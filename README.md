@@ -1,3 +1,4 @@
-# mindisle_client
+（施工中）
+# 心岛 客户端
 
-An useful app based on Flutter for practitioner.
+基于 Flutter 的心岛心理健康管理应用：通过 AI 辅助的用药管理、体重与副作用监测、情绪与量表评估，帮助患者与医生实现安全、持续的心理健康管理。
