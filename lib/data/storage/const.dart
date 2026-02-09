@@ -1,6 +1,10 @@
 import 'package:mindisle_client/data/storage/hive_pref_tool.dart';
 
 abstract final class AppPrefs {
+  static const themeMode = PrefVar<int>(
+    'test_int',
+    defaultValue: 0,
+  );
 
   static const favoriteServerIds = PrefVar<List<String>>(
     'favorite_server_ids',
