@@ -11,13 +11,22 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_launcher_icons: ^0.13.1
   launcher_name: ^1.0.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  authing_sdk: ^1.0.0
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon/app_icon.png
+    - assets/icon/app_icon_foreground.png
+    - assets/icon/app_icon_background.png
 
 flutter_launcher_icons:
   android: true
@@ -34,3 +43,13 @@ launcher_name:
   default: "Mind Isle"
   zh-rCN: "心·岛"
   zh-rTW: "心·島"
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/icon/app_icon_foreground.png
+  android: true
+  ios: true
+
+  android_12:
+    color: "#ffffff"
+    image: assets/icon/app_icon_foreground.png
