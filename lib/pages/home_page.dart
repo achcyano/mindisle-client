@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/app_route.dart';
-//import 'detail_page.dart';
+import '../core/ui/app_route.dart';
+import 'detail_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -17,7 +17,7 @@ class HomePage extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            // DetailPage.route.go(context, 'Hello Flutter');
+             DetailPage.route.go(context, 'Hello Flutter');
           },
           child: const Text('Go to detail'),
         ),

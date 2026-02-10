@@ -13,10 +13,10 @@ dependencies:
   launcher_name: ^1.0.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  authing_sdk: ^1.0.0
   flutter_native_splash: ^2.4.7
   hive_ce_flutter: ^2.3.1
   logger: ^2.6.2
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -38,6 +38,7 @@ flutter_launcher_icons:
 
   adaptive_icon_foreground: assets/icon/app_icon_foreground.png
   adaptive_icon_background: assets/icon/app_icon_background.png
+
 
   remove_alpha_ios: true
 

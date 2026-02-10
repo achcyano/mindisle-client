@@ -1,4 +1,4 @@
-import 'package:mindisle_client/data/storage/hive_pref_tool.dart';
+import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
 
 abstract final class AppPrefs {
   static const themeMode = PrefVar<int>(

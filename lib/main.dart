@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mindisle_client/data/storage/hive_pref_tool.dart';
-import 'core/app_navigator.dart';
-import 'core/app_route_observer.dart';
+import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
+import 'core/ui/app_navigator.dart';
+import 'core/ui/app_route_observer.dart';
 import 'pages/home_page.dart';
 
 Future<void> main() async {
@@ -15,6 +15,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       navigatorKey: AppNavigator.key,
       navigatorObservers: [AppRouteObserver.instance],
       home: const HomePage(),
