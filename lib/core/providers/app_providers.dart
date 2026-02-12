@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/config/app_config.dart';
 import 'package:mindisle_client/core/network/dio_factory.dart';
 import 'package:mindisle_client/core/network/token_refresh_service.dart';
+import 'package:mindisle_client/shared/session/session_expired_signal.dart';
 import 'package:mindisle_client/shared/session/session_store.dart';
 import 'package:mindisle_client/shared/session/session_store_impl.dart';
 
@@ -35,5 +36,6 @@ final appDioProvider = Provider<Dio>((ref) {
     config: ref.watch(appConfigProvider),
     sessionStore: ref.watch(sessionStoreProvider),
     refreshService: ref.watch(tokenRefreshServiceProvider),
+    onSessionExpired: ref.read(sessionExpiredEmitterProvider),
   );
 });

@@ -9,10 +9,12 @@ final class ApiEnvelope<T> {
     Map<String, dynamic> json,
     T Function(Object? raw) decodeData,
   ) {
+    final code = (json['code'] as num?)?.toInt() ?? -1;
+    final message = (json['message'] as String?) ?? 'Unknown error';
     return ApiEnvelope<T>(
-      code: (json['code'] as num?)?.toInt() ?? -1,
-      message: (json['message'] as String?) ?? 'Unknown error',
-      data: decodeData(json['data']),
+      code: code,
+      message: message,
+      data: code == 0 ? decodeData(json['data']) : null,
     );
   }
 

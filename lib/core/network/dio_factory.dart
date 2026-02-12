@@ -23,6 +23,7 @@ final class DioFactory {
     required AppConfig config,
     required SessionStore sessionStore,
     required TokenRefreshService refreshService,
+    required void Function() onSessionExpired,
   }) {
     final dio = Dio(
       BaseOptions(
@@ -39,6 +40,7 @@ final class DioFactory {
         dio: dio,
         refreshService: refreshService,
         sessionStore: sessionStore,
+        onSessionExpired: onSessionExpired,
       ),
     );
 
