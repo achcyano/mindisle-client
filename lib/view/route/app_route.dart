@@ -38,6 +38,19 @@ final class AppRoute<Ret> extends AppRouteBase {
       ),
     );
   }
+
+  Future<Ret?> replace(BuildContext context) {
+    if (middlewares.any((m) => !m(context, this))) {
+      return Future.value(null);
+    }
+
+    return Navigator.of(context).pushReplacement<Ret, dynamic>(
+      MaterialPageRoute(
+        settings: settings,
+        builder: builder,
+      ),
+    );
+  }
 }
 
 final class AppRouteArg<Ret, Arg extends Object>
@@ -57,6 +70,19 @@ final class AppRouteArg<Ret, Arg extends Object>
     }
 
     return Navigator.of(context).push<Ret>(
+      MaterialPageRoute(
+        settings: settings,
+        builder: (_) => builder(arg),
+      ),
+    );
+  }
+
+  Future<Ret?> replace(BuildContext context, Arg arg) {
+    if (middlewares.any((m) => !m(context, this))) {
+      return Future.value(null);
+    }
+
+    return Navigator.of(context).pushReplacement<Ret, dynamic>(
       MaterialPageRoute(
         settings: settings,
         builder: (_) => builder(arg),
