@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:mindisle_client/core/network/api_envelope.dart';
 import 'package:mindisle_client/core/network/error_mapper.dart';
 import 'package:mindisle_client/core/result/result.dart';
+import 'package:mindisle_client/data/preference/const.dart';
 import 'package:mindisle_client/features/auth/data/models/auth_models.dart';
 import 'package:mindisle_client/features/auth/data/remote/auth_api.dart';
 import 'package:mindisle_client/features/auth/domain/entities/auth_entities.dart';
@@ -158,6 +159,7 @@ final class AuthRepositoryImpl implements AuthRepository {
         userId: data.userId,
         tokenPair: data.tokenPair,
       );
+      await AppPrefs.hasCompletedFirstLogin.set(true);
     }
   }
 

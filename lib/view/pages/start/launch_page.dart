@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/app_error.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/providers/app_providers.dart';
+import 'package:mindisle_client/data/preference/const.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/view/pages/home_page.dart';
 import 'package:mindisle_client/view/pages/start/login_page.dart';
+import 'package:mindisle_client/view/pages/start/welcome_page.dart';
 
 class LaunchPage extends ConsumerStatefulWidget {
   const LaunchPage({super.key});
@@ -29,6 +31,10 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
     if (!mounted) return;
 
     if (session == null) {
+      if (!AppPrefs.hasCompletedFirstLogin.value) {
+        await WelcomePage.route.replace(context);
+        return;
+      }
       await LoginPage.route.replace(context);
       return;
     }
@@ -38,6 +44,7 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
 
     switch (result) {
       case Success():
+        await AppPrefs.hasCompletedFirstLogin.set(true);
         await HomePage.route.replace(context);
       case Failure(error: final error):
         if (error.type == AppErrorType.unauthorized) {

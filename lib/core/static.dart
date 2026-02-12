@@ -2,6 +2,8 @@ import 'package:logger/logger.dart';
 
 final logger = Logger();
 
+const appDisplayName = '心岛';
+
 const apiScheme = 'http';
 const apiHost = '192.168.1.3';
 const apiPort = 8808;

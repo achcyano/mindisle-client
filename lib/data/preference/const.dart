@@ -1,6 +1,12 @@
 import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
 
 abstract final class AppPrefs {
+  // Whether the user has ever completed a successful login.
+  static const hasCompletedFirstLogin = PrefVar<bool>(
+    'has_completed_first_login',
+    defaultValue: false,
+  );
+
   static const deviceId = PrefVar<String>(
     'device_id',
     defaultValue: '',

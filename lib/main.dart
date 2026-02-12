@@ -29,7 +29,11 @@ class App extends ConsumerWidget {
       final messenger = AppNavigator.scaffoldMessengerKey.currentState;
       messenger?.hideCurrentSnackBar();
       messenger?.showSnackBar(
-        const SnackBar(content: Text('账号信息过期，请重新登录')),
+        const SnackBar(
+          content: Text(
+            '登录过期，请重新登录',
+          ),
+        ),
       );
     });
 
