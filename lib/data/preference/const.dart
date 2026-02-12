@@ -1,6 +1,26 @@
 import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
 
 abstract final class AppPrefs {
+  static const deviceId = PrefVar<String>(
+    'device_id',
+    defaultValue: '',
+  );
+
+  static const sessionUserId = PrefVar<int>(
+    'session_user_id',
+    defaultValue: 0,
+  );
+
+  static const accessTokenExpiresAtMs = PrefVar<int>(
+    'access_token_expires_at_ms',
+    defaultValue: 0,
+  );
+
+  static const refreshTokenExpiresAtMs = PrefVar<int>(
+    'refresh_token_expires_at_ms',
+    defaultValue: 0,
+  );
+
   static const themeMode = PrefVar<int>(
     'test_int',
     defaultValue: 0,

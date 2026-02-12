@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
-import 'core/ui/app_navigator.dart';
-import 'core/ui/app_route_observer.dart';
-import 'pages/home_page.dart';
+import 'package:mindisle_client/view/route/app_navigator.dart';
+import 'package:mindisle_client/view/route/app_route_observer.dart';
+import 'package:mindisle_client/view/pages/home_page.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await HivePrefTool.instance.init(boxName: 'app_preferences');
-  runApp(const App());
+  runApp(const ProviderScope(child: App()));
 }
 
 class App extends StatelessWidget {

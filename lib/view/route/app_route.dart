@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_route_observer.dart';
+import 'package:mindisle_client/view/route/app_route_observer.dart';
 
 typedef RouteMiddleware<T> = bool Function(
     BuildContext context,

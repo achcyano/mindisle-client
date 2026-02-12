@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/ui/app_route.dart';
+import 'package:mindisle_client/view/route/app_route.dart';
 
 class DetailPage extends StatelessWidget {
   final String message;
