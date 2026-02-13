@@ -23,7 +23,7 @@ AppError mapDioExceptionToAppError(DioException exception) {
       exception.type == DioExceptionType.connectionError) {
     return const AppError(
       type: AppErrorType.network,
-      message: 'Network connection failed',
+      message: '网络连接失败',
     );
   }
 

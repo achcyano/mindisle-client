@@ -6,7 +6,7 @@ const appDisplayName = '心岛';
 
 const apiScheme = 'http';
 const apiHost = '192.168.1.3';
-const apiPort = 8808;
+const apiPort = 80;
 const apiPrefix = '/api/v1';
 
 Uri buildApiUri(String path, [Map<String, dynamic>? queryParameters]) {

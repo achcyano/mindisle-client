@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindisle_client/core/static.dart';
-import 'package:mindisle_client/view/pages/start/login_page.dart';
+import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:mindisle_client/view/widget/guided_entry_button.dart';
 

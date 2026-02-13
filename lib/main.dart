@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
 import 'package:mindisle_client/shared/session/session_expired_signal.dart';
 import 'package:mindisle_client/view/pages/start/launch_page.dart';
-import 'package:mindisle_client/view/pages/start/login_page.dart';
+import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/route/app_navigator.dart';
 import 'package:mindisle_client/view/route/app_route_observer.dart';
 
