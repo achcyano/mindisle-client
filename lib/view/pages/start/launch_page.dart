@@ -8,6 +8,7 @@ import 'package:mindisle_client/features/user/presentation/providers/user_provid
 import 'package:mindisle_client/view/pages/home_page.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/pages/start/welcome_page.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class LaunchPage extends ConsumerStatefulWidget {
   const LaunchPage({super.key});
@@ -62,7 +63,7 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicatorM3E(),
       ),
     );
   }

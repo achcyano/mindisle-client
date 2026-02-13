@@ -22,12 +22,8 @@ class _LoginSubmitButtonState extends State<LoginSubmitButton> {
     final colorScheme = Theme.of(context).colorScheme;
     final canSubmit = !widget.isSubmitting;
 
-    final backgroundColor = canSubmit
-        ? colorScheme.primary
-        : colorScheme.surfaceContainerHighest;
-    final foregroundColor = canSubmit
-        ? colorScheme.onPrimary
-        : colorScheme.onSurface.withValues(alpha: 0.46);
+    final backgroundColor = colorScheme.primary;
+    final foregroundColor = colorScheme.onPrimary;
 
     return SizedBox(
       width: 56,

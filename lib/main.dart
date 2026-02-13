@@ -26,11 +26,20 @@ class App extends ConsumerWidget {
 
       LoginPage.route.replace(navContext);
 
+      final mediaQuery = MediaQuery.maybeOf(navContext);
+      final safeBottom = mediaQuery?.padding.bottom ?? 0;
+      final viewInsetsBottom = mediaQuery?.viewInsets.bottom ?? 0;
+      final bottomMargin = viewInsetsBottom > 0
+          ? 16 + safeBottom + viewInsetsBottom
+          : 236 + safeBottom;
+
       final messenger = AppNavigator.scaffoldMessengerKey.currentState;
       messenger?.hideCurrentSnackBar();
       messenger?.showSnackBar(
-        const SnackBar(
-          content: Text('账号信息已过期，请重新登录'),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
+          content: const Text('账号信息已过期，请重新登录'),
         ),
       );
     });

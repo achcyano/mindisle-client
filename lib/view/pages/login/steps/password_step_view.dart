@@ -61,7 +61,7 @@ class PasswordStepView extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   isRegister
-                      ? '为 ${_formatPhone(phoneDigits)} 设置密码（至少 6 位）'
+                      ? '为 ${_formatPhone(phoneDigits)} 设置密码（6 到 20 位）'
                       : '请输入 ${_formatPhone(phoneDigits)} 的密码',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

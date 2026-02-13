@@ -26,6 +26,8 @@ dependencies:
   uuid: ^4.5.1
   pretty_dio_logger: ^1.4.0
   connectivity_plus: ^6.1.4
+  progress_indicator_m3e: ^0.1.1
+  m3e_design: ^0.2.1
 
 dev_dependencies:
   flutter_test:

@@ -94,19 +94,6 @@ class _OtpStepViewState extends State<OtpStepView> {
                   ),
                 ),
               ),
-              SizedBox(
-                height: 18,
-                child: widget.isSubmitting
-                    ? Text(
-                        '正在校验验证码...',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withValues(alpha: 0.65),
-                              fontWeight: FontWeight.w300,
-                              fontSize: 12,
-                            ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
             ],
           ),
         ),
