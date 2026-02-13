@@ -80,7 +80,7 @@ AppError mapServerCodeToAppError({
   };
 
   final localizedMessage =
-      _localizedMessageForCode(code) ?? _fallbackMessageForType(type);
+      _localizedMessageForCode(code, message) ?? _fallbackMessageForType(type);
 
   return AppError(
     type: type,
@@ -90,7 +90,7 @@ AppError mapServerCodeToAppError({
   );
 }
 
-String? _localizedMessageForCode(int code) {
+String? _localizedMessageForCode(int code, String serverMessage) {
   return switch (code) {
     0 => '成功',
     40000 => '请求参数不合法',
@@ -106,10 +106,17 @@ String? _localizedMessageForCode(int code) {
     42901 => '操作过于频繁，请稍后再试',
     42902 => '今日短信次数已达上限',
     42903 => '验证码尝试次数过多，请稍后再试',
+    50010 when _isSmsValidateFailure(serverMessage) => '验证码错误或已过期',
     50010 => '短信服务暂不可用，请稍后重试',
     50000 => '服务暂不可用，请稍后重试',
     _ => null,
   };
+}
+
+bool _isSmsValidateFailure(String serverMessage) {
+  if (serverMessage.isEmpty) return false;
+  final raw = serverMessage.toLowerCase();
+  return raw.contains('validatefail') || raw.contains('验证失败');
 }
 
 String _fallbackMessageForType(AppErrorType type) {

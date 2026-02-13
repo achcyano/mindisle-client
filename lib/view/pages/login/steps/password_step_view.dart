@@ -78,6 +78,7 @@ class PasswordStepView extends StatelessWidget {
                     obscureText: true,
                     enabled: !isSubmitting,
                     onChanged: onPasswordChanged,
+                    maxLength: 20,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w300,
@@ -87,6 +88,7 @@ class PasswordStepView extends StatelessWidget {
                       labelText: '密码',
                       floatingLabelBehavior: FloatingLabelBehavior.always,
                       hintText: '请输入密码',
+                      counterText: '',
                       filled: false,
                       border: border,
                       enabledBorder: border,

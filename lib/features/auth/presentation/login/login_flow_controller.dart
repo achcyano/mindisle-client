@@ -115,6 +115,10 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
       _setInlineError('密码至少 6 位');
       return;
     }
+    if (state.password.length > 20) {
+      _setInlineError('密码不能超过 20 位');
+      return;
+    }
 
     state = state.copyWith(isSubmitting: true, inlineError: null);
 
@@ -265,7 +269,9 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
     switch (result) {
       case Failure(error: final error):
         final code = error.code;
-        if (code == 40003 || code == 42903) {
+        if (code == 40003 ||
+            code == 42903 ||
+            (code == 50010 && error.message.contains('验证码'))) {
           state = state.copyWith(
             step: LoginStep.otp,
             isSubmitting: false,
@@ -297,8 +303,25 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
 
   void _showSnackBar(String message) {
     final messenger = AppNavigator.scaffoldMessengerKey.currentState;
+    final context = AppNavigator.key.currentContext;
+    final mediaQuery = context != null ? MediaQuery.of(context) : null;
+    final safeBottom = mediaQuery?.padding.bottom ?? 0;
+    final viewInsetsBottom = mediaQuery?.viewInsets.bottom ?? 0;
+
+    final useCustomKeypad =
+        state.step == LoginStep.phone || state.step == LoginStep.otp;
+    final bottomMargin = useCustomKeypad
+        ? 236 + safeBottom
+        : 16 + safeBottom + viewInsetsBottom;
+
     messenger?.hideCurrentSnackBar();
-    messenger?.showSnackBar(SnackBar(content: Text(message)));
+    messenger?.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
+        content: Text(message),
+      ),
+    );
   }
 
   bool _isDigit(String value) {
