@@ -45,6 +45,7 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
     switch (result) {
       case Success():
         await AppPrefs.hasCompletedFirstLogin.set(true);
+        if (!mounted) return;
         await HomePage.route.replace(context);
         return;
       case Failure(error: final error):

@@ -43,7 +43,7 @@ AppError mapDioExceptionToAppError(DioException exception) {
       404 => '请求资源不存在',
       409 => '请求冲突，请稍后重试',
       429 => '请求过于频繁，请稍后再试',
-      >= 500 => '服务器开小差了，请稍后重试',
+      int code when code >= 500 => '服务器开小差了，请稍后重试',
       _ => '请求失败，请稍后重试',
     };
 
