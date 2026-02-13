@@ -8,7 +8,6 @@ class PasswordStepView extends StatelessWidget {
     required this.phoneDigits,
     required this.inlineError,
     required this.isSubmitting,
-    required this.canSubmit,
     required this.onPasswordChanged,
     required this.onSubmit,
     super.key,
@@ -18,7 +17,6 @@ class PasswordStepView extends StatelessWidget {
   final String phoneDigits;
   final String? inlineError;
   final bool isSubmitting;
-  final bool canSubmit;
   final ValueChanged<String> onPasswordChanged;
   final VoidCallback onSubmit;
 
@@ -26,6 +24,20 @@ class PasswordStepView extends StatelessWidget {
   Widget build(BuildContext context) {
     final isRegister = mode == LoginFlowMode.register;
     final colorScheme = Theme.of(context).colorScheme;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: colorScheme.primary,
+        width: 1.2,
+      ),
+    );
+    final errorBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: colorScheme.error,
+        width: 1.2,
+      ),
+    );
 
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
@@ -42,8 +54,9 @@ class PasswordStepView extends StatelessWidget {
                   isRegister ? '设置登录密码' : '输入登录密码',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 19,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -51,21 +64,51 @@ class PasswordStepView extends StatelessWidget {
                       ? '为 ${_formatPhone(phoneDigits)} 设置密码（至少 6 位）'
                       : '请输入 ${_formatPhone(phoneDigits)} 的密码',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.72),
-                      ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.72),
+                    fontWeight: FontWeight.w300,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  autofocus: true,
-                  obscureText: true,
-                  enabled: !isSubmitting,
-                  onChanged: onPasswordChanged,
-                  decoration: InputDecoration(
-                    hintText: '请输入密码',
-                    errorText: inlineError,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                SizedBox(
+                  height: 46,
+                  child: TextField(
+                    autofocus: true,
+                    obscureText: true,
+                    enabled: !isSubmitting,
+                    onChanged: onPasswordChanged,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w300,
+                          fontSize: 17,
+                        ),
+                    decoration: InputDecoration(
+                      labelText: '密码',
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                      hintText: '请输入密码',
+                      filled: false,
+                      border: border,
+                      enabledBorder: border,
+                      focusedBorder: border,
+                      disabledBorder: border,
+                      errorBorder: errorBorder,
+                      focusedErrorBorder: errorBorder,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 18,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      inlineError ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.error,
+                      ),
                     ),
                   ),
                 ),
@@ -79,7 +122,6 @@ class PasswordStepView extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: LoginSubmitButton(
                 isSubmitting: isSubmitting,
-                enabled: canSubmit,
                 onPressed: onSubmit,
               ),
             ),

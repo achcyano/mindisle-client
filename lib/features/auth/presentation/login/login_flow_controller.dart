@@ -96,6 +96,9 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
       return;
     }
 
+    state = state.copyWith(isSubmitting: true, inlineError: null);
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+
     state = state.copyWith(
       step: LoginStep.password,
       isSubmitting: false,
@@ -261,6 +264,18 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
 
     switch (result) {
       case Failure(error: final error):
+        final code = error.code;
+        if (code == 40003 || code == 42903) {
+          state = state.copyWith(
+            step: LoginStep.otp,
+            isSubmitting: false,
+            password: '',
+            otpDigits: '',
+            inlineError: '验证码不正确或已过期，请重新输入',
+          );
+          _showSnackBar('验证码不正确或已过期');
+          return;
+        }
         _fail(error.message);
         return;
       case Success():

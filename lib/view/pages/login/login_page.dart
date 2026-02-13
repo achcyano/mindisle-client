@@ -23,11 +23,11 @@ class LoginPage extends ConsumerWidget {
     final state = ref.watch(loginFlowControllerProvider);
     final controller = ref.read(loginFlowControllerProvider.notifier);
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (state.step == LoginStep.phone) return true;
+    return PopScope<void>(
+      canPop: state.step == LoginStep.phone,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         controller.goBackStep();
-        return false;
       },
       child: Scaffold(
         body: SafeArea(
@@ -52,7 +52,6 @@ class LoginPage extends ConsumerWidget {
                   phoneDigits: state.phoneDigits,
                   inlineError: state.inlineError,
                   isSubmitting: state.isSubmitting,
-                  canSubmit: state.canSubmitPhone,
                   onDigitPressed: controller.inputPhoneDigit,
                   onBackspacePressed: controller.deletePhoneDigit,
                   onSubmit: () => controller.submitPhone(context),
@@ -63,7 +62,6 @@ class LoginPage extends ConsumerWidget {
                   otpDigits: state.otpDigits,
                   inlineError: state.inlineError,
                   isSubmitting: state.isSubmitting,
-                  canSubmit: state.canSubmitOtp,
                   onDigitPressed: controller.inputOtpDigit,
                   onBackspacePressed: controller.deleteOtpDigit,
                   onSubmit: () => controller.submitOtp(),
@@ -74,7 +72,6 @@ class LoginPage extends ConsumerWidget {
                   phoneDigits: state.phoneDigits,
                   inlineError: state.inlineError,
                   isSubmitting: state.isSubmitting,
-                  canSubmit: state.canSubmitPassword,
                   onPasswordChanged: controller.setPassword,
                   onSubmit: () => controller.submitPassword(context),
                 ),

@@ -1,4 +1,4 @@
-final class ApiEnvelope<T> {
+﻿final class ApiEnvelope<T> {
   const ApiEnvelope({
     required this.code,
     required this.message,
@@ -11,7 +11,8 @@ final class ApiEnvelope<T> {
   ) {
     final parsedCode = (json['code'] as num?)?.toInt();
     final code = parsedCode ?? 0;
-    final message = (json['message'] as String?) ?? (code == 0 ? 'OK' : 'Unknown error');
+    final message = (json['message'] as String?) ??
+        (code == 0 ? '\u6210\u529f' : '\u8bf7\u6c42\u5931\u8d25');
     final rawData = json.containsKey('data') ? json['data'] : json;
 
     return ApiEnvelope<T>(
@@ -26,5 +27,4 @@ final class ApiEnvelope<T> {
   final T? data;
 
   bool get isSuccess => code == 0;
-
 }

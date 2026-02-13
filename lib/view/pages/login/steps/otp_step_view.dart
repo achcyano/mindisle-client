@@ -1,14 +1,12 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:mindisle_client/view/widget/login_submit_button.dart';
 import 'package:mindisle_client/view/widget/number_keypad.dart';
 
-class OtpStepView extends StatelessWidget {
+class OtpStepView extends StatefulWidget {
   const OtpStepView({
     required this.phoneDigits,
     required this.otpDigits,
     required this.inlineError,
     required this.isSubmitting,
-    required this.canSubmit,
     required this.onDigitPressed,
     required this.onBackspacePressed,
     required this.onSubmit,
@@ -19,10 +17,26 @@ class OtpStepView extends StatelessWidget {
   final String otpDigits;
   final String? inlineError;
   final bool isSubmitting;
-  final bool canSubmit;
   final ValueChanged<String> onDigitPressed;
   final VoidCallback onBackspacePressed;
   final VoidCallback onSubmit;
+
+  @override
+  State<OtpStepView> createState() => _OtpStepViewState();
+}
+
+class _OtpStepViewState extends State<OtpStepView> {
+  @override
+  void didUpdateWidget(covariant OtpStepView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final justCompleted =
+        oldWidget.otpDigits.length < 6 && widget.otpDigits.length == 6;
+    if (justCompleted && !widget.isSubmitting) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onSubmit();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,15 +53,18 @@ class OtpStepView extends StatelessWidget {
                 '输入验证码',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 19,
                     ),
               ),
               const SizedBox(height: 10),
               Text(
-                '验证码已发送至 ${_formatPhone(phoneDigits)}',
+                '验证码已发送至 ${_formatPhone(widget.phoneDigits)}',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withValues(alpha: 0.72),
+                      fontWeight: FontWeight.w300,
+                      fontSize: 13,
                     ),
               ),
               const SizedBox(height: 16),
@@ -55,41 +72,50 @@ class OtpStepView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   for (var i = 0; i < 6; i++) ...[
-                    _OtpCell(value: i < otpDigits.length ? otpDigits[i] : ''),
+                    _OtpCell(
+                      value: i < widget.otpDigits.length ? widget.otpDigits[i] : '',
+                    ),
                     if (i != 5) const SizedBox(width: 8),
                   ],
                 ],
               ),
-              if (inlineError != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  inlineError!,
-                  style: TextStyle(
-                    color: colorScheme.error,
-                    fontSize: 13,
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 18,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.inlineError ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colorScheme.error,
+                        ),
                   ),
                 ),
-              ],
+              ),
+              SizedBox(
+                height: 18,
+                child: widget.isSubmitting
+                    ? Text(
+                        '正在校验验证码...',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withValues(alpha: 0.65),
+                              fontWeight: FontWeight.w300,
+                              fontSize: 12,
+                            ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
             ],
           ),
         ),
         const Spacer(flex: 3),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: LoginSubmitButton(
-              isSubmitting: isSubmitting,
-              enabled: canSubmit,
-              onPressed: onSubmit,
-            ),
-          ),
-        ),
         const SizedBox(height: 10),
         NumberKeypad(
-          onDigitPressed: onDigitPressed,
-          onBackspacePressed: onBackspacePressed,
-          enabled: !isSubmitting,
+          onDigitPressed: widget.onDigitPressed,
+          onBackspacePressed: widget.onBackspacePressed,
+          enabled: !widget.isSubmitting,
         ),
       ],
     );
@@ -112,18 +138,20 @@ class _OtpCell extends StatelessWidget {
 
     return Container(
       width: 42,
-      height: 50,
+      height: 46,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+          color: colorScheme.primary,
+          width: 1.2,
         ),
       ),
       child: Text(
         value,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w300,
+              fontSize: 17,
             ),
       ),
     );

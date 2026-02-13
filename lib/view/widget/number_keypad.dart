@@ -1,11 +1,12 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class NumberKeypad extends StatelessWidget {
   const NumberKeypad({
     required this.onDigitPressed,
     required this.onBackspacePressed,
     this.enabled = true,
-    this.height = 272,
+    this.height = 210,
     super.key,
   });
 
@@ -16,32 +17,20 @@ class NumberKeypad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return SizedBox(
       height: height,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHigh.withValues(alpha: 0.58),
-          border: Border(
-            top: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-            ),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-          child: Column(
-            children: [
-              _buildRow(context, const ['1', '2', '3']),
-              const SizedBox(height: 10),
-              _buildRow(context, const ['4', '5', '6']),
-              const SizedBox(height: 10),
-              _buildRow(context, const ['7', '8', '9']),
-              const SizedBox(height: 10),
-              _buildBottomRow(context),
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(
+          children: [
+            _buildRow(context, const ['1', '2', '3']),
+            const SizedBox(height: 10),
+            _buildRow(context, const ['4', '5', '6']),
+            const SizedBox(height: 10),
+            _buildRow(context, const ['7', '8', '9']),
+            const SizedBox(height: 10),
+            _buildBottomRow(context),
+          ],
         ),
       ),
     );
@@ -54,11 +43,15 @@ class NumberKeypad extends StatelessWidget {
           for (final digit in digits)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: _DigitKey(
-                  label: digit,
+                  digit: digit,
+                  letters: _lettersForDigit(digit),
                   enabled: enabled,
-                  onTap: () => onDigitPressed(digit),
+                  onTap: () {
+                    HapticFeedback.vibrate();
+                    onDigitPressed(digit);
+                  },
                 ),
               ),
             ),
@@ -81,9 +74,13 @@ class NumberKeypad extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: _DigitKey(
-                label: '0',
+                digit: '0',
+                letters: _lettersForDigit('0'),
                 enabled: enabled,
-                onTap: () => onDigitPressed('0'),
+                onTap: () {
+                  HapticFeedback.vibrate();
+                  onDigitPressed('0');
+                },
               ),
             ),
           ),
@@ -92,7 +89,10 @@ class NumberKeypad extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: _BackspaceKey(
                 enabled: enabled,
-                onTap: onBackspacePressed,
+                onTap: () {
+                  HapticFeedback.vibrate();
+                  onBackspacePressed();
+                },
               ),
             ),
           ),
@@ -100,45 +100,98 @@ class NumberKeypad extends StatelessWidget {
       ),
     );
   }
+
+  String _lettersForDigit(String digit) {
+    return switch (digit) {
+      '2' => 'ABC',
+      '3' => 'DEF',
+      '4' => 'GHI',
+      '5' => 'JKL',
+      '6' => 'MNO',
+      '7' => 'PQRS',
+      '8' => 'TUV',
+      '9' => 'WXYZ',
+      '0' => '+',
+      _ => '',
+    };
+  }
 }
 
 class _DigitKey extends StatelessWidget {
   const _DigitKey({
-    required this.label,
+    required this.digit,
+    required this.letters,
     required this.enabled,
     required this.onTap,
   });
 
-  final String label;
+  final String digit;
+  final String letters;
   final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    const keyRadius = 8.0;
+    final keyFill = colorScheme.surfaceContainerHighest.withValues(alpha: 0.55);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(keyRadius),
+        splashFactory: InkRipple.splashFactory,
+        radius: 52,
+        splashColor: colorScheme.onSurface.withValues(alpha: 0.16),
+        highlightColor: colorScheme.onSurface.withValues(alpha: 0.06),
         onTap: enabled ? onTap : null,
         child: Ink(
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.34),
-            ),
+            color: keyFill,
+            borderRadius: BorderRadius.circular(keyRadius),
           ),
           child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w500,
-                color: enabled
-                    ? colorScheme.onSurface
-                    : colorScheme.onSurface.withValues(alpha: 0.38),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  SizedBox(
+                    width: 28,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        digit,
+                        style: TextStyle(
+                          fontSize: 23,
+                          fontWeight: FontWeight.w300,
+                          color: enabled
+                              ? colorScheme.onSurface
+                              : colorScheme.onSurface.withValues(alpha: 0.38),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  SizedBox(
+                    width: 44,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        letters,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w300,
+                          letterSpacing: 0.6,
+                          color: enabled
+                              ? colorScheme.onSurface.withValues(alpha: 0.55)
+                              : colorScheme.onSurface.withValues(alpha: 0.30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -160,24 +213,27 @@ class _BackspaceKey extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    const keyRadius = 8.0;
+    final keyFill = colorScheme.surfaceContainerHighest.withValues(alpha: 0.55);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(keyRadius),
+        splashFactory: InkRipple.splashFactory,
+        radius: 52,
+        splashColor: colorScheme.onSurface.withValues(alpha: 0.16),
+        highlightColor: colorScheme.onSurface.withValues(alpha: 0.06),
         onTap: enabled ? onTap : null,
         child: Ink(
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.34),
-            ),
+            color: keyFill,
+            borderRadius: BorderRadius.circular(keyRadius),
           ),
           child: Center(
             child: Icon(
               Icons.backspace_outlined,
-              size: 25,
+              size: 20,
               color: enabled
                   ? colorScheme.onSurface
                   : colorScheme.onSurface.withValues(alpha: 0.38),

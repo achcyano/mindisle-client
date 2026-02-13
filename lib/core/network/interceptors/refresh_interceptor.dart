@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:mindisle_client/core/network/request_flags.dart';
 import 'package:mindisle_client/core/network/token_refresh_service.dart';
 import 'package:mindisle_client/core/static.dart';
@@ -74,6 +74,8 @@ final class RefreshInterceptor extends Interceptor {
   }
 
   DioException _buildReLoginException(RequestOptions requestOptions) {
+    const expiredMessage = '\u767b\u5f55\u72b6\u6001\u5df2\u5931\u6548\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55';
+
     return DioException(
       requestOptions: requestOptions,
       response: Response(
@@ -81,12 +83,12 @@ final class RefreshInterceptor extends Interceptor {
         statusCode: 401,
         data: const {
           'code': 40100,
-          'message': 'Session expired, please login again',
+          'message': expiredMessage,
           'data': null,
         },
       ),
       type: DioExceptionType.badResponse,
-      message: 'Session expired, please login again',
+      message: expiredMessage,
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:mindisle_client/core/network/api_envelope.dart';
 import 'package:mindisle_client/core/network/error_mapper.dart';
 import 'package:mindisle_client/core/result/result.dart';
@@ -107,7 +107,7 @@ final class AuthRepositoryImpl implements AuthRepository {
     if (refreshToken == null || refreshToken.isEmpty) {
       return Failure(mapServerCodeToAppError(
         code: 40100,
-        message: 'Missing refresh token',
+        message: '\u7f3a\u5c11\u5237\u65b0\u4ee4\u724c',
       ));
     }
 
@@ -209,3 +209,4 @@ final class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
+
