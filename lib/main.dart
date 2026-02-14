@@ -6,6 +6,7 @@ import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/pages/start/launch_page.dart';
 import 'package:mindisle_client/view/route/app_navigator.dart';
 import 'package:mindisle_client/view/route/app_route_observer.dart';
+import 'package:mindisle_client/view/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +47,7 @@ class App extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true),
+      theme: AppTheme.light(),
       navigatorKey: AppNavigator.key,
       scaffoldMessengerKey: AppNavigator.scaffoldMessengerKey,
       navigatorObservers: [AppRouteObserver.instance],

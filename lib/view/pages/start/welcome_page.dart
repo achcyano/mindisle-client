@@ -30,14 +30,10 @@ class WelcomePage extends StatelessWidget {
                 width: 230,
                 height: 200,
               ),
-              const Text(
+              Text(
                 appDisplayName,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.7,
-                ),
+                style: Theme.of(context).textTheme.displaySmall,
               ),
               const Spacer(flex: 4),
               Align(

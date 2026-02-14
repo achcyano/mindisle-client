@@ -52,10 +52,7 @@ class _OtpStepViewState extends State<OtpStepView> {
               Text(
                 '输入验证码',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 19,
-                    ),
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
               Text(
@@ -63,8 +60,6 @@ class _OtpStepViewState extends State<OtpStepView> {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withValues(alpha: 0.72),
-                      fontWeight: FontWeight.w300,
-                      fontSize: 13,
                     ),
               ),
               const SizedBox(height: 16),
@@ -136,10 +131,7 @@ class _OtpCell extends StatelessWidget {
       ),
       child: Text(
         value,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w300,
-              fontSize: 17,
-            ),
+        style: Theme.of(context).textTheme.titleLarge,
       ),
     );
   }

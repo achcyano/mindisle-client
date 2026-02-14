@@ -55,10 +55,7 @@ class _GuidedEntryButtonState extends State<GuidedEntryButton>
               ),
               child: Text(
                 widget.label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(context).textTheme.labelLarge,
               ),
             ),
             IgnorePointer(

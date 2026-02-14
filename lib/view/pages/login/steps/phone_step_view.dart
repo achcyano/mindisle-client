@@ -79,21 +79,14 @@ class _PhoneStepViewState extends State<PhoneStepView> {
               Text(
                 '输入手机号码',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 19,
-                ),
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
               Text(
                 '请确认手机号码输入正确。',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.72),
-                  fontWeight: FontWeight.w300,
-                  fontSize: 13
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
                 ),
               ),
               const SizedBox(height: 14),
@@ -105,10 +98,7 @@ class _PhoneStepViewState extends State<PhoneStepView> {
                   keyboardType: TextInputType.none,
                   showCursor: true,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w300,
-                    fontSize: 17
-                  ),
+                  style: Theme.of(context).textTheme.titleSmall,
                   decoration: InputDecoration(
                     labelText: '手机号码',
                     floatingLabelBehavior: FloatingLabelBehavior.always,

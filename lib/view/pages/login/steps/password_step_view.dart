@@ -53,10 +53,7 @@ class PasswordStepView extends StatelessWidget {
                 Text(
                   isRegister ? '设置登录密码' : '输入登录密码',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 19,
-                  ),
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -66,8 +63,6 @@ class PasswordStepView extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurface.withValues(alpha: 0.72),
-                    fontWeight: FontWeight.w300,
-                    fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -80,10 +75,7 @@ class PasswordStepView extends StatelessWidget {
                     onChanged: onPasswordChanged,
                     maxLength: 20,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w300,
-                          fontSize: 17,
-                        ),
+                    style: Theme.of(context).textTheme.titleSmall,
                     decoration: InputDecoration(
                       labelText: '密码',
                       floatingLabelBehavior: FloatingLabelBehavior.always,

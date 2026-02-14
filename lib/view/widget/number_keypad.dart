@@ -133,8 +133,13 @@ class _DigitKey extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     const keyRadius = 8.0;
     final keyFill = colorScheme.surfaceContainerHighest.withValues(alpha: 0.55);
+    final baseDigitStyle =
+        textTheme.titleLarge ?? const TextStyle(fontSize: 23, fontWeight: FontWeight.w300);
+    final baseLettersStyle = textTheme.titleMedium ??
+        const TextStyle(fontSize: 16, fontWeight: FontWeight.w300, letterSpacing: 0.6);
 
     return Material(
       color: Colors.transparent,
@@ -163,9 +168,7 @@ class _DigitKey extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         digit,
-                        style: TextStyle(
-                          fontSize: 23,
-                          fontWeight: FontWeight.w300,
+                        style: baseDigitStyle.copyWith(
                           color: enabled
                               ? colorScheme.onSurface
                               : colorScheme.onSurface.withValues(alpha: 0.38),
@@ -180,10 +183,7 @@ class _DigitKey extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: Text(
                         letters,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w300,
-                          letterSpacing: 0.6,
+                        style: baseLettersStyle.copyWith(
                           color: enabled
                               ? colorScheme.onSurface.withValues(alpha: 0.55)
                               : colorScheme.onSurface.withValues(alpha: 0.30),
