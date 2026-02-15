@@ -4,7 +4,7 @@ import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/features/auth/domain/entities/auth_entities.dart';
 import 'package:mindisle_client/features/auth/presentation/login/login_flow_state.dart';
 import 'package:mindisle_client/features/auth/presentation/providers/auth_providers.dart';
-import 'package:mindisle_client/view/pages/home_page.dart';
+import 'package:mindisle_client/view/pages/home_shell.dart';
 import 'package:mindisle_client/view/route/app_navigator.dart';
 
 final loginFlowControllerProvider = StateNotifierProvider.autoDispose<
@@ -236,7 +236,7 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
       case Success():
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
-        await HomePage.route.replace(context);
+        await HomeShell.route.replace(context);
         return;
     }
   }
@@ -254,7 +254,7 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
       case Success():
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
-        await HomePage.route.replace(context);
+        await HomeShell.route.replace(context);
         return;
     }
   }
@@ -287,7 +287,7 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
       case Success():
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
-        await HomePage.route.replace(context);
+        await HomeShell.route.replace(context);
         return;
     }
   }

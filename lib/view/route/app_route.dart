@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mindisle_client/view/route/app_route_observer.dart';
 
 typedef RouteMiddleware<T> = bool Function(
-    BuildContext context,
-    T route,
-    );
+  BuildContext context,
+  T route,
+);
 
 abstract class AppRouteBase {
   final String path;
@@ -14,7 +14,6 @@ abstract class AppRouteBase {
 
   bool get alreadyIn => AppRouteObserver.current?.name == path;
 }
-
 
 final class AppRoute<Ret> extends AppRouteBase {
   final WidgetBuilder builder;
@@ -39,6 +38,19 @@ final class AppRoute<Ret> extends AppRouteBase {
     );
   }
 
+  Future<Ret?> goRoot(BuildContext context) {
+    if (middlewares.any((m) => !m(context, this))) {
+      return Future.value(null);
+    }
+
+    return Navigator.of(context, rootNavigator: true).push<Ret>(
+      MaterialPageRoute(
+        settings: settings,
+        builder: builder,
+      ),
+    );
+  }
+
   Future<Ret?> replace(BuildContext context) {
     if (middlewares.any((m) => !m(context, this))) {
       return Future.value(null);
@@ -51,10 +63,22 @@ final class AppRoute<Ret> extends AppRouteBase {
       ),
     );
   }
+
+  Future<Ret?> replaceRoot(BuildContext context) {
+    if (middlewares.any((m) => !m(context, this))) {
+      return Future.value(null);
+    }
+
+    return Navigator.of(context, rootNavigator: true).pushReplacement<Ret, dynamic>(
+      MaterialPageRoute(
+        settings: settings,
+        builder: builder,
+      ),
+    );
+  }
 }
 
-final class AppRouteArg<Ret, Arg extends Object>
-    extends AppRouteBase {
+final class AppRouteArg<Ret, Arg extends Object> extends AppRouteBase {
   final Widget Function(Arg arg) builder;
   final List<RouteMiddleware<AppRouteArg<Ret, Arg>>> middlewares;
 
@@ -77,12 +101,38 @@ final class AppRouteArg<Ret, Arg extends Object>
     );
   }
 
+  Future<Ret?> goRoot(BuildContext context, Arg arg) {
+    if (middlewares.any((m) => !m(context, this))) {
+      return Future.value(null);
+    }
+
+    return Navigator.of(context, rootNavigator: true).push<Ret>(
+      MaterialPageRoute(
+        settings: settings,
+        builder: (_) => builder(arg),
+      ),
+    );
+  }
+
   Future<Ret?> replace(BuildContext context, Arg arg) {
     if (middlewares.any((m) => !m(context, this))) {
       return Future.value(null);
     }
 
     return Navigator.of(context).pushReplacement<Ret, dynamic>(
+      MaterialPageRoute(
+        settings: settings,
+        builder: (_) => builder(arg),
+      ),
+    );
+  }
+
+  Future<Ret?> replaceRoot(BuildContext context, Arg arg) {
+    if (middlewares.any((m) => !m(context, this))) {
+      return Future.value(null);
+    }
+
+    return Navigator.of(context, rootNavigator: true).pushReplacement<Ret, dynamic>(
       MaterialPageRoute(
         settings: settings,
         builder: (_) => builder(arg),

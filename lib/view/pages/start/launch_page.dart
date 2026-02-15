@@ -5,7 +5,7 @@ import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/providers/app_providers.dart';
 import 'package:mindisle_client/data/preference/const.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
-import 'package:mindisle_client/view/pages/home_page.dart';
+import 'package:mindisle_client/view/pages/home_shell.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/pages/start/welcome_page.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
@@ -47,13 +47,13 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
       case Success():
         await AppPrefs.hasCompletedFirstLogin.set(true);
         if (!mounted) return;
-        await HomePage.route.replace(context);
+        await HomeShell.route.replace(context);
         return;
       case Failure(error: final error):
         if (error.type == AppErrorType.unauthorized) {
           await LoginPage.route.replace(context);
         } else {
-          await HomePage.route.replace(context);
+          await HomeShell.route.replace(context);
         }
         return;
     }
