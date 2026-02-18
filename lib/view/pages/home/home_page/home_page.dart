@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindisle_client/core/static.dart';
+import 'package:mindisle_client/view/pages/home/home_page/card_home.dart';
 import 'package:mindisle_client/view/pages/home/profile_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 
@@ -14,7 +15,6 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(appDisplayName),
         centerTitle: true,
@@ -27,8 +27,26 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Text('Placeholder'),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                elevation: 0,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                child: const HomeIconTextTile(
+                  icon: Icons.link,
+                  title: '绑定医生',
+                  subtitle: '绑定医生以使用完整服务',
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
