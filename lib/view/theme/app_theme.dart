@@ -8,7 +8,9 @@ class AppTheme {
     final base = ThemeData(useMaterial3: true);
     return base.copyWith(
       textTheme: AppTextTheme.build(base.textTheme),
+      navigationBarTheme: const NavigationBarThemeData(
+        height: 64,
+      ),
     );
   }
 }
-

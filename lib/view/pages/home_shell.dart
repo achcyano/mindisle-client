@@ -25,7 +25,7 @@ class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
 
   late final List<WidgetBuilder> _tabRootBuilders = <WidgetBuilder>[
-    (_) => const HomePage(),
+    (_) => HomePage(onRouteRequested: _onRouteRequested),
     (_) => const ChatPage(),
     (_) => const MedicinePage(),
     (_) => const ProfilePage(),
@@ -34,7 +34,7 @@ class _HomeShellState extends State<HomeShell> {
     '/home/home',
     '/home/chat',
     '/home/medicine',
-    '/home/profile',
+    ProfilePage.route.path,
   ];
 
   Future<void> _handleBackPressed() async {
@@ -52,6 +52,15 @@ class _HomeShellState extends State<HomeShell> {
 
     if (!mounted) return;
     Navigator.of(context).maybePop();
+  }
+
+  void _onRouteRequested(AppRouteBase route) {
+    final targetIndex = _tabRootRouteNames.indexOf(route.path);
+    if (targetIndex < 0) {
+      return;
+    }
+
+    _onDestinationSelected(targetIndex);
   }
 
   void _onDestinationSelected(int index) {
@@ -103,6 +112,7 @@ class _HomeShellState extends State<HomeShell> {
           key: const ValueKey('home_shell_navigation_bar'),
           selectedIndex: _currentIndex,
           onDestinationSelected: _onDestinationSelected,
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: const <NavigationDestination>[
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
