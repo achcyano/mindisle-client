@@ -43,6 +43,12 @@ abstract final class AppPrefs {
     defaultValue: <String, dynamic>{},
     decode: _decodeStringDynamicMap,
   );
+
+  static const todayMoodEntry = PrefVar<Map<String, dynamic>>(
+    'today_mood_entry',
+    defaultValue: <String, dynamic>{},
+    decode: _decodeStringDynamicMap,
+  );
 }
 
 List<String> _decodeStringList(Object? raw) {

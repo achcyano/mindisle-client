@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindisle_client/data/preference/const.dart';
 
 class TodayMoodCard extends StatefulWidget {
   const TodayMoodCard({super.key});
@@ -7,7 +8,8 @@ class TodayMoodCard extends StatefulWidget {
   State<TodayMoodCard> createState() => _TodayMoodCardState();
 }
 
-class _TodayMoodCardState extends State<TodayMoodCard> {
+class _TodayMoodCardState extends State<TodayMoodCard>
+    with WidgetsBindingObserver {
   static const int _lowMoodStartIndex = 3;
   static const String _sideEffectTag = '副作用';
 
@@ -45,15 +47,32 @@ class _TodayMoodCardState extends State<TodayMoodCard> {
   final Set<String> _selectedEvents = <String>{};
   final Set<String> _selectedBody = <String>{};
   final TextEditingController _noteController = TextEditingController();
+  bool _isLockedForToday = false;
 
   bool get _showLowMoodDetails => _isLowMood(_selectedMoodIndex);
   bool get _showBodyFeelings =>
       _showLowMoodDetails && _selectedEvents.contains(_sideEffectTag);
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _restoreTodayMoodEntry();
+    _syncLockStateWithToday();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _noteController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncLockStateWithToday();
+    }
   }
 
   @override
@@ -62,6 +81,13 @@ class _TodayMoodCardState extends State<TodayMoodCard> {
     final colorScheme = theme.colorScheme;
     final descriptionTextStyle = theme.textTheme.bodySmall?.copyWith(
       color: colorScheme.onSurface.withValues(alpha: 0.72),
+    );
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(6),
+      borderSide: BorderSide(
+        color: colorScheme.primary,
+        width: 0.9,
+      ),
     );
 
     return Card(
@@ -91,6 +117,7 @@ class _TodayMoodCardState extends State<TodayMoodCard> {
                       option: option,
                       selected: selected,
                       onPressed: () {
+                        if (_isLockedForToday) return;
                         setState(() {
                           final nextIndex = selected ? null : index;
                           _selectedMoodIndex = nextIndex;
@@ -116,6 +143,7 @@ class _TodayMoodCardState extends State<TodayMoodCard> {
                 labels: _eventTags,
                 selectedValues: _selectedEvents,
                 labelStyle: descriptionTextStyle,
+                enabled: !_isLockedForToday,
                 onSelect: (tag) {
                   setState(() {
                     if (_selectedEvents.contains(tag)) {
@@ -153,6 +181,7 @@ class _TodayMoodCardState extends State<TodayMoodCard> {
                     avatar: Icon(tag.icon, size: 16),
                     label: Text(tag.label, style: descriptionTextStyle),
                     onSelected: (value) {
+                      if (_isLockedForToday) return;
                       setState(() {
                         if (value) {
                           _selectedBody.add(tag.label);
@@ -168,44 +197,33 @@ class _TodayMoodCardState extends State<TodayMoodCard> {
             const SizedBox(height: 8),
             TextField(
               controller: _noteController,
+              readOnly: _isLockedForToday,
               textInputAction: TextInputAction.newline,
               style: descriptionTextStyle,
               decoration: InputDecoration(
                 hintText: '想多说一点吗？',
                 hintStyle: descriptionTextStyle,
                 fillColor: colorScheme.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(
-                    width: 0.9,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: BorderSide(
-                    color: colorScheme.primary,
-                    width: 0.9,
-                  ),
-                ),
+                border: border,
+                enabledBorder: border,
+                focusedBorder: border
               ),
             ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: colorScheme.primary,
-                  side: BorderSide(color: colorScheme.primary),
-                  textStyle: descriptionTextStyle,
+            if (!_isLockedForToday) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colorScheme.primary,
+                    side: BorderSide(color: colorScheme.primary),
+                    textStyle: descriptionTextStyle,
+                  ),
+                  onPressed: _submitTodayMoodEntry,
+                  child: const Text('轻轻记下今天'),
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已轻轻记下今天。')),
-                  );
-                },
-                child: const Text('轻轻记下今天'),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -216,6 +234,93 @@ class _TodayMoodCardState extends State<TodayMoodCard> {
     if (index == null) return false;
     return index >= _lowMoodStartIndex;
   }
+
+  void _restoreTodayMoodEntry() {
+    final raw = AppPrefs.todayMoodEntry.value;
+    if (raw.isEmpty) return;
+
+    final savedDayKey = _toIntOrNull(raw['dayKey']);
+    final todayKey = _toDayKey(DateTime.now());
+    if (savedDayKey != todayKey) {
+      AppPrefs.todayMoodEntry.value = <String, dynamic>{};
+      return;
+    }
+
+    _selectedMoodIndex = _toIntOrNull(raw['moodIndex']);
+    _selectedEvents
+      ..clear()
+      ..addAll(_toStringSet(raw['events']));
+    _selectedBody
+      ..clear()
+      ..addAll(_toStringSet(raw['body']));
+    _noteController.text = _toString(raw['note']);
+
+    if (!_isLowMood(_selectedMoodIndex)) {
+      _selectedEvents.clear();
+      _selectedBody.clear();
+    } else if (!_selectedEvents.contains(_sideEffectTag)) {
+      _selectedBody.clear();
+    }
+
+    _isLockedForToday = true;
+  }
+
+  Future<void> _submitTodayMoodEntry() async {
+    await AppPrefs.todayMoodEntry.set(<String, dynamic>{
+      'dayKey': _toDayKey(DateTime.now()),
+      'moodIndex': _selectedMoodIndex,
+      'events': _selectedEvents.toList(growable: false),
+      'body': _selectedBody.toList(growable: false),
+      'note': _noteController.text.trim(),
+    });
+
+    if (!mounted) return;
+    setState(() {
+      _isLockedForToday = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已轻轻记下今天。')),
+    );
+  }
+
+  void _syncLockStateWithToday() {
+    if (!_isLockedForToday) return;
+    final savedDayKey = _toIntOrNull(AppPrefs.todayMoodEntry.value['dayKey']);
+    if (savedDayKey == _toDayKey(DateTime.now())) return;
+
+    AppPrefs.todayMoodEntry.value = <String, dynamic>{};
+    if (!mounted) return;
+    setState(() {
+      _isLockedForToday = false;
+      _selectedMoodIndex = null;
+      _selectedEvents.clear();
+      _selectedBody.clear();
+      _noteController.clear();
+    });
+  }
+
+  int _toDayKey(DateTime dateTime) {
+    return dateTime.year * 10000 + dateTime.month * 100 + dateTime.day;
+  }
+
+  int? _toIntOrNull(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  String _toString(Object? value) {
+    if (value is String) return value;
+    return '';
+  }
+
+  Set<String> _toStringSet(Object? value) {
+    if (value is List) {
+      return value.map((item) => item.toString()).toSet();
+    }
+    return <String>{};
+  }
 }
 
 class _FilterChipGrid extends StatelessWidget {
@@ -223,12 +328,14 @@ class _FilterChipGrid extends StatelessWidget {
     required this.labels,
     required this.selectedValues,
     required this.onSelect,
+    this.enabled = true,
     this.labelStyle,
   });
 
   final List<String> labels;
   final Set<String> selectedValues;
   final ValueChanged<String> onSelect;
+  final bool enabled;
   final TextStyle? labelStyle;
 
   @override
@@ -244,7 +351,10 @@ class _FilterChipGrid extends StatelessWidget {
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           visualDensity: VisualDensity.compact,
           label: Text(label, style: labelStyle),
-          onSelected: (_) => onSelect(label),
+          onSelected: (_) {
+            if (!enabled) return;
+            onSelect(label);
+          },
         );
       }).toList(growable: false),
     );
@@ -300,12 +410,10 @@ class _MoodButton extends StatelessWidget {
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({
     required this.title,
-    this.subtitle,
     this.textStyle,
   });
 
   final String title;
-  final String? subtitle;
   final TextStyle? textStyle;
 
   @override
@@ -316,15 +424,7 @@ class _SectionTitle extends StatelessWidget {
       color: colorScheme.onSurface.withValues(alpha: 0.72),
     );
     final style = textStyle ?? defaultStyle;
-    final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: style),
-        if (hasSubtitle) Text(subtitle!, style: style),
-      ],
-    );
+    return Text(title, style: style);
   }
 }
 
