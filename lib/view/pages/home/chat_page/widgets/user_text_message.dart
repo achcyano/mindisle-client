@@ -20,6 +20,7 @@ class UserTextMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final maxBubbleWidth = MediaQuery.of(context).size.width * 0.78;
     final timeColor =
         (isSentByMe
                 ? colorScheme.onPrimaryContainer
@@ -37,6 +38,7 @@ class UserTextMessageBubble extends StatelessWidget {
         SimpleTextMessage(
           message: message,
           index: index,
+          constraints: BoxConstraints(maxWidth: maxBubbleWidth),
           showTime: true,
           showStatus: true,
           borderRadius: BorderRadius.circular(16),

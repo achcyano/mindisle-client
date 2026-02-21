@@ -31,7 +31,8 @@ class AssistantOptionsBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text(option.label),
+            child: Text(
+                option.label),
           ),
       ],
     );
