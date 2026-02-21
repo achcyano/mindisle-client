@@ -23,6 +23,7 @@ class _HomeShellState extends State<HomeShell> {
     (_) => GlobalKey<NavigatorState>(),
   );
   int _currentIndex = 0;
+  late final PageController _pageController = PageController(initialPage: 0);
 
   late final List<WidgetBuilder> _tabRootBuilders = <WidgetBuilder>[
     (_) => HomePage(onRouteRequested: _onRouteRequested),
@@ -44,9 +45,7 @@ class _HomeShellState extends State<HomeShell> {
     }
 
     if (_currentIndex != 0) {
-      setState(() {
-        _currentIndex = 0;
-      });
+      _onDestinationSelected(0);
       return;
     }
 
@@ -69,31 +68,47 @@ class _HomeShellState extends State<HomeShell> {
       return;
     }
 
+    final fromIndex = _currentIndex;
     setState(() {
       _currentIndex = index;
     });
+
+    if (_pageController.hasClients) {
+      if ((index - fromIndex).abs() == 1) {
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        _pageController.jumpToPage(index);
+      }
+    }
   }
 
   Widget _buildTabNavigator(int index) {
     final routeName = _tabRootRouteNames[index];
 
-    return Offstage(
-      offstage: _currentIndex != index,
-      child: TickerMode(
-        enabled: _currentIndex == index,
-        child: Navigator(
-          key: _tabNavigatorKeys[index],
-          onGenerateRoute: (settings) {
-            return MaterialPageRoute<void>(
-              settings: settings.name == null
-                  ? RouteSettings(name: routeName)
-                  : settings,
-              builder: _tabRootBuilders[index],
-            );
-          },
-        ),
+    return TickerMode(
+      enabled: _currentIndex == index,
+      child: Navigator(
+        key: _tabNavigatorKeys[index],
+        onGenerateRoute: (settings) {
+          return MaterialPageRoute<void>(
+            settings: settings.name == null
+                ? RouteSettings(name: routeName)
+                : settings,
+            builder: _tabRootBuilders[index],
+          );
+        },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -105,7 +120,18 @@ class _HomeShellState extends State<HomeShell> {
         _handleBackPressed();
       },
       child: Scaffold(
-        body: Stack(children: List<Widget>.generate(4, _buildTabNavigator)),
+        body: PageView.builder(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _tabRootBuilders.length,
+          onPageChanged: (index) {
+            if (index == _currentIndex) return;
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          itemBuilder: (context, index) => _buildTabNavigator(index),
+        ),
         bottomNavigationBar: NavigationBar(
           key: const ValueKey('home_shell_navigation_bar'),
           selectedIndex: _currentIndex,

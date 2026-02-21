@@ -8,7 +8,10 @@ final class AiChatState {
     this.initialized = false,
     this.isInitializing = false,
     this.isSending = false,
+    this.isLoadingHistory = false,
+    this.hasMoreHistory = true,
     this.conversationId,
+    this.earliestLoadedServerMessageId,
     this.errorMessage,
     this.lastEventId,
     this.activeGenerationId,
@@ -17,7 +20,10 @@ final class AiChatState {
   final bool initialized;
   final bool isInitializing;
   final bool isSending;
+  final bool isLoadingHistory;
+  final bool hasMoreHistory;
   final int? conversationId;
+  final int? earliestLoadedServerMessageId;
   final String? errorMessage;
   final String? lastEventId;
   final String? activeGenerationId;
@@ -26,7 +32,10 @@ final class AiChatState {
     bool? initialized,
     bool? isInitializing,
     bool? isSending,
+    bool? isLoadingHistory,
+    bool? hasMoreHistory,
     int? conversationId,
+    Object? earliestLoadedServerMessageId = _sentinel,
     Object? errorMessage = _sentinel,
     Object? lastEventId = _sentinel,
     Object? activeGenerationId = _sentinel,
@@ -35,7 +44,13 @@ final class AiChatState {
       initialized: initialized ?? this.initialized,
       isInitializing: isInitializing ?? this.isInitializing,
       isSending: isSending ?? this.isSending,
+      isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
+      hasMoreHistory: hasMoreHistory ?? this.hasMoreHistory,
       conversationId: conversationId ?? this.conversationId,
+      earliestLoadedServerMessageId:
+          identical(earliestLoadedServerMessageId, _sentinel)
+          ? this.earliestLoadedServerMessageId
+          : earliestLoadedServerMessageId as int?,
       errorMessage: identical(errorMessage, _sentinel)
           ? this.errorMessage
           : errorMessage as String?,

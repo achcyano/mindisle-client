@@ -24,6 +24,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
   static const String currentUserId = 'mindisle_user';
   static const String assistantUserId = 'mindisle_ai';
   static const Duration _deltaFlushInterval = Duration(milliseconds: 40);
+  static const int _historyPageSize = 30;
 
   final Map<UserID, User> _users = <UserID, User>{
     currentUserId: const User(id: currentUserId, name: '我'),
@@ -57,7 +58,10 @@ final class AiChatController extends StateNotifier<AiChatState> {
       case Success<AiConversation>(data: final conversation):
         final messagesResult = await _ref
             .read(fetchAiMessagesUseCaseProvider)
-            .execute(conversationId: conversation.conversationId, limit: 50);
+            .execute(
+              conversationId: conversation.conversationId,
+              limit: _historyPageSize,
+            );
 
         switch (messagesResult) {
           case Failure<List<AiChatMessage>>(error: final error):
@@ -65,25 +69,27 @@ final class AiChatController extends StateNotifier<AiChatState> {
               initialized: true,
               isInitializing: false,
               conversationId: conversation.conversationId,
+              isLoadingHistory: false,
+              hasMoreHistory: false,
+              earliestLoadedServerMessageId: null,
               errorMessage: error.message,
             );
             return;
           case Success<List<AiChatMessage>>(data: final messages):
-            final uiMessages =
-                messages.map(_toUiMessage).toList(growable: false)
-                  ..sort((a, b) {
-                    final aTime =
-                        a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-                    final bTime =
-                        b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-                    return aTime.compareTo(bTime);
-                  });
+            final uiMessages = _toUiMessages(messages);
+            final earliestServerMessageId = _findEarliestMessageId(messages);
+            final hasMoreHistory =
+                messages.length >= _historyPageSize &&
+                earliestServerMessageId != null;
 
             await chatController.setMessages(uiMessages, animated: false);
             state = state.copyWith(
               initialized: true,
               isInitializing: false,
               conversationId: conversation.conversationId,
+              isLoadingHistory: false,
+              hasMoreHistory: hasMoreHistory,
+              earliestLoadedServerMessageId: earliestServerMessageId,
               errorMessage: null,
             );
             return;
@@ -111,6 +117,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
       id: userId,
       authorId: currentUserId,
       createdAt: now,
+      status: MessageStatus.sending,
       text: trimmed,
     );
     final assistantMessage = _buildAssistantMessage(
@@ -159,6 +166,12 @@ final class AiChatController extends StateNotifier<AiChatState> {
       state = state.copyWith(errorMessage: '回复中断，请重试');
     }
 
+    final sentSuccessfully = outcome.done && !outcome.hadError;
+    await _setUserMessageStatus(
+      userId,
+      sentSuccessfully ? MessageStatus.sent : MessageStatus.error,
+    );
+
     state = state.copyWith(
       isSending: false,
       lastEventId: outcome.lastEventId,
@@ -168,6 +181,74 @@ final class AiChatController extends StateNotifier<AiChatState> {
 
   Future<void> sendOption(AiOption option) async {
     await sendText(option.payload);
+  }
+
+  Future<void> retryTextMessage(TextMessage message) async {
+    await sendText(message.text);
+  }
+
+  Future<void> loadOlderMessages() async {
+    if (state.isLoadingHistory || !state.hasMoreHistory) return;
+
+    final conversationId = state.conversationId;
+    final beforeMessageId = state.earliestLoadedServerMessageId;
+    if (conversationId == null || beforeMessageId == null) {
+      state = state.copyWith(hasMoreHistory: false);
+      return;
+    }
+
+    state = state.copyWith(isLoadingHistory: true);
+    final result = await _ref
+        .read(fetchAiMessagesUseCaseProvider)
+        .execute(
+          conversationId: conversationId,
+          limit: _historyPageSize,
+          beforeMessageId: beforeMessageId,
+        );
+
+    switch (result) {
+      case Failure<List<AiChatMessage>>(error: final error):
+        state = state.copyWith(
+          isLoadingHistory: false,
+          errorMessage: error.message,
+        );
+        return;
+      case Success<List<AiChatMessage>>(data: final messages):
+        if (messages.isEmpty) {
+          state = state.copyWith(
+            isLoadingHistory: false,
+            hasMoreHistory: false,
+          );
+          return;
+        }
+
+        final existingMessageIds = chatController.messages
+            .map((message) => message.id)
+            .toSet();
+        final newMessages = _toUiMessages(messages)
+            .where((message) => !existingMessageIds.contains(message.id))
+            .toList(growable: false);
+
+        if (newMessages.isNotEmpty) {
+          await chatController.insertAllMessages(
+            newMessages,
+            index: 0,
+            animated: false,
+          );
+        }
+
+        final earliestServerMessageId = _findEarliestMessageId(messages);
+        final hasMoreHistory =
+            messages.length >= _historyPageSize &&
+            earliestServerMessageId != null &&
+            earliestServerMessageId < beforeMessageId;
+        state = state.copyWith(
+          isLoadingHistory: false,
+          hasMoreHistory: hasMoreHistory,
+          earliestLoadedServerMessageId: earliestServerMessageId,
+        );
+        return;
+    }
   }
 
   void clearError() {
@@ -316,6 +397,34 @@ final class AiChatController extends StateNotifier<AiChatState> {
     return true;
   }
 
+  Future<void> _setUserMessageStatus(
+    String messageId,
+    MessageStatus status,
+  ) async {
+    final current = _findMessageById(messageId);
+    if (current is! TextMessage) return;
+
+    final now = DateTime.now();
+    final metadata = Map<String, dynamic>.from(
+      current.metadata ?? const <String, dynamic>{},
+    );
+    metadata.remove('sending');
+    if (status == MessageStatus.sending) {
+      metadata['sending'] = true;
+    }
+
+    final updated = current.copyWith(
+      status: status,
+      sentAt: status == MessageStatus.sent
+          ? (current.sentAt ?? now)
+          : current.sentAt,
+      failedAt: status == MessageStatus.error ? now : null,
+      metadata: metadata.isEmpty ? null : metadata,
+    );
+
+    await chatController.updateMessage(current, updated);
+  }
+
   Future<void> _appendAssistantText(String messageId, String delta) async {
     final current = _findAssistantMessageById(messageId);
     if (current == null) return;
@@ -386,6 +495,37 @@ final class AiChatController extends StateNotifier<AiChatState> {
       }
     }
     return null;
+  }
+
+  Message? _findMessageById(String messageId) {
+    for (final message in chatController.messages) {
+      if (message.id == messageId) {
+        return message;
+      }
+    }
+    return null;
+  }
+
+  List<Message> _toUiMessages(List<AiChatMessage> messages) {
+    final uiMessages = messages.map(_toUiMessage).toList(growable: false);
+    uiMessages.sort((a, b) {
+      final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return aTime.compareTo(bTime);
+    });
+    return uiMessages;
+  }
+
+  int? _findEarliestMessageId(List<AiChatMessage> messages) {
+    int? earliest;
+    for (final message in messages) {
+      final messageId = message.messageId;
+      if (messageId == null) continue;
+      if (earliest == null || messageId < earliest) {
+        earliest = messageId;
+      }
+    }
+    return earliest;
   }
 
   Message _toUiMessage(AiChatMessage message) {
