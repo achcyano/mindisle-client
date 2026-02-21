@@ -32,8 +32,8 @@ class _HomeShellState extends State<HomeShell> {
   ];
   late final List<String> _tabRootRouteNames = <String>[
     '/home/home',
-    '/home/chat',
-    '/home/medicine',
+    ChatPage.route.path,
+    MedicinePage.route.path,
     ProfilePage.route.path,
   ];
 
@@ -105,9 +105,7 @@ class _HomeShellState extends State<HomeShell> {
         _handleBackPressed();
       },
       child: Scaffold(
-        body: Stack(
-          children: List<Widget>.generate(4, _buildTabNavigator),
-        ),
+        body: Stack(children: List<Widget>.generate(4, _buildTabNavigator)),
         bottomNavigationBar: NavigationBar(
           key: const ValueKey('home_shell_navigation_bar'),
           selectedIndex: _currentIndex,

@@ -5,11 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_controller.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_state.dart';
+import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:mindisle_client/view/widget/chat/assistant_options_bar.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key});
+
+  static final route = AppRoute<void>(
+    path: '/home/chat',
+    builder: (_) => const ChatPage(),
+  );
 
   @override
   ConsumerState<ChatPage> createState() => _ChatPageState();
@@ -28,7 +34,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   Widget build(BuildContext context) {
     ref.listen<AiChatState>(aiChatControllerProvider, (previous, next) {
       final message = next.errorMessage;
-      if (message == null || message.isEmpty || message == previous?.errorMessage) {
+      if (message == null ||
+          message.isEmpty ||
+          message == previous?.errorMessage) {
         return;
       }
 
@@ -50,19 +58,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               resolveUser: controller.resolveUser,
               onMessageSend: controller.sendText,
               builders: Builders(
-                customMessageBuilder: (
-                  BuildContext context,
-                  CustomMessage message,
-                  int index, {
-                  MessageGroupStatus? groupStatus,
-                  required bool isSentByMe,
-                }) {
-                  return _AssistantMessageBubble(
-                    message: message,
-                    isSending: state.isSending,
-                    onOptionPressed: controller.sendOption,
-                  );
-                },
+                customMessageBuilder:
+                    (
+                      BuildContext context,
+                      CustomMessage message,
+                      int index, {
+                      MessageGroupStatus? groupStatus,
+                      required bool isSentByMe,
+                    }) {
+                      return _AssistantMessageBubble(
+                        message: message,
+                        isSending: state.isSending,
+                        onOptionPressed: controller.sendOption,
+                      );
+                    },
               ),
             ),
     );
@@ -148,4 +157,3 @@ class _AssistantMessageBubble extends StatelessWidget {
         .toList(growable: false);
   }
 }
-

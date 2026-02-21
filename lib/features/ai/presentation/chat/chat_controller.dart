@@ -23,6 +23,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
 
   static const String currentUserId = 'mindisle_user';
   static const String assistantUserId = 'mindisle_ai';
+  static const Duration _deltaFlushInterval = Duration(milliseconds: 40);
 
   final Map<UserID, User> _users = <UserID, User>{
     currentUserId: const User(id: currentUserId, name: '我'),
@@ -185,6 +186,8 @@ final class AiChatController extends StateNotifier<AiChatState> {
     var hadError = false;
     var interrupted = false;
     var receivedOptions = false;
+    final bufferedDelta = StringBuffer();
+    DateTime? lastDeltaFlushAt;
 
     try {
       await for (final event in stream) {
@@ -203,11 +206,22 @@ final class AiChatController extends StateNotifier<AiChatState> {
           case AiStreamEventType.delta:
             final delta = event.delta;
             if (delta != null && delta.isNotEmpty) {
-              await _appendAssistantText(assistantMessageId, delta);
+              bufferedDelta.write(delta);
+              final now = DateTime.now();
+              final previousFlushAt = lastDeltaFlushAt;
+              final shouldFlush =
+                  previousFlushAt == null ||
+                  now.difference(previousFlushAt) >= _deltaFlushInterval ||
+                  bufferedDelta.length >= 64;
+              if (shouldFlush) {
+                await _flushBufferedDelta(assistantMessageId, bufferedDelta);
+                lastDeltaFlushAt = now;
+              }
             }
             break;
           case AiStreamEventType.options:
             receivedOptions = true;
+            await _flushBufferedDelta(assistantMessageId, bufferedDelta);
             await _setAssistantOptions(
               assistantMessageId,
               event.options,
@@ -215,10 +229,12 @@ final class AiChatController extends StateNotifier<AiChatState> {
             );
             break;
           case AiStreamEventType.done:
+            await _flushBufferedDelta(assistantMessageId, bufferedDelta);
             done = true;
             await _setAssistantStreaming(assistantMessageId, false);
             break;
           case AiStreamEventType.error:
+            await _flushBufferedDelta(assistantMessageId, bufferedDelta);
             _logStreamState(
               'received error eventName=${event.eventName} code=${event.errorCode} '
               'msg=${event.errorMessage}',
@@ -244,6 +260,8 @@ final class AiChatController extends StateNotifier<AiChatState> {
           break;
         }
       }
+
+      await _flushBufferedDelta(assistantMessageId, bufferedDelta);
 
       // Some providers close the stream after options without an explicit done event.
       if (!done && !hadError && !interrupted && receivedOptions) {
@@ -311,6 +329,16 @@ final class AiChatController extends StateNotifier<AiChatState> {
       current,
       current.copyWith(metadata: metadata),
     );
+  }
+
+  Future<void> _flushBufferedDelta(
+    String messageId,
+    StringBuffer buffer,
+  ) async {
+    if (buffer.length == 0) return;
+    final delta = buffer.toString();
+    buffer.clear();
+    await _appendAssistantText(messageId, delta);
   }
 
   Future<void> _setAssistantOptions(

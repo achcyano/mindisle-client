@@ -6,10 +6,17 @@ class AppTheme {
 
   static ThemeData light() {
     final base = ThemeData(useMaterial3: true);
+    final swappedScheme = base.colorScheme.copyWith(
+      surface: base.colorScheme.surfaceContainer,
+      surfaceContainerLow: base.colorScheme.surface,
+    );
     return base.copyWith(
+      colorScheme: swappedScheme,
+      scaffoldBackgroundColor: swappedScheme.surface,
       textTheme: AppTextTheme.build(base.textTheme),
-      navigationBarTheme: const NavigationBarThemeData(
+      navigationBarTheme: NavigationBarThemeData(
         height: 64,
+        backgroundColor: swappedScheme.surfaceContainer,
       ),
     );
   }

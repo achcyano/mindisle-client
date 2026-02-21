@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindisle_client/core/static.dart';
+import 'package:mindisle_client/view/pages/home/chat_page.dart';
 import 'package:mindisle_client/view/pages/home/home_page/card_home.dart';
 import 'package:mindisle_client/view/pages/home/profile_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
@@ -42,7 +43,7 @@ class HomePage extends StatelessWidget {
                 title: '导入用药计划',
                 subtitle: '可使用用药提醒等功能',
               ),
-              const Row(
+              Row(
                 children: [
                   Expanded(
                     child: HomeActionCard(
@@ -54,6 +55,9 @@ class HomePage extends StatelessWidget {
                     child: HomeActionCard(
                       icon: Icons.messenger_outline,
                       title: '聊天',
+                      onTap: (){
+                          onRouteRequested(ChatPage.route);
+                      },
                     ),
                   ),
                 ],
