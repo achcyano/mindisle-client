@@ -42,7 +42,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final controller = ref.read(aiChatControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('心岛助手')),
       body: state.isInitializing
           ? const Center(child: CircularProgressIndicatorM3E())
           : Chat(
