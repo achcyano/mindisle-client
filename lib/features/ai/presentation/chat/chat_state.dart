@@ -54,8 +54,9 @@ final class AiChatState {
       errorMessage: identical(errorMessage, _sentinel)
           ? this.errorMessage
           : errorMessage as String?,
-      lastEventId:
-          identical(lastEventId, _sentinel) ? this.lastEventId : lastEventId as String?,
+      lastEventId: identical(lastEventId, _sentinel)
+          ? this.lastEventId
+          : lastEventId as String?,
       activeGenerationId: identical(activeGenerationId, _sentinel)
           ? this.activeGenerationId
           : activeGenerationId as String?,

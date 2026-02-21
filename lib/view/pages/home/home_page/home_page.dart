@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mindisle_client/core/static.dart';
-import 'package:mindisle_client/view/pages/home/chat_page.dart';
+import 'package:mindisle_client/view/pages/home/chat_page/chat_page.dart';
 import 'package:mindisle_client/view/pages/home/home_page/card_home.dart';
 import 'package:mindisle_client/view/pages/home/medicine_page.dart';
 import 'package:mindisle_client/view/pages/home/profile_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({
-    super.key,
-    required this.onRouteRequested,
-  });
+  const HomePage({super.key, required this.onRouteRequested});
 
   final void Function(AppRouteBase route) onRouteRequested;
 
@@ -43,7 +40,7 @@ class HomePage extends StatelessWidget {
                 icon: Icons.medical_services_outlined,
                 title: '导入用药计划',
                 subtitle: '可使用用药提醒等功能',
-                onTap: (){
+                onTap: () {
                   onRouteRequested(MedicinePage.route);
                 },
               ),
@@ -59,13 +56,13 @@ class HomePage extends StatelessWidget {
                     child: HomeActionCard(
                       icon: Icons.messenger_outline,
                       title: '聊天',
-                      onTap: (){
-                          onRouteRequested(ChatPage.route);
+                      onTap: () {
+                        onRouteRequested(ChatPage.route);
                       },
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),

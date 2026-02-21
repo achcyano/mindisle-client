@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
 import 'package:mindisle_client/shared/session/session_expired_signal.dart';
@@ -47,6 +48,13 @@ class App extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      locale: const Locale('zh', 'CN'),
+      supportedLocales: const <Locale>[Locale('zh', 'CN'), Locale('en', 'US')],
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: AppTheme.light(),
       navigatorKey: AppNavigator.key,
       scaffoldMessengerKey: AppNavigator.scaffoldMessengerKey,
