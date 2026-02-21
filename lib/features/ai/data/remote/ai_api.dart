@@ -13,9 +13,7 @@ final class AiApi {
   Future<Map<String, dynamic>> createConversation({String? title}) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/ai/conversations',
-      data: {
-        if (title != null && title.isNotEmpty) 'title': title,
-      },
+      data: {if (title != null && title.isNotEmpty) 'title': title},
     );
     return response.data ?? const <String, dynamic>{};
   }
@@ -105,7 +103,8 @@ final class AiApi {
   ) async* {
     final response = await request();
     if (kDebugMode) {
-      final contentType = response.headers.value(Headers.contentTypeHeader) ?? '-';
+      final contentType =
+          response.headers.value(Headers.contentTypeHeader) ?? '-';
       developer.log(
         '[AI-SSE] open status=${response.statusCode} content-type=$contentType',
         name: 'mindisle.ai.sse.parser',
@@ -172,9 +171,14 @@ final class AiApi {
 
   Stream<String> _toLineStream(Stream<List<int>> byteStream) async* {
     var pending = '';
-    await for (final chunk in byteStream) {
+    // ResponseBody.stream is often Stream<Uint8List>; cast avoids runtime
+    // transformer type mismatch while keeping incremental UTF-8 decoding.
+    final textStream = byteStream.cast<List<int>>().transform(
+      const Utf8Decoder(allowMalformed: true),
+    );
+    await for (final chunk in textStream) {
       if (chunk.isEmpty) continue;
-      pending += utf8.decode(chunk, allowMalformed: true);
+      pending += chunk;
       final lines = pending.split('\n');
       pending = lines.removeLast();
 
@@ -197,15 +201,14 @@ final class AiApi {
   void _logSseLine(String line) {
     if (!kDebugMode) return;
     final preview = line.length > 160 ? '${line.substring(0, 160)}...' : line;
-    developer.log(
-      '[AI-SSE] line="$preview"',
-      name: 'mindisle.ai.sse.parser',
-    );
+    developer.log('[AI-SSE] line="$preview"', name: 'mindisle.ai.sse.parser');
   }
 
   void _logSseFrame(AiSseFrame frame) {
     if (!kDebugMode) return;
-    final preview = frame.data.length > 160 ? '${frame.data.substring(0, 160)}...' : frame.data;
+    final preview = frame.data.length > 160
+        ? '${frame.data.substring(0, 160)}...'
+        : frame.data;
     developer.log(
       '[AI-SSE] frame id=${frame.id ?? "-"} event=${frame.event} data=$preview',
       name: 'mindisle.ai.sse.parser',
@@ -252,7 +255,10 @@ final class _SseFrameBuilder {
   }
 
   AiSseFrame? _emitAndResetIfNeeded() {
-    final hasFrame = _currentId != null || _dataLines.isNotEmpty || _currentEvent != 'message';
+    final hasFrame =
+        _currentId != null ||
+        _dataLines.isNotEmpty ||
+        _currentEvent != 'message';
     if (!hasFrame) {
       return null;
     }
@@ -274,10 +280,7 @@ final class _SseFrameBuilder {
 }
 
 final class _SseField {
-  const _SseField({
-    required this.name,
-    required this.value,
-  });
+  const _SseField({required this.name, required this.value});
 
   final String name;
   final String value;

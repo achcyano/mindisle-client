@@ -9,9 +9,10 @@ import 'package:mindisle_client/features/ai/presentation/chat/chat_state.dart';
 import 'package:mindisle_client/features/ai/presentation/providers/ai_providers.dart';
 import 'package:uuid/uuid.dart';
 
-final aiChatControllerProvider = StateNotifierProvider<AiChatController, AiChatState>((ref) {
-  return AiChatController(ref);
-});
+final aiChatControllerProvider =
+    StateNotifierProvider<AiChatController, AiChatState>((ref) {
+      return AiChatController(ref);
+    });
 
 final class AiChatController extends StateNotifier<AiChatState> {
   AiChatController(this._ref) : super(const AiChatState());
@@ -42,7 +43,9 @@ final class AiChatController extends StateNotifier<AiChatState> {
     if (state.initialized || state.isInitializing) return;
 
     state = state.copyWith(isInitializing: true, errorMessage: null);
-    final conversationResult = await _ref.read(ensureAiConversationUseCaseProvider).execute();
+    final conversationResult = await _ref
+        .read(ensureAiConversationUseCaseProvider)
+        .execute();
     switch (conversationResult) {
       case Failure<AiConversation>(error: final error):
         state = state.copyWith(
@@ -51,10 +54,9 @@ final class AiChatController extends StateNotifier<AiChatState> {
         );
         return;
       case Success<AiConversation>(data: final conversation):
-        final messagesResult = await _ref.read(fetchAiMessagesUseCaseProvider).execute(
-              conversationId: conversation.conversationId,
-              limit: 50,
-            );
+        final messagesResult = await _ref
+            .read(fetchAiMessagesUseCaseProvider)
+            .execute(conversationId: conversation.conversationId, limit: 50);
 
         switch (messagesResult) {
           case Failure<List<AiChatMessage>>(error: final error):
@@ -66,12 +68,15 @@ final class AiChatController extends StateNotifier<AiChatState> {
             );
             return;
           case Success<List<AiChatMessage>>(data: final messages):
-            final uiMessages = messages.map(_toUiMessage).toList(growable: false)
-              ..sort((a, b) {
-                final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-                final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-                return aTime.compareTo(bTime);
-              });
+            final uiMessages =
+                messages.map(_toUiMessage).toList(growable: false)
+                  ..sort((a, b) {
+                    final aTime =
+                        a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                    final bTime =
+                        b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                    return aTime.compareTo(bTime);
+                  });
 
             await chatController.setMessages(uiMessages, animated: false);
             state = state.copyWith(
@@ -118,13 +123,12 @@ final class AiChatController extends StateNotifier<AiChatState> {
     await chatController.insertMessage(userMessage);
     await chatController.insertMessage(assistantMessage);
 
-    state = state.copyWith(
-      isSending: true,
-      errorMessage: null,
-    );
+    state = state.copyWith(isSending: true, errorMessage: null);
 
     var outcome = await _consumeStream(
-      stream: _ref.read(streamAiConversationUseCaseProvider).execute(
+      stream: _ref
+          .read(streamAiConversationUseCaseProvider)
+          .execute(
             conversationId: conversationId,
             userMessage: trimmed,
             clientMessageId: _uuid.v4(),
@@ -136,9 +140,10 @@ final class AiChatController extends StateNotifier<AiChatState> {
         !outcome.hadError &&
         outcome.generationId != null &&
         outcome.lastEventId != null) {
-      state = state.copyWith(errorMessage: '连接中断，正在重连...');
       outcome = await _consumeStream(
-        stream: _ref.read(resumeAiGenerationUseCaseProvider).execute(
+        stream: _ref
+            .read(resumeAiGenerationUseCaseProvider)
+            .execute(
               generationId: outcome.generationId!,
               lastEventId: outcome.lastEventId!,
             ),
@@ -179,6 +184,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
     var done = false;
     var hadError = false;
     var interrupted = false;
+    var receivedOptions = false;
 
     try {
       await for (final event in stream) {
@@ -201,7 +207,12 @@ final class AiChatController extends StateNotifier<AiChatState> {
             }
             break;
           case AiStreamEventType.options:
-            await _setAssistantOptions(assistantMessageId, event.options, event.optionSource);
+            receivedOptions = true;
+            await _setAssistantOptions(
+              assistantMessageId,
+              event.options,
+              event.optionSource,
+            );
             break;
           case AiStreamEventType.done:
             done = true;
@@ -233,9 +244,15 @@ final class AiChatController extends StateNotifier<AiChatState> {
           break;
         }
       }
+
+      // Some providers close the stream after options without an explicit done event.
+      if (!done && !hadError && !interrupted && receivedOptions) {
+        done = true;
+        await _setAssistantStreaming(assistantMessageId, false);
+      }
     } catch (_) {
-      if ((generationId != null && generationId!.isNotEmpty) &&
-          (lastEventId != null && lastEventId!.isNotEmpty)) {
+      if ((generationId != null && generationId.isNotEmpty) &&
+          (lastEventId != null && lastEventId.isNotEmpty)) {
         _logStreamState(
           'stream exception but resumable generationId=$generationId lastEventId=$lastEventId',
         );
@@ -262,10 +279,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
 
   void _logStreamState(String message) {
     if (!kDebugMode) return;
-    developer.log(
-      '[AI-CHAT] $message',
-      name: 'mindisle.ai.chat',
-    );
+    developer.log('[AI-CHAT] $message', name: 'mindisle.ai.chat');
   }
 
   bool _canResumeAfterError(
@@ -288,10 +302,15 @@ final class AiChatController extends StateNotifier<AiChatState> {
     final current = _findAssistantMessageById(messageId);
     if (current == null) return;
 
-    final metadata = Map<String, dynamic>.from(current.metadata ?? const <String, dynamic>{});
+    final metadata = Map<String, dynamic>.from(
+      current.metadata ?? const <String, dynamic>{},
+    );
     final currentText = metadata[assistantTextKey] as String? ?? '';
     metadata[assistantTextKey] = '$currentText$delta';
-    await chatController.updateMessage(current, current.copyWith(metadata: metadata));
+    await chatController.updateMessage(
+      current,
+      current.copyWith(metadata: metadata),
+    );
   }
 
   Future<void> _setAssistantOptions(
@@ -302,19 +321,34 @@ final class AiChatController extends StateNotifier<AiChatState> {
     final current = _findAssistantMessageById(messageId);
     if (current == null) return;
 
-    final metadata = Map<String, dynamic>.from(current.metadata ?? const <String, dynamic>{});
-    metadata[assistantOptionsKey] = options.map((it) => it.toJson()).toList(growable: false);
+    final metadata = Map<String, dynamic>.from(
+      current.metadata ?? const <String, dynamic>{},
+    );
+    metadata[assistantOptionsKey] = options
+        .map((it) => it.toJson())
+        .toList(growable: false);
     metadata[assistantOptionSourceKey] = source ?? 'primary';
-    await chatController.updateMessage(current, current.copyWith(metadata: metadata));
+    await chatController.updateMessage(
+      current,
+      current.copyWith(metadata: metadata),
+    );
   }
 
-  Future<void> _setAssistantStreaming(String messageId, bool isStreaming) async {
+  Future<void> _setAssistantStreaming(
+    String messageId,
+    bool isStreaming,
+  ) async {
     final current = _findAssistantMessageById(messageId);
     if (current == null) return;
 
-    final metadata = Map<String, dynamic>.from(current.metadata ?? const <String, dynamic>{});
+    final metadata = Map<String, dynamic>.from(
+      current.metadata ?? const <String, dynamic>{},
+    );
     metadata[assistantStreamingKey] = isStreaming;
-    await chatController.updateMessage(current, current.copyWith(metadata: metadata));
+    await chatController.updateMessage(
+      current,
+      current.copyWith(metadata: metadata),
+    );
   }
 
   CustomMessage? _findAssistantMessageById(String messageId) {
@@ -360,7 +394,9 @@ final class AiChatController extends StateNotifier<AiChatState> {
       createdAt: createdAt,
       metadata: {
         assistantTextKey: text,
-        assistantOptionsKey: options.map((it) => it.toJson()).toList(growable: false),
+        assistantOptionsKey: options
+            .map((it) => it.toJson())
+            .toList(growable: false),
         assistantStreamingKey: isStreaming,
       },
     );

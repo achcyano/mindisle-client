@@ -12,8 +12,6 @@ import 'package:mindisle_client/features/ai/data/remote/ai_api.dart';
 import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
 import 'package:mindisle_client/features/ai/domain/repositories/ai_repository.dart';
 
-import '../../../../core/static.dart';
-
 final class AiRepositoryImpl implements AiRepository {
   AiRepositoryImpl(this._api);
 
@@ -35,10 +33,7 @@ final class AiRepositoryImpl implements AiRepository {
         }
     }
 
-    return _run(
-      () => _api.createConversation(),
-      _decodeConversation,
-    );
+    return _run(() => _api.createConversation(), _decodeConversation);
   }
 
   @override
@@ -82,8 +77,6 @@ final class AiRepositoryImpl implements AiRepository {
     } catch (e, st) {
       _logStreamException('streamConversation', e, st);
 
-      logger.e("83");
-
       yield const AiStreamEvent(
         type: AiStreamEventType.error,
         eventName: 'stream_exception',
@@ -125,18 +118,16 @@ final class AiRepositoryImpl implements AiRepository {
       final envelope = ApiEnvelope<T>.fromJson(json, decodeData);
       if (!envelope.isSuccess) {
         return Failure(
-          mapServerCodeToAppError(code: envelope.code, message: envelope.message),
+          mapServerCodeToAppError(
+            code: envelope.code,
+            message: envelope.message,
+          ),
         );
       }
 
       final data = envelope.data;
       if (data == null) {
-        return Failure(
-          mapServerCodeToAppError(
-            code: 50000,
-            message: '响应数据为空',
-          ),
-        );
+        return Failure(mapServerCodeToAppError(code: 50000, message: '响应数据为空'));
       }
 
       return Success(data);
@@ -164,19 +155,32 @@ final class AiRepositoryImpl implements AiRepository {
   }
 
   List<AiConversation> _decodeConversationList(Object? rawData) {
-    final list = _extractList(rawData, fallbackKeys: const ['items', 'conversations', 'list']);
+    final list = _extractList(
+      rawData,
+      fallbackKeys: const ['items', 'conversations', 'list'],
+    );
     return list
         .whereType<Map>()
-        .map((item) => AiConversationDto.fromJson(Map<String, dynamic>.from(item)).toDomain())
+        .map(
+          (item) => AiConversationDto.fromJson(
+            Map<String, dynamic>.from(item),
+          ).toDomain(),
+        )
         .where((it) => it.conversationId > 0)
         .toList(growable: false);
   }
 
   List<AiChatMessage> _decodeMessageList(Object? rawData) {
-    final list = _extractList(rawData, fallbackKeys: const ['items', 'messages', 'list']);
+    final list = _extractList(
+      rawData,
+      fallbackKeys: const ['items', 'messages', 'list'],
+    );
     return list
         .whereType<Map>()
-        .map((item) => AiMessageDto.fromJson(Map<String, dynamic>.from(item)).toDomain())
+        .map(
+          (item) =>
+              AiMessageDto.fromJson(Map<String, dynamic>.from(item)).toDomain(),
+        )
         .toList(growable: false);
   }
 
@@ -208,7 +212,8 @@ final class AiRepositoryImpl implements AiRepository {
     switch (eventName) {
       case 'meta':
         final generationId =
-            _readString(data, const ['generationId', 'generation_id']) ?? inferredGenerationId;
+            _readString(data, const ['generationId', 'generation_id']) ??
+            inferredGenerationId;
         return AiStreamEvent(
           type: AiStreamEventType.meta,
           eventId: frame.id,
@@ -221,7 +226,8 @@ final class AiRepositoryImpl implements AiRepository {
           eventId: frame.id,
           eventName: eventName,
           generationId:
-              _readString(data, const ['generationId', 'generation_id']) ?? inferredGenerationId,
+              _readString(data, const ['generationId', 'generation_id']) ??
+              inferredGenerationId,
           delta: _extractDeltaText(data),
         );
       case 'usage':
@@ -230,7 +236,8 @@ final class AiRepositoryImpl implements AiRepository {
           eventId: frame.id,
           eventName: eventName,
           generationId:
-              _readString(data, const ['generationId', 'generation_id']) ?? inferredGenerationId,
+              _readString(data, const ['generationId', 'generation_id']) ??
+              inferredGenerationId,
           usage: data,
         );
       case 'options':
@@ -239,7 +246,8 @@ final class AiRepositoryImpl implements AiRepository {
           eventId: frame.id,
           eventName: eventName,
           generationId:
-              _readString(data, const ['generationId', 'generation_id']) ?? inferredGenerationId,
+              _readString(data, const ['generationId', 'generation_id']) ??
+              inferredGenerationId,
           options: _decodeOptions(data['items']),
           optionSource: data['source'] as String?,
         );
@@ -249,7 +257,8 @@ final class AiRepositoryImpl implements AiRepository {
           eventId: frame.id,
           eventName: eventName,
           generationId:
-              _readString(data, const ['generationId', 'generation_id']) ?? inferredGenerationId,
+              _readString(data, const ['generationId', 'generation_id']) ??
+              inferredGenerationId,
         );
       case 'error':
         return AiStreamEvent(
@@ -257,9 +266,11 @@ final class AiRepositoryImpl implements AiRepository {
           eventId: frame.id,
           eventName: eventName,
           generationId:
-              _readString(data, const ['generationId', 'generation_id']) ?? inferredGenerationId,
+              _readString(data, const ['generationId', 'generation_id']) ??
+              inferredGenerationId,
           errorCode: (data['code'] as num?)?.toInt(),
-          errorMessage: _readString(data, const ['message', 'error']) ?? '回复中断，请稍后重试',
+          errorMessage:
+              _readString(data, const ['message', 'error']) ?? '回复中断，请稍后重试',
         );
       default:
         return AiStreamEvent(
@@ -267,7 +278,8 @@ final class AiRepositoryImpl implements AiRepository {
           eventId: frame.id,
           eventName: eventName,
           generationId:
-              _readString(data, const ['generationId', 'generation_id']) ?? inferredGenerationId,
+              _readString(data, const ['generationId', 'generation_id']) ??
+              inferredGenerationId,
         );
     }
   }
@@ -316,7 +328,10 @@ final class AiRepositoryImpl implements AiRepository {
     if (rawItems is! List) return const <AiOption>[];
     return rawItems
         .whereType<Map>()
-        .map((item) => AiOptionDto.fromJson(Map<String, dynamic>.from(item)).toDomain())
+        .map(
+          (item) =>
+              AiOptionDto.fromJson(Map<String, dynamic>.from(item)).toDomain(),
+        )
         .where((item) => item.label.isNotEmpty && item.payload.isNotEmpty)
         .take(3)
         .toList(growable: false);
@@ -347,7 +362,8 @@ final class AiRepositoryImpl implements AiRepository {
         if (choiceDelta != null) {
           return choiceDelta;
         }
-        final choiceText = _readTextFromDynamic(firstMap['text']) ??
+        final choiceText =
+            _readTextFromDynamic(firstMap['text']) ??
             _readTextFromDynamic(firstMap['content']);
         if (choiceText != null) {
           return choiceText;
@@ -383,10 +399,13 @@ final class AiRepositoryImpl implements AiRepository {
     }
     if (value is Map) {
       final map = Map<String, dynamic>.from(value);
-      final text = _readString(
-        map,
-        const ['text', 'content', 'delta', 'value', 'output_text'],
-      );
+      final text = _readString(map, const [
+        'text',
+        'content',
+        'delta',
+        'value',
+        'output_text',
+      ]);
       if (text != null) {
         return text;
       }
@@ -400,12 +419,16 @@ final class AiRepositoryImpl implements AiRepository {
       return normalizedFromFrame;
     }
 
-    final inferredFromData =
-        _normalizeEventName(_readString(data, const ['event', 'type', 'name', 'kind']));
+    final inferredFromData = _normalizeEventName(
+      _readString(data, const ['event', 'type', 'name', 'kind']),
+    );
     if (inferredFromData != null) {
       return inferredFromData;
     }
 
+    if (_isDoneSentinel(data)) {
+      return 'done';
+    }
     if (data.containsKey('items') && data['items'] is List) {
       return 'options';
     }
@@ -419,6 +442,12 @@ final class AiRepositoryImpl implements AiRepository {
     }
 
     return 'message';
+  }
+
+  bool _isDoneSentinel(Map<String, dynamic> data) {
+    final text = _readString(data, const ['text']);
+    if (text == null) return false;
+    return text.trim() == '[DONE]';
   }
 
   String? _normalizeEventName(String? raw) {
@@ -455,7 +484,9 @@ final class AiRepositoryImpl implements AiRepository {
     required String eventName,
   }) {
     if (!kDebugMode) return;
-    final preview = frame.data.length > 180 ? '${frame.data.substring(0, 180)}...' : frame.data;
+    final preview = frame.data.length > 180
+        ? '${frame.data.substring(0, 180)}...'
+        : frame.data;
     developer.log(
       '[AI-SSE] id=${frame.id ?? "-"} event=${frame.event} mapped=$eventName data=$preview',
       name: 'mindisle.ai.sse',
@@ -494,9 +525,13 @@ final class AiRepositoryImpl implements AiRepository {
     final message = parsed?.message;
     return AiStreamEvent(
       type: AiStreamEventType.error,
-      eventName: _isRecoverableDioException(exception) ? 'recoverable_error' : 'request_error',
+      eventName: _isRecoverableDioException(exception)
+          ? 'recoverable_error'
+          : 'request_error',
       errorCode: mapped.code,
-      errorMessage: (message != null && message.isNotEmpty) ? message : mapped.message,
+      errorMessage: (message != null && message.isNotEmpty)
+          ? message
+          : mapped.message,
     );
   }
 
@@ -556,7 +591,8 @@ final class AiRepositoryImpl implements AiRepository {
 
   _ParsedError? _parseErrorFromMap(Map<String, dynamic> map) {
     var code = _toInt(map['code']);
-    var message = _toNonEmptyString(map['message']) ?? _toNonEmptyString(map['error']);
+    var message =
+        _toNonEmptyString(map['message']) ?? _toNonEmptyString(map['error']);
 
     final nestedError = map['error'];
     if (nestedError is Map) {
@@ -611,10 +647,7 @@ final class AiRepositoryImpl implements AiRepository {
 }
 
 final class _ParsedError {
-  const _ParsedError({
-    this.code,
-    this.message = '',
-  });
+  const _ParsedError({this.code, this.message = ''});
 
   final int? code;
   final String message;
