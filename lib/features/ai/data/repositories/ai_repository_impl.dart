@@ -332,7 +332,7 @@ final class AiRepositoryImpl implements AiRepository {
           (item) =>
               AiOptionDto.fromJson(Map<String, dynamic>.from(item)).toDomain(),
         )
-        .where((item) => item.label.isNotEmpty && item.payload.isNotEmpty)
+        .where((item) => item.label.isNotEmpty)
         .take(3)
         .toList(growable: false);
   }

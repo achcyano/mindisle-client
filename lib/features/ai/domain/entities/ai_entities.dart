@@ -7,26 +7,22 @@ final class AiOption {
   const AiOption({
     required this.id,
     required this.label,
-    required this.payload,
   });
 
   final String id;
   final String label;
-  final String payload;
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'label': label,
-      'payload': payload,
     };
   }
 
   factory AiOption.fromJson(Map<String, dynamic> json) {
     return AiOption(
       id: json['id'] as String? ?? '',
-      label: json['label'] as String? ?? '',
-      payload: json['payload'] as String? ?? '',
+      label: json['label'] as String? ?? (json['payload'] as String? ?? ''),
     );
   }
 }
@@ -98,4 +94,3 @@ final class AiStreamEvent {
   final int? errorCode;
   final String? errorMessage;
 }
-

@@ -46,23 +46,20 @@ final class AiOptionDto {
   const AiOptionDto({
     required this.id,
     required this.label,
-    required this.payload,
   });
 
   factory AiOptionDto.fromJson(Map<String, dynamic> json) {
     return AiOptionDto(
       id: json['id'] as String? ?? '',
-      label: json['label'] as String? ?? '',
-      payload: json['payload'] as String? ?? '',
+      label: json['label'] as String? ?? (json['payload'] as String? ?? ''),
     );
   }
 
   final String id;
   final String label;
-  final String payload;
 
   AiOption toDomain() {
-    return AiOption(id: id, label: label, payload: payload);
+    return AiOption(id: id, label: label);
   }
 }
 
@@ -132,4 +129,3 @@ DateTime? _parseDateTime(Object? raw) {
   }
   return null;
 }
-

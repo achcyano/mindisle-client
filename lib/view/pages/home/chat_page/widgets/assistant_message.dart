@@ -121,7 +121,7 @@ class AssistantMessageContent extends StatelessWidget {
     return rawOptions
         .whereType<Map>()
         .map((item) => AiOption.fromJson(Map<String, dynamic>.from(item)))
-        .where((item) => item.label.isNotEmpty && item.payload.isNotEmpty)
+        .where((item) => item.label.isNotEmpty)
         .take(3)
         .toList(growable: false);
   }

@@ -203,7 +203,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
   }
 
   Future<void> sendOption(AiOption option) async {
-    await sendText(option.payload);
+    await sendText(option.label);
   }
 
   Future<void> sendOptionFromMessage(
@@ -211,7 +211,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
     AiOption option,
   ) async {
     await _clearAssistantOptions(assistantMessageId);
-    await sendText(option.payload);
+    await sendText(option.label);
   }
 
   Future<void> retryTextMessage(TextMessage message) async {
