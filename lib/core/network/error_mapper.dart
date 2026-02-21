@@ -5,9 +5,10 @@ AppError mapDioExceptionToAppError(DioException exception) {
   final response = exception.response;
   final data = response?.data;
 
-  if (data is Map<String, dynamic>) {
-    final code = (data['code'] as num?)?.toInt();
-    final message = (data['message'] as String?) ?? '';
+  if (data is Map<String, dynamic> || data is Map) {
+    final map = data is Map<String, dynamic> ? data : Map<String, dynamic>.from(data as Map);
+    final code = (map['code'] as num?)?.toInt();
+    final message = (map['message'] as String?) ?? '';
     if (code != null) {
       return mapServerCodeToAppError(
         code: code,
@@ -69,13 +70,14 @@ AppError mapServerCodeToAppError({
   int? statusCode,
 }) {
   final type = switch (code) {
-    40000 || 40001 || 40002 || 40003 || 40004 => AppErrorType.validation,
-    40100 => AppErrorType.unauthorized,
+    40000 || 40001 || 40002 || 40003 || 40004 || 40010 || 40011 =>
+      AppErrorType.validation,
+    40100 || 40310 => AppErrorType.unauthorized,
     40101 => AppErrorType.invalidCredentials,
-    40401 || 40402 => AppErrorType.notFound,
-    40901 => AppErrorType.conflict,
-    42901 || 42902 || 42903 => AppErrorType.rateLimited,
-    50000 || 50010 => AppErrorType.server,
+    40401 || 40402 || 40410 || 40411 => AppErrorType.notFound,
+    40901 || 40910 || 40911 => AppErrorType.conflict,
+    42901 || 42902 || 42903 || 42910 => AppErrorType.rateLimited,
+    50000 || 50010 || 50020 || 50021 || 50201 || 50202 => AppErrorType.server,
     _ => AppErrorType.unknown,
   };
 
@@ -98,16 +100,28 @@ String? _localizedMessageForCode(int code, String serverMessage) {
     40002 => '密码长度不能少于 6 位',
     40003 => '验证码错误或已过期',
     40004 => '登录票据无效或已过期',
+    40010 => 'AI 请求参数不合法',
+    40011 => '选项结构非法',
     40100 => '登录状态已失效，请重新登录',
     40101 => '账号或密码错误',
+    40310 => '无权访问该会话或生成任务',
     40401 => '该手机号尚未注册',
     40402 => '该手机号未注册',
+    40410 => '会话不存在',
+    40411 => '生成任务不存在',
     40901 => '该手机号已被注册',
+    40910 => '请求冲突，请稍后重试',
+    40911 => '重连窗口已过期，请重新发起提问',
     42901 => '操作过于频繁，请稍后再试',
     42902 => '今日短信次数已达上限',
     42903 => '验证码尝试次数过多，请稍后再试',
+    42910 => '请求过于频繁，请稍后重试',
     50010 when _isSmsValidateFailure(serverMessage) => '验证码错误或已过期',
     50010 => '短信服务暂不可用，请稍后重试',
+    50020 => 'AI 服务暂不可用，请稍后重试',
+    50021 => '回复解析失败，请稍后重试',
+    50201 => '上游服务暂不可用，请稍后重试',
+    50202 => '选项生成失败，请稍后重试',
     50000 => '服务暂不可用，请稍后重试',
     _ => null,
   };

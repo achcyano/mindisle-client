@@ -21,22 +21,25 @@ dependencies:
   dio: ^5.8.0+1
   retrofit: ^4.4.2
   json_annotation: ^4.9.0
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.1.0
   flutter_secure_storage: ^9.2.2
   uuid: ^4.5.1
   pretty_dio_logger: ^1.4.0
   connectivity_plus: ^6.1.4
   progress_indicator_m3e: ^0.1.1
   m3e_design: ^0.2.1
+  flutter_chat_core: ^2.9.0
+  flutter_chat_ui: ^2.11.1
+  flutter_chat_types: ^3.6.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   build_runner: ^2.4.15
-  retrofit_generator: ^9.1.9
+  retrofit_generator: ^10.2.3
   json_serializable: ^6.9.3
-  freezed: ^2.5.8
+  freezed: ^3.2.5
 
 flutter:
   uses-material-design: true

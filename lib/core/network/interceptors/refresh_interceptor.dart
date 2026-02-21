@@ -63,14 +63,27 @@ final class RefreshInterceptor extends Interceptor {
     if (request.extra[RequestFlags.skipRefresh] == true) return false;
     if (request.extra[RequestFlags.retriedAfterRefresh] == true) return false;
     if (request.path == '$apiPrefix/auth/token/refresh') return false;
+    if (!_hasBearerToken(request)) return false;
 
     final response = err.response;
     if (response == null) return false;
     if (response.statusCode != 401) return false;
 
     final data = response.data;
-    if (data is! Map<String, dynamic>) return false;
-    return (data['code'] as num?)?.toInt() == 40100;
+    if (data is Map<String, dynamic>) {
+      return (data['code'] as num?)?.toInt() == 40100;
+    }
+    if (data is Map) {
+      return (data['code'] as num?)?.toInt() == 40100;
+    }
+
+    // Streaming requests usually fail with ResponseBody on 401.
+    return true;
+  }
+
+  bool _hasBearerToken(RequestOptions request) {
+    final authHeader = request.headers['Authorization'];
+    return authHeader is String && authHeader.startsWith('Bearer ');
   }
 
   DioException _buildReLoginException(RequestOptions requestOptions) {

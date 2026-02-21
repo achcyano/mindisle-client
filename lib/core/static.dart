@@ -5,7 +5,7 @@ final logger = Logger();
 const appDisplayName = '心岛';
 
 const apiScheme = 'http';
-const apiHost = '192.168.0.105';
+const apiHost = '192.168.0.101';
 const apiPort = 80;
 const apiPrefix = '/api/v1';
 
