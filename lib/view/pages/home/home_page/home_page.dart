@@ -17,7 +17,6 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(appDisplayName),
-        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
@@ -31,19 +30,34 @@ class HomePage extends StatelessWidget {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
+            spacing: 8,
             children: [
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                elevation: 0,
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                child: const HomeIconTextTile(
-                  icon: Icons.link,
-                  title: '绑定医生',
-                  subtitle: '绑定医生以使用完整服务',
-                ),
+              const HomeActionCard(
+                icon: Icons.link,
+                title: '绑定医生',
+                subtitle: '绑定医生以使用完整服务',
               ),
+              const HomeActionCard(
+                icon: Icons.medical_services_outlined,
+                title: '导入用药计划',
+                subtitle: '可使用用药提醒等功能',
+              ),
+              const Row(
+                children: [
+                  Expanded(
+                    child: HomeActionCard(
+                      icon: Icons.assessment_outlined,
+                      title: '量表评估',
+                    ),
+                  ),
+                  Expanded(
+                    child: HomeActionCard(
+                      icon: Icons.messenger_outline,
+                      title: '聊天',
+                    ),
+                  ),
+                ],
+              )
             ],
           ),
         ),
