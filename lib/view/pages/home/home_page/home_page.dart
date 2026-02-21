@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mindisle_client/core/static.dart';
 import 'package:mindisle_client/view/pages/home/chat_page/chat_page.dart';
 import 'package:mindisle_client/view/pages/home/home_page/card_home.dart';
+import 'package:mindisle_client/view/pages/home/home_page/today_mood_card.dart';
 import 'package:mindisle_client/view/pages/home/medicine_page.dart';
 import 'package:mindisle_client/view/pages/home/profile_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
@@ -63,6 +64,7 @@ class HomePage extends StatelessWidget {
                   ),
                 ],
               ),
+              const TodayMoodCard(),
             ],
           ),
         ),

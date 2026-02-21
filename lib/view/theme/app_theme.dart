@@ -10,10 +10,18 @@ class AppTheme {
       surface: base.colorScheme.surfaceContainer,
       surfaceContainerLow: base.colorScheme.surface,
     );
+    final thinChipBorder = BorderSide(
+      width: 0.5,
+      color: swappedScheme.outlineVariant.withValues(alpha: 0.75),
+    );
     return base.copyWith(
       colorScheme: swappedScheme,
       scaffoldBackgroundColor: swappedScheme.surface,
       textTheme: AppTextTheme.build(base.textTheme),
+      chipTheme: base.chipTheme.copyWith(
+        side: thinChipBorder,
+        shape: StadiumBorder(side: thinChipBorder),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
         backgroundColor: swappedScheme.surfaceContainer,
