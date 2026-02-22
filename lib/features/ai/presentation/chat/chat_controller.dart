@@ -20,6 +20,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
   final Ref _ref;
   final Uuid _uuid = const Uuid();
   final InMemoryChatController chatController = InMemoryChatController();
+  String? _latestAssistantOptionsMessageId;
 
   static const String currentUserId = 'mindisle_user';
   static const String assistantUserId = 'mindisle_ai';
@@ -72,6 +73,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
     bool refreshConversations = false,
   }) async {
     if (state.isInitializing) return;
+    _latestAssistantOptionsMessageId = null;
 
     state = state.copyWith(
       initialized: true,
@@ -140,6 +142,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
       return;
     }
     if (state.conversationId == conversationId && state.initialized) return;
+    _latestAssistantOptionsMessageId = null;
 
     state = state.copyWith(
       initialized: true,
@@ -195,7 +198,8 @@ final class AiChatController extends StateNotifier<AiChatState> {
             earliestServerMessageId != null;
 
         await chatController.setMessages(uiMessages, animated: false);
-        await _enforceSingleAssistantOptions();
+        _latestAssistantOptionsMessageId =
+            _findLatestAssistantMessageWithOptionsId();
         state = state.copyWith(
           initialized: true,
           isInitializing: false,
@@ -221,6 +225,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
       conversationId = await _createConversationForFirstMessage();
       if (conversationId == null) return;
     }
+    await _clearLatestAssistantOptionsIfNeeded();
 
     final now = DateTime.now();
     final userId = 'user_${_uuid.v4()}';
@@ -440,7 +445,6 @@ final class AiChatController extends StateNotifier<AiChatState> {
             index: 0,
             animated: false,
           );
-          await _enforceSingleAssistantOptions();
         }
 
         final earliestServerMessageId = _findEarliestMessageId(messages);
@@ -661,7 +665,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
     List<AiOption> options,
     String? source,
   ) async {
-    await _clearAssistantOptionsInAllMessages(exceptMessageId: messageId);
+    await _clearLatestAssistantOptionsIfNeeded(exceptMessageId: messageId);
 
     final current = _findAssistantMessageById(messageId);
     if (current == null) return;
@@ -672,7 +676,15 @@ final class AiChatController extends StateNotifier<AiChatState> {
     metadata[assistantOptionsKey] = options
         .map((it) => it.toJson())
         .toList(growable: false);
-    metadata[assistantOptionSourceKey] = source ?? 'primary';
+    if (options.isEmpty) {
+      metadata.remove(assistantOptionSourceKey);
+      if (_latestAssistantOptionsMessageId == messageId) {
+        _latestAssistantOptionsMessageId = null;
+      }
+    } else {
+      metadata[assistantOptionSourceKey] = source ?? 'primary';
+      _latestAssistantOptionsMessageId = messageId;
+    }
     await chatController.updateMessage(
       current,
       current.copyWith(metadata: metadata),
@@ -687,44 +699,27 @@ final class AiChatController extends StateNotifier<AiChatState> {
       current.metadata ?? const <String, dynamic>{},
     );
     final rawOptions = metadata[assistantOptionsKey];
-    if (rawOptions is! List || rawOptions.isEmpty) return;
+    final hasOptions = rawOptions is List && rawOptions.isNotEmpty;
+    final hasSource = metadata.containsKey(assistantOptionSourceKey);
+    if (!hasOptions && !hasSource) return;
 
     metadata[assistantOptionsKey] = const <Object>[];
+    metadata.remove(assistantOptionSourceKey);
     await chatController.updateMessage(
       current,
       current.copyWith(metadata: metadata),
     );
-  }
-
-  Future<void> _clearAssistantOptionsInAllMessages({
-    String? exceptMessageId,
-  }) async {
-    final assistantMessages = chatController.messages
-        .whereType<CustomMessage>()
-        .where((message) => message.authorId == assistantUserId)
-        .where((message) => message.id != exceptMessageId)
-        .toList(growable: false);
-
-    for (final message in assistantMessages) {
-      final metadata = Map<String, dynamic>.from(
-        message.metadata ?? const <String, dynamic>{},
-      );
-      final rawOptions = metadata[assistantOptionsKey];
-      if (rawOptions is! List || rawOptions.isEmpty) {
-        continue;
-      }
-
-      metadata[assistantOptionsKey] = const <Object>[];
-      await chatController.updateMessage(
-        message,
-        message.copyWith(metadata: metadata),
-      );
+    if (_latestAssistantOptionsMessageId == messageId) {
+      _latestAssistantOptionsMessageId = null;
     }
   }
 
-  Future<void> _enforceSingleAssistantOptions() async {
-    final keepMessageId = _findLatestAssistantMessageWithOptionsId();
-    await _clearAssistantOptionsInAllMessages(exceptMessageId: keepMessageId);
+  Future<void> _clearLatestAssistantOptionsIfNeeded({
+    String? exceptMessageId,
+  }) async {
+    final currentId = _latestAssistantOptionsMessageId;
+    if (currentId == null || currentId == exceptMessageId) return;
+    await _clearAssistantOptions(currentId);
   }
 
   String? _findLatestAssistantMessageWithOptionsId() {

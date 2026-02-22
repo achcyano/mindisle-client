@@ -71,6 +71,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        elevation: 0,
         leading: Builder(
           builder: (context) {
             return IconButton(
@@ -96,68 +100,89 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         top: false,
         child: state.isInitializing
             ? const Center(child: CircularProgressIndicatorM3E())
-            : Chat(
-                chatController: controller.chatController,
-                currentUserId: AiChatController.currentUserId,
-                resolveUser: controller.resolveUser,
-                onMessageSend: controller.sendText,
-                backgroundColor: colorScheme.surface,
-                theme: ChatTheme.fromThemeData(
-                  Theme.of(context),
-                ).copyWith(shape: const BorderRadius.all(Radius.circular(16))),
-                builders: Builders(
-                  chatAnimatedListBuilder: (context, itemBuilder) {
-                    return ChatAnimatedList(
-                      itemBuilder: itemBuilder,
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      initialScrollToEndMode: InitialScrollToEndMode.jump,
-                      onEndReached: state.hasMoreHistory
-                          ? controller.loadOlderMessages
-                          : null,
-                      topSliver: state.isLoadingHistory
-                          ? const SliverToBoxAdapter(
-                              child: HistoryLoadingIndicator(),
-                            )
-                          : null,
-                    );
-                  },
-                  composerBuilder: (context) {
-                    return ChatComposer(isSending: state.isSending);
-                  },
-                  emptyChatListBuilder: (context) {
-                    return const ChatEmptyState();
-                  },
-                  textMessageBuilder:
-                      (BuildContext context, TextMessage message, int index, {
-                    required bool isSentByMe,
-                    MessageGroupStatus? groupStatus,
-                  }) {
-                    return UserTextMessageBubble(
-                      message: message,
-                      index: index,
-                      isSentByMe: isSentByMe,
-                      onRetry:
-                          isSentByMe &&
-                              message.resolvedStatus == MessageStatus.error
-                          ? () => controller.retryTextMessage(message)
-                          : null,
-                    );
-                  },
-                  customMessageBuilder:
-                      (BuildContext context, CustomMessage message, int index, {
-                    MessageGroupStatus? groupStatus,
-                    required bool isSentByMe,
-                  }) {
-                    return AssistantMessageContent(
-                      message: message,
-                      isSending: state.isSending,
-                      onOptionPressed: (option) {
-                        controller.sendOptionFromMessage(message.id, option);
-                      },
-                    );
-                  },
-                ),
+            : Column(
+                children: [
+                  Expanded(
+                    child: Chat(
+                      chatController: controller.chatController,
+                      currentUserId: AiChatController.currentUserId,
+                      resolveUser: controller.resolveUser,
+                      onMessageSend: controller.sendText,
+                      backgroundColor: colorScheme.surface,
+                      theme: ChatTheme.fromThemeData(
+                        Theme.of(context),
+                      ).copyWith(
+                        shape: const BorderRadius.all(Radius.circular(16)),
+                      ),
+                      builders: Builders(
+                        chatAnimatedListBuilder: (context, itemBuilder) {
+                          return ChatAnimatedList(
+                            itemBuilder: itemBuilder,
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            initialScrollToEndMode: InitialScrollToEndMode.jump,
+                            onEndReached: state.hasMoreHistory
+                                ? controller.loadOlderMessages
+                                : null,
+                            topSliver: state.isLoadingHistory
+                                ? const SliverToBoxAdapter(
+                                    child: HistoryLoadingIndicator(),
+                                  )
+                                : null,
+                          );
+                        },
+                        composerBuilder: (context) {
+                          return ChatComposer(isSending: state.isSending);
+                        },
+                        emptyChatListBuilder: (context) {
+                          return const ChatEmptyState();
+                        },
+                        textMessageBuilder: (
+                          BuildContext context,
+                          TextMessage message,
+                          int index, {
+                          required bool isSentByMe,
+                          MessageGroupStatus? groupStatus,
+                        }) {
+                          return UserTextMessageBubble(
+                            message: message,
+                            index: index,
+                            isSentByMe: isSentByMe,
+                            onRetry:
+                                isSentByMe &&
+                                    message.resolvedStatus == MessageStatus.error
+                                ? () => controller.retryTextMessage(message)
+                                : null,
+                          );
+                        },
+                        customMessageBuilder: (
+                          BuildContext context,
+                          CustomMessage message,
+                          int index, {
+                          MessageGroupStatus? groupStatus,
+                          required bool isSentByMe,
+                        }) {
+                          return AssistantMessageContent(
+                            message: message,
+                            isSending: state.isSending,
+                            onOptionPressed: (option) {
+                              controller.sendOptionFromMessage(message.id, option);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    child: Text(
+                      'AI建议仅供参考，如有疑问请咨询医生',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
               ),
       ),
     );

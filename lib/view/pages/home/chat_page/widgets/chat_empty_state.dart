@@ -29,13 +29,13 @@ class ChatEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text('开始一段对话', style: textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              '可直接提问，或等待助手给出建议选项',
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
+            // const SizedBox(height: 4),
+            // Text(
+            //   '可直接提问，或等待助手给出建议选项',
+            //   style: textTheme.bodySmall?.copyWith(
+            //     color: colorScheme.onSurfaceVariant,
+            //   ),
+            // ),
           ],
         ),
       ),

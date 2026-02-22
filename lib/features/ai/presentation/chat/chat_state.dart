@@ -45,7 +45,7 @@ final class AiChatState {
     List<AiConversation>? conversations,
     bool? isLoadingConversations,
     bool? isRefreshingConversations,
-    int? conversationId,
+    Object? conversationId = _sentinel,
     Object? earliestLoadedServerMessageId = _sentinel,
     Object? errorMessage = _sentinel,
     Object? lastEventId = _sentinel,
@@ -62,7 +62,9 @@ final class AiChatState {
           isLoadingConversations ?? this.isLoadingConversations,
       isRefreshingConversations:
           isRefreshingConversations ?? this.isRefreshingConversations,
-      conversationId: conversationId ?? this.conversationId,
+      conversationId: identical(conversationId, _sentinel)
+          ? this.conversationId
+          : conversationId as int?,
       earliestLoadedServerMessageId:
           identical(earliestLoadedServerMessageId, _sentinel)
           ? this.earliestLoadedServerMessageId
