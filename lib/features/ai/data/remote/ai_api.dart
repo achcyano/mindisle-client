@@ -47,6 +47,26 @@ final class AiApi {
     return response.data ?? const <String, dynamic>{};
   }
 
+  Future<Map<String, dynamic>> updateConversationTitle({
+    required int conversationId,
+    required String title,
+  }) async {
+    final response = await _dio.put<dynamic>(
+      '/api/v1/ai/conversations/$conversationId/title',
+      data: <String, dynamic>{'title': title},
+    );
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> deleteConversation({
+    required int conversationId,
+  }) async {
+    final response = await _dio.delete<dynamic>(
+      '/api/v1/ai/conversations/$conversationId',
+    );
+    return _toMap(response.data);
+  }
+
   Stream<AiSseFrame> streamConversation({
     required int conversationId,
     required String userMessage,
@@ -213,6 +233,16 @@ final class AiApi {
       '[AI-SSE] frame id=${frame.id ?? "-"} event=${frame.event} data=$preview',
       name: 'mindisle.ai.sse.parser',
     );
+  }
+
+  Map<String, dynamic> _toMap(Object? raw) {
+    if (raw is Map<String, dynamic>) {
+      return raw;
+    }
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return const <String, dynamic>{};
   }
 }
 

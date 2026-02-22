@@ -82,7 +82,7 @@ class _TodayMoodCardState extends State<TodayMoodCard>
     final descriptionTextStyle = theme.textTheme.bodySmall?.copyWith(
       color: colorScheme.onSurface.withValues(alpha: 0.72),
     );
-    final border = OutlineInputBorder(
+    final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(6),
       borderSide: BorderSide(
         color: colorScheme.primary,
@@ -100,134 +100,207 @@ class _TodayMoodCardState extends State<TodayMoodCard>
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('心情日记', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Row(
-              children: List<Widget>.generate(_moods.length, (index) {
-                final option = _moods[index];
-                final selected = _selectedMoodIndex == index;
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: index == 0 ? 0 : 3,
-                      right: index == _moods.length - 1 ? 0 : 3,
-                    ),
-                    child: _MoodButton(
-                      option: option,
-                      selected: selected,
-                      onPressed: () {
-                        if (_isLockedForToday) return;
-                        setState(() {
-                          final nextIndex = selected ? null : index;
-                          _selectedMoodIndex = nextIndex;
-                          if (!_isLowMood(nextIndex)) {
-                            _selectedEvents.clear();
-                            _selectedBody.clear();
-                          }
-                        });
-                      },
-                    ),
-                  ),
-                );
-              }),
-            ),
-            if (_showLowMoodDetails) ...[
-              const SizedBox(height: 14),
-              _SectionTitle(
-                title: '今天发生了什么？',
-                textStyle: descriptionTextStyle,
-              ),
-              const SizedBox(height: 8),
-              _FilterChipGrid(
-                labels: _eventTags,
-                selectedValues: _selectedEvents,
-                labelStyle: descriptionTextStyle,
-                enabled: !_isLockedForToday,
-                onSelect: (tag) {
-                  setState(() {
-                    if (_selectedEvents.contains(tag)) {
-                      _selectedEvents.remove(tag);
-                      if (tag == _sideEffectTag) {
-                        _selectedBody.clear();
-                      }
-                      return;
-                    }
-                    if (_selectedEvents.length >= 3) {
-                      return;
-                    }
-                    _selectedEvents.add(tag);
-                  });
-                },
-              ),
-            ],
-            if (_showBodyFeelings) ...[
-              const SizedBox(height: 14),
-              _SectionTitle(
-                title: '身体感觉如何？',
-                textStyle: descriptionTextStyle,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 8,
-                children: _bodyTags.map((tag) {
-                  final selected = _selectedBody.contains(tag.label);
-                  return FilterChip(
-                    selected: selected,
-                    showCheckmark: false,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
-                    avatar: Icon(tag.icon, size: 16),
-                    label: Text(tag.label, style: descriptionTextStyle),
-                    onSelected: (value) {
-                      if (_isLockedForToday) return;
-                      setState(() {
-                        if (value) {
-                          _selectedBody.add(tag.label);
-                        } else {
-                          _selectedBody.remove(tag.label);
-                        }
-                      });
-                    },
-                  );
-                }).toList(growable: false),
-              ),
-            ],
-            const SizedBox(height: 8),
-            TextField(
-              controller: _noteController,
-              readOnly: _isLockedForToday,
-              textInputAction: TextInputAction.newline,
-              style: descriptionTextStyle,
-              decoration: InputDecoration(
-                hintText: '想多说一点吗？',
-                hintStyle: descriptionTextStyle,
-                fillColor: colorScheme.surface,
-                border: border,
-                enabledBorder: border,
-                focusedBorder: border
-              ),
-            ),
-            if (!_isLockedForToday) ...[
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colorScheme.primary,
-                    side: BorderSide(color: colorScheme.primary),
-                    textStyle: descriptionTextStyle,
-                  ),
-                  onPressed: _submitTodayMoodEntry,
-                  child: const Text('轻轻记下今天'),
-                ),
-              ),
-            ],
-          ],
+          children: _buildCardChildren(
+            theme: theme,
+            colorScheme: colorScheme,
+            descriptionTextStyle: descriptionTextStyle,
+            inputBorder: inputBorder,
+          ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildCardChildren({
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required TextStyle? descriptionTextStyle,
+    required OutlineInputBorder inputBorder,
+  }) {
+    final children = <Widget>[
+      Text('心情日记', style: theme.textTheme.titleMedium),
+      const SizedBox(height: 10),
+      _buildMoodRow(),
+    ];
+
+    if (_showLowMoodDetails) {
+      children.addAll(_buildLowMoodDetails(descriptionTextStyle));
+    }
+
+    if (_showBodyFeelings) {
+      children.addAll(_buildBodyFeelingDetails(descriptionTextStyle));
+    }
+
+    children.addAll(<Widget>[
+      const SizedBox(height: 8),
+      _buildNoteField(
+        descriptionTextStyle: descriptionTextStyle,
+        colorScheme: colorScheme,
+        inputBorder: inputBorder,
+      ),
+    ]);
+
+    if (!_isLockedForToday) {
+      children.addAll(<Widget>[
+        const SizedBox(height: 14),
+        _buildSubmitButton(
+          descriptionTextStyle: descriptionTextStyle,
+          colorScheme: colorScheme,
+        ),
+      ]);
+    }
+
+    return children;
+  }
+
+  Widget _buildMoodRow() {
+    return Row(
+      children: List<Widget>.generate(_moods.length, (index) {
+        final option = _moods[index];
+        final selected = _selectedMoodIndex == index;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: index == 0 ? 0 : 3,
+              right: index == _moods.length - 1 ? 0 : 3,
+            ),
+            child: _MoodButton(
+              option: option,
+              selected: selected,
+              onPressed: () =>
+                  _onMoodPressed(index: index, isSelected: selected),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  List<Widget> _buildLowMoodDetails(TextStyle? descriptionTextStyle) {
+    return <Widget>[
+      const SizedBox(height: 14),
+      _SectionTitle(
+        title: '今天发生了什么？',
+        textStyle: descriptionTextStyle,
+      ),
+      const SizedBox(height: 8),
+      _FilterChipGrid(
+        labels: _eventTags,
+        selectedValues: _selectedEvents,
+        labelStyle: descriptionTextStyle,
+        enabled: !_isLockedForToday,
+        onSelect: _onEventTagSelected,
+      ),
+    ];
+  }
+
+  List<Widget> _buildBodyFeelingDetails(TextStyle? descriptionTextStyle) {
+    return <Widget>[
+      const SizedBox(height: 14),
+      _SectionTitle(
+        title: '身体感觉如何？',
+        textStyle: descriptionTextStyle,
+      ),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 6,
+        runSpacing: 8,
+        children: _bodyTags.map((tag) {
+          final selected = _selectedBody.contains(tag.label);
+          return FilterChip(
+            selected: selected,
+            showCheckmark: false,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+            avatar: Icon(tag.icon, size: 16),
+            label: Text(tag.label, style: descriptionTextStyle),
+            onSelected: (value) => _onBodyTagSelected(
+              label: tag.label,
+              selected: value,
+            ),
+          );
+        }).toList(growable: false),
+      ),
+    ];
+  }
+
+  Widget _buildNoteField({
+    required TextStyle? descriptionTextStyle,
+    required ColorScheme colorScheme,
+    required OutlineInputBorder inputBorder,
+  }) {
+    return TextField(
+      controller: _noteController,
+      readOnly: _isLockedForToday,
+      textInputAction: TextInputAction.newline,
+      style: descriptionTextStyle,
+      decoration: InputDecoration(
+        hintText: '想多说一点吗？',
+        hintStyle: descriptionTextStyle,
+        fillColor: colorScheme.surface,
+        border: inputBorder,
+        enabledBorder: inputBorder,
+        focusedBorder: inputBorder,
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton({
+    required TextStyle? descriptionTextStyle,
+    required ColorScheme colorScheme,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.primary),
+          textStyle: descriptionTextStyle,
+        ),
+        onPressed: _submitTodayMoodEntry,
+        child: const Text('轻轻记下今天'),
+      ),
+    );
+  }
+
+  void _onMoodPressed({required int index, required bool isSelected}) {
+    if (_isLockedForToday) return;
+    setState(() {
+      final nextIndex = isSelected ? null : index;
+      _selectedMoodIndex = nextIndex;
+      if (!_isLowMood(nextIndex)) {
+        _selectedEvents.clear();
+        _selectedBody.clear();
+      }
+    });
+  }
+
+  void _onEventTagSelected(String tag) {
+    if (_isLockedForToday) return;
+    setState(() {
+      if (_selectedEvents.contains(tag)) {
+        _selectedEvents.remove(tag);
+        if (tag == _sideEffectTag) {
+          _selectedBody.clear();
+        }
+        return;
+      }
+      if (_selectedEvents.length >= 3) {
+        return;
+      }
+      _selectedEvents.add(tag);
+    });
+  }
+
+  void _onBodyTagSelected({required String label, required bool selected}) {
+    if (_isLockedForToday) return;
+    setState(() {
+      if (selected) {
+        _selectedBody.add(label);
+      } else {
+        _selectedBody.remove(label);
+      }
+    });
   }
 
   bool _isLowMood(int? index) {

@@ -12,6 +12,57 @@ final class EnsureAiConversationUseCase {
   }
 }
 
+final class FetchAiConversationsUseCase {
+  const FetchAiConversationsUseCase(this._repository);
+
+  final AiRepository _repository;
+
+  Future<Result<List<AiConversation>>> execute({
+    int limit = 20,
+    String? cursor,
+  }) {
+    return _repository.fetchConversations(limit: limit, cursor: cursor);
+  }
+}
+
+final class CreateAiConversationUseCase {
+  const CreateAiConversationUseCase(this._repository);
+
+  final AiRepository _repository;
+
+  Future<Result<AiConversation>> execute({String? title}) {
+    return _repository.createConversation(title: title);
+  }
+}
+
+final class UpdateAiConversationTitleUseCase {
+  const UpdateAiConversationTitleUseCase(this._repository);
+
+  final AiRepository _repository;
+
+  Future<Result<AiConversation>> execute({
+    required int conversationId,
+    required String title,
+  }) {
+    return _repository.updateConversationTitle(
+      conversationId: conversationId,
+      title: title,
+    );
+  }
+}
+
+final class DeleteAiConversationUseCase {
+  const DeleteAiConversationUseCase(this._repository);
+
+  final AiRepository _repository;
+
+  Future<Result<bool>> execute({
+    required int conversationId,
+  }) {
+    return _repository.deleteConversation(conversationId: conversationId);
+  }
+}
+
 final class FetchAiMessagesUseCase {
   const FetchAiMessagesUseCase(this._repository);
 
@@ -69,4 +120,3 @@ final class ResumeAiGenerationUseCase {
     );
   }
 }
-

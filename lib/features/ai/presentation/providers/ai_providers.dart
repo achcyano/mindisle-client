@@ -17,6 +17,22 @@ final ensureAiConversationUseCaseProvider = Provider<EnsureAiConversationUseCase
   return EnsureAiConversationUseCase(ref.watch(aiRepositoryProvider));
 });
 
+final fetchAiConversationsUseCaseProvider = Provider<FetchAiConversationsUseCase>((ref) {
+  return FetchAiConversationsUseCase(ref.watch(aiRepositoryProvider));
+});
+
+final createAiConversationUseCaseProvider = Provider<CreateAiConversationUseCase>((ref) {
+  return CreateAiConversationUseCase(ref.watch(aiRepositoryProvider));
+});
+
+final updateAiConversationTitleUseCaseProvider = Provider<UpdateAiConversationTitleUseCase>((ref) {
+  return UpdateAiConversationTitleUseCase(ref.watch(aiRepositoryProvider));
+});
+
+final deleteAiConversationUseCaseProvider = Provider<DeleteAiConversationUseCase>((ref) {
+  return DeleteAiConversationUseCase(ref.watch(aiRepositoryProvider));
+});
+
 final fetchAiMessagesUseCaseProvider = Provider<FetchAiMessagesUseCase>((ref) {
   return FetchAiMessagesUseCase(ref.watch(aiRepositoryProvider));
 });
@@ -28,4 +44,3 @@ final streamAiConversationUseCaseProvider = Provider<StreamAiConversationUseCase
 final resumeAiGenerationUseCaseProvider = Provider<ResumeAiGenerationUseCase>((ref) {
   return ResumeAiGenerationUseCase(ref.watch(aiRepositoryProvider));
 });
-

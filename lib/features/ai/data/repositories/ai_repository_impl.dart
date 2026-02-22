@@ -37,6 +37,45 @@ final class AiRepositoryImpl implements AiRepository {
   }
 
   @override
+  Future<Result<List<AiConversation>>> fetchConversations({
+    int limit = 20,
+    String? cursor,
+  }) {
+    return _run(
+      () => _api.listConversations(limit: limit, cursor: cursor),
+      _decodeConversationList,
+    );
+  }
+
+  @override
+  Future<Result<AiConversation>> createConversation({String? title}) {
+    return _run(() => _api.createConversation(title: title), _decodeConversation);
+  }
+
+  @override
+  Future<Result<AiConversation>> updateConversationTitle({
+    required int conversationId,
+    required String title,
+  }) {
+    return _run(
+      () => _api.updateConversationTitle(
+        conversationId: conversationId,
+        title: title,
+      ),
+      _decodeConversation,
+    );
+  }
+
+  @override
+  Future<Result<bool>> deleteConversation({
+    required int conversationId,
+  }) {
+    return _runNoData(
+      () => _api.deleteConversation(conversationId: conversationId),
+    );
+  }
+
+  @override
   Future<Result<List<AiChatMessage>>> fetchMessages({
     required int conversationId,
     int limit = 50,
@@ -131,6 +170,31 @@ final class AiRepositoryImpl implements AiRepository {
       }
 
       return Success(data);
+    } on DioException catch (e) {
+      return Failure(mapDioExceptionToAppError(e));
+    } catch (e) {
+      return Failure(
+        mapServerCodeToAppError(code: 50000, message: e.toString()),
+      );
+    }
+  }
+
+  Future<Result<bool>> _runNoData(
+    Future<Map<String, dynamic>> Function() request,
+  ) async {
+    try {
+      final json = await request();
+      final envelope = ApiEnvelope<Object?>.fromJson(json, (raw) => raw);
+      if (!envelope.isSuccess) {
+        return Failure(
+          mapServerCodeToAppError(
+            code: envelope.code,
+            message: envelope.message,
+          ),
+        );
+      }
+
+      return const Success(true);
     } on DioException catch (e) {
       return Failure(mapDioExceptionToAppError(e));
     } catch (e) {

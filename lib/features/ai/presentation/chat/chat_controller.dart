@@ -26,6 +26,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
   static const Duration _deltaFlushInterval = Duration(milliseconds: 40);
   static const int _initialHistoryPageSize = 12;
   static const int _historyPageSize = 30;
+  static const int _conversationListPageSize = 20;
 
   final Map<UserID, User> _users = <UserID, User>{
     currentUserId: const User(id: currentUserId, name: '我'),
@@ -64,59 +65,149 @@ final class AiChatController extends StateNotifier<AiChatState> {
   }
 
   Future<void> initialize() async {
-    if (state.initialized || state.isInitializing) return;
+    await startNewDraftConversation(refreshConversations: true);
+  }
 
-    state = state.copyWith(isInitializing: true, errorMessage: null);
-    final conversationResult = await _ref
-        .read(ensureAiConversationUseCaseProvider)
-        .execute();
-    switch (conversationResult) {
-      case Failure<AiConversation>(error: final error):
+  Future<void> startNewDraftConversation({
+    bool refreshConversations = false,
+  }) async {
+    if (state.isInitializing) return;
+
+    state = state.copyWith(
+      initialized: true,
+      isInitializing: true,
+      isLoadingHistory: false,
+      hasMoreHistory: false,
+      conversationId: null,
+      earliestLoadedServerMessageId: null,
+      lastEventId: null,
+      activeGenerationId: null,
+      errorMessage: null,
+    );
+    await chatController.setMessages(const <Message>[], animated: false);
+    state = state.copyWith(
+      initialized: true,
+      isInitializing: false,
+      isLoadingHistory: false,
+      hasMoreHistory: false,
+      conversationId: null,
+      earliestLoadedServerMessageId: null,
+      lastEventId: null,
+      activeGenerationId: null,
+      errorMessage: null,
+    );
+
+    if (refreshConversations) {
+      await loadConversations(refresh: true);
+    }
+  }
+
+  Future<void> loadConversations({bool refresh = false}) async {
+    if (!refresh && state.conversations.isNotEmpty) return;
+    if (refresh) {
+      if (state.isRefreshingConversations) return;
+      state = state.copyWith(isRefreshingConversations: true);
+    } else {
+      if (state.isLoadingConversations) return;
+      state = state.copyWith(isLoadingConversations: true);
+    }
+
+    final result = await _ref
+        .read(fetchAiConversationsUseCaseProvider)
+        .execute(limit: _conversationListPageSize);
+
+    switch (result) {
+      case Failure<List<AiConversation>>(error: final error):
         state = state.copyWith(
-          isInitializing: false,
+          isLoadingConversations: false,
+          isRefreshingConversations: false,
           errorMessage: error.message,
         );
         return;
-      case Success<AiConversation>(data: final conversation):
-        final messagesResult = await _ref
-            .read(fetchAiMessagesUseCaseProvider)
-            .execute(
-              conversationId: conversation.conversationId,
-              limit: _initialHistoryPageSize,
-            );
+      case Success<List<AiConversation>>(data: final conversations):
+        state = state.copyWith(
+          conversations: conversations,
+          isLoadingConversations: false,
+          isRefreshingConversations: false,
+        );
+        return;
+    }
+  }
 
-        switch (messagesResult) {
-          case Failure<List<AiChatMessage>>(error: final error):
-            state = state.copyWith(
-              initialized: true,
-              isInitializing: false,
-              conversationId: conversation.conversationId,
-              isLoadingHistory: false,
-              hasMoreHistory: false,
-              earliestLoadedServerMessageId: null,
-              errorMessage: error.message,
-            );
-            return;
-          case Success<List<AiChatMessage>>(data: final messages):
-            final uiMessages = _toUiMessages(messages);
-            final earliestServerMessageId = _findEarliestMessageId(messages);
-            final hasMoreHistory =
-                messages.length >= _initialHistoryPageSize &&
-                earliestServerMessageId != null;
+  Future<void> switchConversation(int conversationId) async {
+    if (state.isSending) {
+      state = state.copyWith(errorMessage: '正在回复，请稍后切换会话');
+      return;
+    }
+    if (state.conversationId == conversationId && state.initialized) return;
 
-            await chatController.setMessages(uiMessages, animated: false);
-            await _enforceSingleAssistantOptions();
-            state = state.copyWith(
-              initialized: true,
-              isInitializing: false,
-              conversationId: conversation.conversationId,
-              isLoadingHistory: false,
-              hasMoreHistory: hasMoreHistory,
-              earliestLoadedServerMessageId: earliestServerMessageId,
-              errorMessage: null,
-            );
-            return;
-        }
+    state = state.copyWith(
+      initialized: true,
+      isInitializing: true,
+      isLoadingHistory: false,
+      hasMoreHistory: true,
+      conversationId: conversationId,
+      earliestLoadedServerMessageId: null,
+      lastEventId: null,
+      activeGenerationId: null,
+      errorMessage: null,
+    );
+
+    await _loadConversationMessages(
+      conversationId: conversationId,
+      clearMessages: true,
+    );
+    await scrollToLatest();
+  }
+
+  Future<void> _loadConversationMessages({
+    required int conversationId,
+    required bool clearMessages,
+  }) async {
+    if (clearMessages) {
+      await chatController.setMessages(const <Message>[], animated: false);
+    }
+
+    final messagesResult = await _ref.read(fetchAiMessagesUseCaseProvider).execute(
+      conversationId: conversationId,
+      limit: _initialHistoryPageSize,
+    );
+
+    switch (messagesResult) {
+      case Failure<List<AiChatMessage>>(error: final error):
+        state = state.copyWith(
+          initialized: true,
+          isInitializing: false,
+          conversationId: conversationId,
+          isLoadingHistory: false,
+          hasMoreHistory: false,
+          earliestLoadedServerMessageId: null,
+          lastEventId: null,
+          activeGenerationId: null,
+          errorMessage: error.message,
+        );
+        return;
+      case Success<List<AiChatMessage>>(data: final messages):
+        final uiMessages = _toUiMessages(messages);
+        final earliestServerMessageId = _findEarliestMessageId(messages);
+        final hasMoreHistory =
+            messages.length >= _initialHistoryPageSize &&
+            earliestServerMessageId != null;
+
+        await chatController.setMessages(uiMessages, animated: false);
+        await _enforceSingleAssistantOptions();
+        state = state.copyWith(
+          initialized: true,
+          isInitializing: false,
+          conversationId: conversationId,
+          isLoadingHistory: false,
+          hasMoreHistory: hasMoreHistory,
+          earliestLoadedServerMessageId: earliestServerMessageId,
+          lastEventId: null,
+          activeGenerationId: null,
+          errorMessage: null,
+        );
+        return;
     }
   }
 
@@ -127,8 +218,7 @@ final class AiChatController extends StateNotifier<AiChatState> {
 
     var conversationId = state.conversationId;
     if (conversationId == null) {
-      await initialize();
-      conversationId = state.conversationId;
+      conversationId = await _createConversationForFirstMessage();
       if (conversationId == null) return;
     }
 
@@ -200,6 +290,90 @@ final class AiChatController extends StateNotifier<AiChatState> {
       lastEventId: outcome.lastEventId,
       activeGenerationId: outcome.generationId,
     );
+  }
+
+  Future<int?> _createConversationForFirstMessage() async {
+    final result = await _ref
+        .read(createAiConversationUseCaseProvider)
+        .execute();
+
+    switch (result) {
+      case Failure<AiConversation>(error: final error):
+        state = state.copyWith(errorMessage: error.message);
+        return null;
+      case Success<AiConversation>(data: final conversation):
+        final updatedConversations = <AiConversation>[
+          conversation,
+          ...state.conversations.where(
+            (it) => it.conversationId != conversation.conversationId,
+          ),
+        ];
+        state = state.copyWith(
+          conversationId: conversation.conversationId,
+          hasMoreHistory: false,
+          earliestLoadedServerMessageId: null,
+          lastEventId: null,
+          activeGenerationId: null,
+          conversations: updatedConversations,
+        );
+        await loadConversations(refresh: true);
+        return conversation.conversationId;
+    }
+  }
+
+  Future<void> renameConversationTitle({
+    required int conversationId,
+    required String title,
+  }) async {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) {
+      state = state.copyWith(errorMessage: '标题不能为空');
+      return;
+    }
+
+    final result = await _ref
+        .read(updateAiConversationTitleUseCaseProvider)
+        .execute(conversationId: conversationId, title: trimmed);
+    switch (result) {
+      case Failure<AiConversation>(error: final error):
+        state = state.copyWith(errorMessage: error.message);
+        return;
+      case Success<AiConversation>(data: final updated):
+        final conversations = state.conversations
+            .map(
+              (it) => it.conversationId == conversationId ? updated : it,
+            )
+            .toList(growable: false);
+        state = state.copyWith(conversations: conversations);
+        return;
+    }
+  }
+
+  Future<void> deleteConversation(int conversationId) async {
+    if (state.isSending && state.conversationId == conversationId) {
+      state = state.copyWith(errorMessage: '正在回复，暂时不能删除当前会话');
+      return;
+    }
+
+    final result = await _ref
+        .read(deleteAiConversationUseCaseProvider)
+        .execute(conversationId: conversationId);
+    switch (result) {
+      case Failure<bool>(error: final error):
+        state = state.copyWith(errorMessage: error.message);
+        return;
+      case Success<bool>():
+        final wasCurrent = state.conversationId == conversationId;
+        final conversations = state.conversations
+            .where((it) => it.conversationId != conversationId)
+            .toList(growable: false);
+        state = state.copyWith(conversations: conversations);
+        if (wasCurrent) {
+          await startNewDraftConversation(refreshConversations: false);
+        }
+        await loadConversations(refresh: true);
+        return;
+    }
   }
 
   Future<void> sendOption(AiOption option) async {

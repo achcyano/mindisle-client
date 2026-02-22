@@ -1,3 +1,5 @@
+import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
+
 const assistantTextKey = 'assistant_text';
 const assistantOptionsKey = 'assistant_options';
 const assistantStreamingKey = 'assistant_streaming';
@@ -10,6 +12,9 @@ final class AiChatState {
     this.isSending = false,
     this.isLoadingHistory = false,
     this.hasMoreHistory = true,
+    this.conversations = const <AiConversation>[],
+    this.isLoadingConversations = false,
+    this.isRefreshingConversations = false,
     this.conversationId,
     this.earliestLoadedServerMessageId,
     this.errorMessage,
@@ -22,6 +27,9 @@ final class AiChatState {
   final bool isSending;
   final bool isLoadingHistory;
   final bool hasMoreHistory;
+  final List<AiConversation> conversations;
+  final bool isLoadingConversations;
+  final bool isRefreshingConversations;
   final int? conversationId;
   final int? earliestLoadedServerMessageId;
   final String? errorMessage;
@@ -34,6 +42,9 @@ final class AiChatState {
     bool? isSending,
     bool? isLoadingHistory,
     bool? hasMoreHistory,
+    List<AiConversation>? conversations,
+    bool? isLoadingConversations,
+    bool? isRefreshingConversations,
     int? conversationId,
     Object? earliestLoadedServerMessageId = _sentinel,
     Object? errorMessage = _sentinel,
@@ -46,6 +57,11 @@ final class AiChatState {
       isSending: isSending ?? this.isSending,
       isLoadingHistory: isLoadingHistory ?? this.isLoadingHistory,
       hasMoreHistory: hasMoreHistory ?? this.hasMoreHistory,
+      conversations: conversations ?? this.conversations,
+      isLoadingConversations:
+          isLoadingConversations ?? this.isLoadingConversations,
+      isRefreshingConversations:
+          isRefreshingConversations ?? this.isRefreshingConversations,
       conversationId: conversationId ?? this.conversationId,
       earliestLoadedServerMessageId:
           identical(earliestLoadedServerMessageId, _sentinel)
