@@ -138,8 +138,7 @@ class _DigitKey extends StatelessWidget {
     final keyFill = colorScheme.surfaceContainerHighest.withValues(alpha: 0.55);
     final baseDigitStyle =
         textTheme.titleLarge ?? const TextStyle(fontSize: 23, fontWeight: FontWeight.w300);
-    final baseLettersStyle = textTheme.titleMedium ??
-        const TextStyle(fontSize: 16, fontWeight: FontWeight.w300, letterSpacing: 0.6);
+    final baseLettersStyle = textTheme.bodyMedium!;
 
     return Material(
       color: Colors.transparent,
