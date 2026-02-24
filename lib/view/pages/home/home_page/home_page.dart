@@ -17,7 +17,17 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(appDisplayName),
+        title: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.home_outlined, size: 25),
+              const SizedBox(width: 8),
+              const Text(appDisplayName),
+            ],
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
@@ -63,7 +73,8 @@ class HomePage extends StatelessWidget {
                       icon: Icons.messenger_outline,
                       title: '聊天',
                       onTap: () {
-                        onRouteRequested(ChatPage.route);
+                        ChatPage.route.goRoot(context);
+                        //onRouteRequested(ChatPage.route);
                       },
                     ),
                   ),
