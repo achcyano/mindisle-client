@@ -1,6 +1,11 @@
-﻿# MindIsle 服务端接口与行为说明（客户端对接版）
+﻿# MindIsle 认证与用户接口说明（客户端对接版）
 
-本文档基于当前 `mindisle-server` 源码整理，覆盖所有已注册路由、请求/响应格式、鉴权与设备头要求、错误码及触发原因，并说明服务端运行机制。
+本文档基于当前 `mindisle-server` 源码整理，覆盖认证与用户模块路由（`/api/v1/auth/**`、`/api/v1/users/**`）的请求/响应格式、鉴权与设备头要求、错误码及触发原因，并说明相关服务机制。
+
+其他模块请参考：
+
+- AI 对话 SSE：`docs/ai-sse-api.md`
+- 量表系统：`docs/scale-api.md`
 
 ## 1. 服务概览
 
@@ -9,8 +14,9 @@
 - 统一业务 API 前缀: `/api/v1`
 - 数据库: MySQL（Exposed + HikariCP）
 - 启动时行为: 自动建表（`SchemaUtils.create`，无迁移版本管理）
+- `DEBUG` 默认值为 `true`（未配置 `DEBUG` 环境变量时）
 
-已注册路由：
+本文件覆盖的路由：
 
 - `GET /`
 - `POST /test`
@@ -24,6 +30,7 @@
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/users/me`
 - `PUT /api/v1/users/me/profile`
+- `DELETE /api/v1/users`（仅 `DEBUG=true` 时注册，用于内部调试删号）
 
 ## 2. 通用约定
 
@@ -64,7 +71,8 @@
 `X-Device-Id` 的服务端要求：
 
 - 必须非空字符串（仅在指定接口强制）。
-- 未做长度校验，但数据库字段上限为 128；超长可能触发数据库异常（50000）。
+- 长度不能超过 128。
+- 不能包含控制字符（如 `\n`、`\r`、`\t`）。
 
 ### 2.4 手机号规则
 
@@ -110,8 +118,8 @@
 `RegisterRequest`
 
 - `phone: String`（必填）
-- `smsCode: String`（必填）
-- `password: String`（必填，至少 6 位）
+- `smsCode: String`（必填，必须是 6 位数字）
+- `password: String`（必填，长度 6-20 位，且不能包含控制字符）
 - `profile: UpsertProfileRequest?`（可选）
 
 `LoginCheckRequest`
@@ -121,7 +129,7 @@
 `DirectLoginRequest`
 
 - `phone: String`（必填）
-- `ticket: String`（必填，一次性票据）
+- `ticket: String`（必填，一次性票据；不能包含控制字符；最大 512 字符）
 
 `PasswordLoginRequest`
 
@@ -130,27 +138,31 @@
 
 `TokenRefreshRequest`
 
-- `refreshToken: String`（必填）
+- `refreshToken: String`（必填；不能包含控制字符；最大 512 字符）
 
 `ResetPasswordRequest`
 
 - `phone: String`（必填）
-- `smsCode: String`（必填）
-- `newPassword: String`（必填，至少 6 位）
+- `smsCode: String`（必填，必须是 6 位数字）
+- `newPassword: String`（必填，长度 6-20 位，且不能包含控制字符）
 
 `LogoutRequest`
 
-- `refreshToken: String?`（可选，用于校验“当前设备会话是否为该 token”）
+- `refreshToken: String?`（可选，用于校验“当前设备会话是否为该 token”；不能包含控制字符；最大 512 字符）
+
+`DeleteAccountDebugRequest`
+
+- `phone: String`（必填，仅 `DEBUG=true` 时可用）
 
 `UpsertProfileRequest`
 
-- `fullName: String?`（可选，最多 200 字符）
+- `fullName: String?`（可选，最多 200 字符，且不能包含控制字符）
 - `gender: Gender?`（可选）
 - `birthDate: String?`（可选，必须 `yyyy-MM-dd`）
 - `weightKg: Double?`（可选，数据库精度 `DECIMAL(5,2)`）
-- `familyHistory: List<String>?`（可选，每项最多 200 字符）
-- `medicalHistory: List<String>?`（可选，每项最多 200 字符）
-- `medicationHistory: List<String>?`（可选，每项最多 200 字符）
+- `familyHistory: List<String>?`（可选，每项最多 200 字符，且不能包含控制字符）
+- `medicalHistory: List<String>?`（可选，每项最多 200 字符，且不能包含控制字符）
+- `medicationHistory: List<String>?`（可选，每项最多 200 字符，且不能包含控制字符）
 
 更新语义（`PUT /users/me/profile`）：
 
@@ -250,6 +262,12 @@ This is a test endpoint.
 - `42902` 当日短信次数超限
 - `50010` 短信服务商调用失败（阿里云）
 
+行为补充：
+
+- `purpose=REGISTER` 时，验证码有效期会额外增加注册宽限期。
+- 有效期计算：`SMS_CODE_TTL_SECONDS + REGISTER_SMS_CODE_GRACE_SECONDS`。
+- 默认值下约为 `300 + 1800 = 2100` 秒（35 分钟）。
+
 ### `POST /api/v1/auth/register`
 
 - 鉴权：无
@@ -263,10 +281,10 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 请求体非法、缺失 `X-Device-Id`、`profile` 字段格式非法
+- `40000` 请求体非法、缺失/非法 `X-Device-Id`（超长或控制字符）、`profile` 字段格式非法、密码包含控制字符
 - `40001` 手机号非法
-- `40002` 密码长度不足 6
-- `40003` 验证码错误/过期/已消费
+- `40002` 密码长度不在 6-20 位区间
+- `40003` 验证码格式非法，或验证码错误/过期/已消费
 - `40901` 手机号已注册
 - `42903` 验证码校验失败次数超限
 - `50010` 短信服务商校验失败（阿里云）
@@ -296,7 +314,7 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 请求体非法、缺失 `X-Device-Id`
+- `40000` 请求体非法、缺失/非法 `X-Device-Id`（超长或控制字符）
 - `40001` 手机号非法
 
 ### `POST /api/v1/auth/login/direct`
@@ -312,7 +330,7 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 请求体非法、缺失 `X-Device-Id`
+- `40000` 请求体非法、缺失/非法 `X-Device-Id`（超长或控制字符）、`ticket` 包含控制字符或超长
 - `40001` 手机号非法
 - `40004` ticket 无效/过期/已消费/与设备不匹配
 - `40401` 手机号未注册
@@ -330,7 +348,7 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 请求体非法、缺失 `X-Device-Id`
+- `40000` 请求体非法、缺失/非法 `X-Device-Id`（超长或控制字符）
 - `40001` 手机号非法
 - `40101` 密码错误
 - `40401` 手机号未注册
@@ -354,7 +372,7 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 请求体非法、缺失 `X-Device-Id`
+- `40000` 请求体非法、缺失/非法 `X-Device-Id`（超长或控制字符）、`refreshToken` 包含控制字符或超长
 - `40100` refresh token 无效/过期/设备不匹配
 
 ### `POST /api/v1/auth/password/reset`
@@ -381,10 +399,10 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 请求体非法
+- `40000` 请求体非法、新密码包含控制字符
 - `40001` 手机号非法
-- `40002` 新密码长度不足 6
-- `40003` 验证码错误/过期/已消费
+- `40002` 新密码长度不在 6-20 位区间
+- `40003` 验证码格式非法，或验证码错误/过期/已消费
 - `40402` 手机号未注册
 - `42903` 验证码校验失败次数超限
 - `50010` 短信服务商校验失败（阿里云）
@@ -418,7 +436,7 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 缺失 `X-Device-Id`
+- `40000` 缺失/非法 `X-Device-Id`（超长或控制字符），或 `refreshToken` 包含控制字符/超长
 - `40100` access token 无效/缺失，或 refreshToken 与设备会话不匹配
 
 ## 4.3 用户资料
@@ -454,23 +472,56 @@ This is a test endpoint.
 
 接口级可能错误码：
 
-- `40000` 请求体非法、`birthDate` 格式错误、文本超长
+- `40000` 请求体非法、`birthDate` 格式错误、文本超长或含控制字符
 - `40100` access token 无效/缺失，或用户不存在
+
+## 4.4 调试接口（仅内部测试）
+
+### `DELETE /api/v1/users`
+
+- 鉴权：无（仅 `DEBUG=true` 时路由存在）
+- 请求头：
+- `Content-Type: application/json`
+- 请求体：`DeleteAccountDebugRequest`
+- 成功：`200 OK`
+
+成功响应：
+
+```json
+{
+  "code": 0,
+  "message": "Account deleted",
+  "data": null
+}
+```
+
+行为说明：
+
+- 通过 `phone` 定位用户并删除账号。
+- `users` 删除会触发关联表级联清理（依赖外键 `onDelete = CASCADE`）。
+- 额外清理手机号维度短信记录：`sms_verification_codes`、`sms_verification_attempts`。
+- 该接口用于内部测试，不应在生产环境暴露。
+
+接口级可能错误码：
+
+- `40000` 请求体非法
+- `40001` 手机号非法
+- `40402` 手机号未注册
 
 ## 5. 错误码总表（含原因）
 
 | 业务码 | HTTP 状态 | 含义 | 触发原因（可能） |
 |---|---|---|---|
 | 0 | 200/201/202 | 成功 | 请求处理成功 |
-| 40000 | 400 | INVALID_REQUEST | 请求体反序列化失败；枚举值非法；缺少必填字段；缺失 `X-Device-Id`；`birthDate` 非 `yyyy-MM-dd`；资料文本超过 200 字符 |
+| 40000 | 400 | INVALID_REQUEST | 请求体反序列化失败；枚举值非法；缺少必填字段；缺失 `X-Device-Id`；`X-Device-Id` 超长或含控制字符；`ticket`/`refreshToken` 超长或含控制字符；`birthDate` 非 `yyyy-MM-dd`；密码含控制字符；资料文本超过 200 字符或含控制字符 |
 | 40001 | 400 | INVALID_PHONE | 手机号不符合中国大陆手机号规则 |
-| 40002 | 400 | PASSWORD_TOO_SHORT | `password` 或 `newPassword` 长度 < 6 |
-| 40003 | 400 | INVALID_SMS_CODE | 验证码错误、过期、已消费 |
+| 40002 | 400 | PASSWORD_TOO_SHORT | `password` 或 `newPassword` 长度不在 6-20 位区间 |
+| 40003 | 400 | INVALID_SMS_CODE | 验证码格式非法，或验证码错误、过期、已消费 |
 | 40004 | 400 | LOGIN_TICKET_INVALID | 直登票据无效、过期、已消费，或设备/手机号不匹配 |
 | 40100 | 401 | UNAUTHORIZED | access token 无效/过期/缺失；refresh token 无效/过期/设备不匹配；logout 时 refresh token 与设备会话不匹配；用户不存在 |
 | 40101 | 401 | INVALID_CREDENTIALS | 密码登录时密码错误 |
 | 40401 | 404 | REGISTER_REQUIRED | 密码登录/直登时手机号未注册 |
-| 40402 | 404 | PHONE_NOT_REGISTERED | 重置密码发码或重置密码时手机号未注册 |
+| 40402 | 404 | PHONE_NOT_REGISTERED | 重置密码发码或重置密码时手机号未注册；debug 删号时手机号未注册 |
 | 40901 | 409 | PHONE_ALREADY_REGISTERED | 注册发码或注册时手机号已注册 |
 | 42901 | 429 | SMS_TOO_FREQUENT | 短信发送触发冷却间隔限制 |
 | 42902 | 429 | SMS_DAILY_LIMIT | 当日短信发送次数达到上限 |
@@ -500,7 +551,7 @@ This is a test endpoint.
 - `aliyun` => 阿里云网关
 5. 注册全局异常处理（`StatusPages`）。
 6. 注册 JWT 鉴权（`auth-jwt`）。
-7. 注册路由。
+7. 注册路由（`DEBUG=true` 时会额外注册 debug 删号路由 `DELETE /api/v1/users`）。
 
 ### 6.2 令牌与会话模型
 
@@ -523,6 +574,12 @@ This is a test endpoint.
 - 冷却间隔：默认 60 秒
 - 日上限：默认 10 次
 
+有效期策略：
+
+- 基础验证码有效期：`SMS_CODE_TTL_SECONDS`（默认 300 秒）。
+- 注册验证码有效期：`SMS_CODE_TTL_SECONDS + REGISTER_SMS_CODE_GRACE_SECONDS`（默认 2100 秒）。
+- 重置密码验证码有效期：`SMS_CODE_TTL_SECONDS`（默认 300 秒）。
+
 校验限制（按手机号 + purpose）：
 
 - 窗口：默认 600 秒
@@ -533,6 +590,7 @@ This is a test endpoint.
 
 - `local`：服务端本地生成验证码并存哈希校验。
 - `aliyun`：发送与校验都依赖阿里云接口，服务端仍记录请求与尝试轨迹。
+- 注册/重置密码接口对 `smsCode` 入参做格式校验：必须是 6 位数字（`^\d{6}$`）。
 
 ### 6.4 资料存储机制
 
@@ -558,10 +616,13 @@ This is a test endpoint.
 - `REFRESH_TOKEN_TTL_SECONDS`
 - `LOGIN_TICKET_TTL_SECONDS`
 - `SMS_CODE_TTL_SECONDS`
+- `REGISTER_SMS_CODE_GRACE_SECONDS`
 - `SMS_COOLDOWN_SECONDS`
 - `SMS_DAILY_LIMIT`
 - `SMS_VERIFY_WINDOW_SECONDS`
 - `SMS_VERIFY_MAX_ATTEMPTS`
 - `SMS_PROVIDER`（`local` 或 `aliyun`）
+- `DEBUG`（是否启用 debug 专用路由）
 
 建议客户端将以上 TTL 与限制设计为“服务端可变参数”，不要硬编码固定值。
+

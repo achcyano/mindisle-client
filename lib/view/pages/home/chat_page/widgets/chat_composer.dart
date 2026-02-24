@@ -46,7 +46,7 @@ class ChatComposer extends StatelessWidget {
         sendButtonVisibilityMode: SendButtonVisibilityMode.disabled,
         backgroundColor: colorScheme.surface,
         inputFillColor: colorScheme.surfaceContainerLow,
-        sendIcon: const Icon(Icons.arrow_circle_right, size: 27),
+        sendIcon: const Icon(Icons.arrow_circle_right, size: 35),
         sendIconColor: colorScheme.primary,
         emptyFieldSendIconColor: colorScheme.onSurface.withValues(alpha: 0.35),
         hintColor: colorScheme.onSurfaceVariant,

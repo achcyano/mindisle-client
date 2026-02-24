@@ -1,0 +1,30 @@
+﻿{
+    "data":  {
+                 "session":  {
+                                 "sessionId":  1,
+                                 "scaleId":  1,
+                                 "scaleCode":  "PHQ9",
+                                 "scaleName":  "患者健康问卷抑郁量表（PHQ-9）",
+                                 "versionId":  1,
+                                 "version":  2,
+                                 "status":  "IN_PROGRESS",
+                                 "progress":  0,
+                                 "startedAt":  "2026-02-23T06:08:13.953746Z",
+                                 "updatedAt":  "2026-02-23T06:08:13.953746Z"
+                             },
+                 "answers":  [
+
+                             ],
+                 "unansweredRequiredQuestionIds":  [
+                                                       1,
+                                                       2,
+                                                       3,
+                                                       4,
+                                                       5,
+                                                       6,
+                                                       7,
+                                                       8,
+                                                       9
+                                                   ]
+             }
+}

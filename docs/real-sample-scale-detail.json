@@ -1,0 +1,467 @@
+﻿{
+    "data":  {
+                 "scaleId":  1,
+                 "code":  "PHQ9",
+                 "name":  "患者健康问卷抑郁量表（PHQ-9）",
+                 "description":  "用于评估最近两周抑郁相关症状频率。",
+                 "status":  "PUBLISHED",
+                 "versionId":  1,
+                 "version":  2,
+                 "config":  {
+                                "timeWindow":  "近两周",
+                                "defaultOptionSet":  "LIKERT_0_3",
+                                "dimensions":  [
+                                                   {
+                                                       "key":  "total",
+                                                       "name":  "总分",
+                                                       "min":  0,
+                                                       "max":  27,
+                                                       "description":  "9个核心题目总分"
+                                                   }
+                                               ]
+                            },
+                 "dimensions":  [
+                                    {
+                                        "key":  "total",
+                                        "name":  "总分",
+                                        "description":  "9个核心题目总分",
+                                        "scoreRange":  {
+                                                           "min":  0.0,
+                                                           "max":  27.0
+                                                       }
+                                    }
+                                ],
+                 "questions":  [
+                                   {
+                                       "questionId":  1,
+                                       "questionKey":  "q1",
+                                       "orderNo":  1,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "做事情提不起兴趣或没有乐趣",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  1,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  2,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  3,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  4,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  2,
+                                       "questionKey":  "q2",
+                                       "orderNo":  2,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "感到心情低落、沮丧或绝望",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  5,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  6,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  7,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  8,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  3,
+                                       "questionKey":  "q3",
+                                       "orderNo":  3,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "入睡困难、睡不安稳或睡眠过多",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  9,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  10,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  11,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  12,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  4,
+                                       "questionKey":  "q4",
+                                       "orderNo":  4,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "感到疲倦或没有精力",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  13,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  14,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  15,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  16,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  5,
+                                       "questionKey":  "q5",
+                                       "orderNo":  5,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "食欲不振或吃太多",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  17,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  18,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  19,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  20,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  6,
+                                       "questionKey":  "q6",
+                                       "orderNo":  6,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "觉得自己很差劲、失败，或让家人失望",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  21,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  22,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  23,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  24,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  7,
+                                       "questionKey":  "q7",
+                                       "orderNo":  7,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "做事时难以集中注意力",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  25,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  26,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  27,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  28,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  8,
+                                       "questionKey":  "q8",
+                                       "orderNo":  8,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "动作/说话变慢，或坐立不安",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  29,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  30,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  31,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  32,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  9,
+                                       "questionKey":  "q9",
+                                       "orderNo":  9,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  true,
+                                       "scorable":  true,
+                                       "reverseScored":  false,
+                                       "stem":  "有不如死掉或伤害自己的想法",
+                                       "note":  "最近两周",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  33,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  34,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  35,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  36,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   },
+                                   {
+                                       "questionId":  10,
+                                       "questionKey":  "q10",
+                                       "orderNo":  10,
+                                       "type":  "SINGLE_CHOICE",
+                                       "dimension":  "total",
+                                       "required":  false,
+                                       "scorable":  false,
+                                       "reverseScored":  false,
+                                       "stem":  "这些问题对您的工作、家务、学习或人际关系造成了多大影响？",
+                                       "note":  "功能损害附加题",
+                                       "optionSetCode":  "LIKERT_0_3",
+                                       "options":  [
+                                                       {
+                                                           "optionId":  37,
+                                                           "optionKey":  "opt_0",
+                                                           "orderNo":  0,
+                                                           "label":  "完全不会",
+                                                           "scoreValue":  0.0
+                                                       },
+                                                       {
+                                                           "optionId":  38,
+                                                           "optionKey":  "opt_1",
+                                                           "orderNo":  1,
+                                                           "label":  "有几天",
+                                                           "scoreValue":  1.0
+                                                       },
+                                                       {
+                                                           "optionId":  39,
+                                                           "optionKey":  "opt_2",
+                                                           "orderNo":  2,
+                                                           "label":  "一半以上时间",
+                                                           "scoreValue":  2.0
+                                                       },
+                                                       {
+                                                           "optionId":  40,
+                                                           "optionKey":  "opt_3",
+                                                           "orderNo":  3,
+                                                           "label":  "几乎每天",
+                                                           "scoreValue":  3.0
+                                                       }
+                                                   ]
+                                   }
+                               ]
+             }
+}

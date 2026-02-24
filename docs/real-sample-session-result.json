@@ -1,0 +1,25 @@
+﻿{
+    "data":  {
+                 "sessionId":  1,
+                 "totalScore":  9.0,
+                 "dimensionScores":  {
+                                         "total":  9.0
+                                     },
+                 "dimensionResults":  [
+                                          {
+                                              "dimensionKey":  "total",
+                                              "dimensionName":  "总分",
+                                              "rawScore":  9.0,
+                                              "levelCode":  "mild",
+                                              "levelName":  "轻度抑郁"
+                                          }
+                                      ],
+                 "resultFlags":  [
+                                     "SUICIDE_RISK"
+                                 ],
+                 "bandLevelCode":  "mild",
+                 "bandLevelName":  "轻度抑郁",
+                 "resultText":  "PHQ-9 总分 9.00 分，分级：轻度抑郁。 检测到自伤相关条目阳性，建议立即进行风险评估。",
+                 "computedAt":  "2026-02-23T06:13:17.541330Z"
+             }
+}

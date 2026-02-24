@@ -5,6 +5,7 @@ import 'package:mindisle_client/view/pages/home/home_page/card_home.dart';
 import 'package:mindisle_client/view/pages/home/home_page/today_mood_card.dart';
 import 'package:mindisle_client/view/pages/home/medicine_page.dart';
 import 'package:mindisle_client/view/pages/home/profile_page.dart';
+import 'package:mindisle_client/view/pages/home/scale_page/scale_list_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 
 class HomePage extends StatelessWidget {
@@ -35,7 +36,7 @@ class HomePage extends StatelessWidget {
               const HomeActionCard(
                 icon: Icons.link,
                 title: '绑定医生',
-                subtitle: '绑定医生以使用完整服务',
+                subtitle: '绑定医生后可使用完整服务',
               ),
               HomeActionCard(
                 icon: Icons.medical_services_outlined,
@@ -51,6 +52,9 @@ class HomePage extends StatelessWidget {
                     child: HomeActionCard(
                       icon: Icons.assessment_outlined,
                       title: '量表评估',
+                      onTap: () {
+                        ScaleListPage.route.goRoot(context);
+                      },
                     ),
                   ),
                   Expanded(
