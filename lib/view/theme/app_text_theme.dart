@@ -16,15 +16,13 @@ class AppTextTheme {
       ),
       bodySmall: (base.bodySmall ?? const TextStyle()).copyWith(
         fontSize: 13,
-        fontWeight: FontWeight.w300,
       ),
-        bodyMedium: (base.bodyMedium ?? const TextStyle()).copyWith(
-        fontSize: 14,
-        fontWeight: FontWeight.w300,
+      bodyMedium: (base.bodyMedium ?? const TextStyle()).copyWith(
+        fontSize: 15,
+        height: 1.5,
       ),
       titleSmall: (base.titleSmall ?? const TextStyle()).copyWith(
         fontSize: 17,
-        fontWeight: FontWeight.w300,
       ),
       labelLarge: (base.labelLarge ?? const TextStyle()).copyWith(
         fontSize: 16,
@@ -32,11 +30,9 @@ class AppTextTheme {
       ),
       titleLarge: (base.titleLarge ?? const TextStyle()).copyWith(
         fontSize: 23,
-        fontWeight: FontWeight.w300,
       ),
       titleMedium: (base.titleMedium ?? const TextStyle()).copyWith(
         fontSize: 16,
-        fontWeight: FontWeight.w300,
         letterSpacing: 0.6,
       ),
     );

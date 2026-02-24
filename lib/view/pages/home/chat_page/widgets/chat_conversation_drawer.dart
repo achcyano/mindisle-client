@@ -54,8 +54,15 @@ class ChatConversationDrawer extends ConsumerWidget {
                 Navigator.of(context).pop();
                 await controller.switchConversation(conversationId);
               },
-              onLongPressConversation: (conversation) async {
-                await _onConversationLongPressed(
+              onRenameConversation: (conversation) async {
+                await _showRenameDialog(
+                  context: context,
+                  controller: controller,
+                  conversation: conversation,
+                );
+              },
+              onDeleteConversation: (conversation) async {
+                await _showDeleteDialog(
                   context: context,
                   controller: controller,
                   conversation: conversation,
@@ -100,107 +107,52 @@ class ChatConversationDrawer extends ConsumerWidget {
     return value.toString().padLeft(2, '0');
   }
 
-  Future<void> _onConversationLongPressed({
-    required BuildContext context,
-    required AiChatController controller,
-    required AiConversation conversation,
-  }) async {
-    final action = await showModalBottomSheet<_ConversationMenuAction>(
-      context: context,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit_outlined),
-                title: const Text('修改标题'),
-                onTap: () {
-                  Navigator.of(
-                    sheetContext,
-                  ).pop(_ConversationMenuAction.rename);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete_outline),
-                title: const Text('删除对话'),
-                onTap: () {
-                  Navigator.of(
-                    sheetContext,
-                  ).pop(_ConversationMenuAction.delete);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    if (action == null) return;
-    if (!context.mounted) return;
-    switch (action) {
-      case _ConversationMenuAction.rename:
-        await _showRenameDialog(
-          context: context,
-          controller: controller,
-          conversation: conversation,
-        );
-        return;
-      case _ConversationMenuAction.delete:
-        await _showDeleteDialog(
-          context: context,
-          controller: controller,
-          conversation: conversation,
-        );
-        return;
-    }
-  }
-
   Future<void> _showRenameDialog({
     required BuildContext context,
     required AiChatController controller,
     required AiConversation conversation,
   }) async {
     final initial = conversation.title.trim();
-    final textController = TextEditingController(text: initial);
-    try {
-      final title = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('修改标题'),
-            content: TextField(
-              controller: textController,
-              autofocus: true,
-              decoration: const InputDecoration(hintText: '输入新的会话标题'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                },
-                child: const Text('取消'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  final value = textController.text.trim();
-                  if (value.isEmpty) return;
-                  Navigator.of(dialogContext).pop(value);
-                },
-                child: const Text('确认'),
-              ),
-            ],
-          );
-        },
-      );
+    var draftTitle = initial;
 
-      if (title == null) return;
-      await controller.renameConversationTitle(
-        conversationId: conversation.conversationId,
-        title: title,
-      );
-    } finally {
-      textController.dispose();
-    }
+    final title = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('修改标题'),
+          content: TextFormField(
+            initialValue: initial,
+            autofocus: true,
+            onChanged: (value) {
+              draftTitle = value;
+            },
+            decoration: const InputDecoration(hintText: '输入新的会话标题'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = draftTitle.trim();
+                if (value.isEmpty) return;
+                Navigator.of(dialogContext).pop(value);
+              },
+              child: const Text('确认'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (title == null) return;
+    await controller.renameConversationTitle(
+      conversationId: conversation.conversationId,
+      title: title,
+    );
   }
 
   Future<void> _showDeleteDialog({
@@ -237,15 +189,14 @@ class ChatConversationDrawer extends ConsumerWidget {
   }
 }
 
-enum _ConversationMenuAction { rename, delete }
-
 class _ConversationListContent extends StatelessWidget {
   const _ConversationListContent({
     required this.state,
     required this.selectedIndex,
     required this.onRefresh,
     required this.onSelectConversation,
-    required this.onLongPressConversation,
+    required this.onRenameConversation,
+    required this.onDeleteConversation,
     required this.conversationTitleBuilder,
     required this.conversationTimeBuilder,
   });
@@ -254,8 +205,8 @@ class _ConversationListContent extends StatelessWidget {
   final int? selectedIndex;
   final Future<void> Function() onRefresh;
   final Future<void> Function(int conversationId) onSelectConversation;
-  final Future<void> Function(AiConversation conversation)
-  onLongPressConversation;
+  final Future<void> Function(AiConversation conversation) onRenameConversation;
+  final Future<void> Function(AiConversation conversation) onDeleteConversation;
   final String Function(AiConversation conversation) conversationTitleBuilder;
   final String Function(AiConversation conversation) conversationTimeBuilder;
 
@@ -307,8 +258,11 @@ class _ConversationListContent extends StatelessWidget {
             onTap: () {
               onSelectConversation(conversation.conversationId);
             },
-            onLongPress: () {
-              onLongPressConversation(conversation);
+            onRename: () async {
+              await onRenameConversation(conversation);
+            },
+            onDelete: () async {
+              await onDeleteConversation(conversation);
             },
           );
         },
@@ -323,60 +277,110 @@ class _ConversationListItem extends StatelessWidget {
     required this.subtitle,
     required this.isSelected,
     required this.onTap,
-    required this.onLongPress,
+    required this.onRename,
+    required this.onDelete,
   });
 
   final String title;
   final String subtitle;
   final bool isSelected;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
+  final Future<void> Function() onRename;
+  final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final menuTextStyle = Theme.of(context).textTheme.bodyMedium;
     final subtitleStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
       color: colorScheme.onSurface.withValues(alpha: 0.62),
     );
-    return Material(
-      color: isSelected
-          ? colorScheme.secondaryContainer.withValues(alpha: 0.52)
-          : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: SizedBox(
-          height: 62,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(
-              children: [
-                Icon(
-                  isSelected ? Icons.chat_bubble : Icons.chat_bubble_outline,
-                  size: 19,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: subtitleStyle,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+
+    return MenuAnchor(
+      consumeOutsideTap: true,
+      style: MenuStyle(
+        minimumSize: const WidgetStatePropertyAll(Size(196, 0)),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
       ),
+      menuChildren: [
+        MenuItemButton(
+          style: ButtonStyle(textStyle: WidgetStatePropertyAll(menuTextStyle)),
+          onPressed: () async {
+            await onRename();
+          },
+          trailingIcon: const Icon(Icons.edit_outlined),
+          child: const Text('修改标题'),
+        ),
+        MenuItemButton(
+          style: ButtonStyle(textStyle: WidgetStatePropertyAll(menuTextStyle)),
+          onPressed: () async {
+            await onDelete();
+          },
+          trailingIcon: const Icon(Icons.delete_outline),
+          child: const Text('删除对话'),
+        ),
+      ],
+      builder: (context, menuController, child) {
+        Offset? longPressPosition;
+        return Material(
+          color: isSelected
+              ? colorScheme.secondaryContainer.withValues(alpha: 0.52)
+              : Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            onTapDown: (details) {
+              longPressPosition = details.localPosition;
+            },
+            onLongPress: () {
+              if (menuController.isOpen) return;
+              if (longPressPosition == null) {
+                menuController.open();
+                return;
+              }
+              menuController.open(position: longPressPosition);
+            },
+            child: SizedBox(
+              height: 62,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      isSelected
+                          ? Icons.chat_bubble
+                          : Icons.chat_bubble_outline,
+                      size: 19,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: subtitleStyle,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
