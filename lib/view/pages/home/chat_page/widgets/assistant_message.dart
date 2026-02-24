@@ -3,6 +3,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_state.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class AssistantMessageContent extends StatelessWidget {
   const AssistantMessageContent({
@@ -94,10 +95,7 @@ class AssistantMessageContent extends StatelessWidget {
                 SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: colorScheme.primary,
-                  ),
+                  child: const FittedBox(child: CircularProgressIndicatorM3E()),
                 ),
               ],
               if (options.isNotEmpty) ...[

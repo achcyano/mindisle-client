@@ -7,6 +7,7 @@ import 'package:mindisle_client/view/pages/home/scale_page/scale_assessment_page
 import 'package:mindisle_client/view/pages/home/scale_page/scale_history_page.dart';
 import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_card_tile.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ScaleListPage extends ConsumerStatefulWidget {
   const ScaleListPage({super.key});
@@ -66,7 +67,7 @@ class _ScaleListPageState extends ConsumerState<ScaleListPage> {
       body: SafeArea(
         top: false,
         child: state.isLoading && state.items.isEmpty
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicatorM3E())
             : RefreshIndicator(
                 onRefresh: () => controller.loadScales(refresh: true),
                 child: state.items.isEmpty

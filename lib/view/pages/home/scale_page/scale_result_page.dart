@@ -6,6 +6,7 @@ import 'package:mindisle_client/features/scale/presentation/providers/scale_prov
 import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_dimension_result_list.dart';
 import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_result_summary_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ScaleResultPage extends ConsumerStatefulWidget {
   const ScaleResultPage({super.key, required this.sessionId});
@@ -87,7 +88,7 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
       body: SafeArea(
         top: false,
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicatorM3E())
             : _errorMessage != null
             ? Center(
                 child: Padding(

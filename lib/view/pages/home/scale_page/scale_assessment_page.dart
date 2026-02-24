@@ -13,6 +13,7 @@ import 'package:mindisle_client/view/pages/home/scale_page/widgets/question_step
 import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_assist_bottom_sheet.dart';
 import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_progress_header.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ScaleAssessmentPage extends ConsumerStatefulWidget {
   const ScaleAssessmentPage({super.key, required this.args});
@@ -216,7 +217,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       icon: state.isSubmitting
           ? const SizedBox.square(
               dimension: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: FittedBox(child: CircularProgressIndicatorM3E()),
             )
           : Icon(data.isLastQuestion ? Icons.check : Icons.arrow_forward),
       label: Text(
@@ -243,7 +244,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     required _AssessmentViewData data,
   }) {
     if (state.isLoading && data.detail == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicatorM3E());
     }
     if (data.detail == null) {
       return _buildRetry();

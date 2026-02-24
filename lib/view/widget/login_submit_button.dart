@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class LoginSubmitButton extends StatelessWidget {
   const LoginSubmitButton({
@@ -29,10 +30,10 @@ class LoginSubmitButton extends StatelessWidget {
             ? SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    colorScheme.onPrimary,
+                child: FittedBox(
+                  child: CircularProgressIndicatorM3E(
+                    activeColor: colorScheme.onPrimary,
+                    trackColor: colorScheme.onPrimary.withValues(alpha: 0.24),
                   ),
                 ),
               )

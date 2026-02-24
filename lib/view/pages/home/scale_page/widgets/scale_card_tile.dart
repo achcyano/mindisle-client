@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ScaleCardTile extends StatelessWidget {
   const ScaleCardTile({
@@ -75,10 +76,7 @@ class ScaleCardTile extends StatelessWidget {
               if (isOpening)
                 SizedBox.square(
                   dimension: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    color: colorScheme.primary,
-                  ),
+                  child: const FittedBox(child: CircularProgressIndicatorM3E()),
                 )
               else
                 const Icon(Icons.chevron_right),

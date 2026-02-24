@@ -29,16 +29,11 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: swappedScheme.surfaceContainerHighest,
+        elevation: 0,
         contentTextStyle: base.textTheme.bodyMedium?.copyWith(
           color: swappedScheme.onSurface,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            width: 0.8,
-            color: swappedScheme.outlineVariant.withValues(alpha: 0.65),
-          ),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }

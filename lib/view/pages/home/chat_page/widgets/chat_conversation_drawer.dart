@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_controller.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_state.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ChatConversationDrawer extends ConsumerWidget {
   const ChatConversationDrawer({super.key});
@@ -44,8 +45,6 @@ class ChatConversationDrawer extends ConsumerWidget {
               ],
             ),
           ),
-          if (state.isRefreshingConversations)
-            const LinearProgressIndicator(minHeight: 2),
           Expanded(
             child: _ConversationListContent(
               state: state,
@@ -116,14 +115,18 @@ class ChatConversationDrawer extends ConsumerWidget {
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('修改标题'),
                 onTap: () {
-                  Navigator.of(sheetContext).pop(_ConversationMenuAction.rename);
+                  Navigator.of(
+                    sheetContext,
+                  ).pop(_ConversationMenuAction.rename);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline),
                 title: const Text('删除对话'),
                 onTap: () {
-                  Navigator.of(sheetContext).pop(_ConversationMenuAction.delete);
+                  Navigator.of(
+                    sheetContext,
+                  ).pop(_ConversationMenuAction.delete);
                 },
               ),
             ],
@@ -168,9 +171,7 @@ class ChatConversationDrawer extends ConsumerWidget {
             content: TextField(
               controller: textController,
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText: '输入新的会话标题',
-              ),
+              decoration: const InputDecoration(hintText: '输入新的会话标题'),
             ),
             actions: [
               TextButton(
@@ -236,10 +237,7 @@ class ChatConversationDrawer extends ConsumerWidget {
   }
 }
 
-enum _ConversationMenuAction {
-  rename,
-  delete,
-}
+enum _ConversationMenuAction { rename, delete }
 
 class _ConversationListContent extends StatelessWidget {
   const _ConversationListContent({
@@ -257,7 +255,7 @@ class _ConversationListContent extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final Future<void> Function(int conversationId) onSelectConversation;
   final Future<void> Function(AiConversation conversation)
-      onLongPressConversation;
+  onLongPressConversation;
   final String Function(AiConversation conversation) conversationTitleBuilder;
   final String Function(AiConversation conversation) conversationTimeBuilder;
 
@@ -266,7 +264,7 @@ class _ConversationListContent extends StatelessWidget {
     final conversations = state.conversations;
 
     if (state.isLoadingConversations && conversations.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicatorM3E());
     }
 
     if (conversations.isEmpty) {
@@ -363,11 +361,7 @@ class _ConversationListItem extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 2),
                       Text(
                         subtitle,

@@ -3,6 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/scale/presentation/assist/scale_assist_controller.dart';
 import 'package:mindisle_client/features/scale/presentation/assist/scale_assist_state.dart';
+import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ScaleAssistBottomSheet extends ConsumerStatefulWidget {
   const ScaleAssistBottomSheet({
@@ -23,8 +24,13 @@ class ScaleAssistBottomSheet extends ConsumerStatefulWidget {
 
 class _ScaleAssistBottomSheetState
     extends ConsumerState<ScaleAssistBottomSheet> {
+  static const double _bottomFollowThreshold = 36;
+  static const Duration _autoFollowThrottle = Duration(milliseconds: 90);
+
   late final TextEditingController _textController;
   late final ScrollController _scrollController;
+  bool _shouldAutoFollowStreaming = false;
+  DateTime? _lastAutoFollowAt;
 
   ScaleAssistArgs get _args => ScaleAssistArgs(
     sessionId: widget.sessionId,
@@ -35,12 +41,13 @@ class _ScaleAssistBottomSheetState
   void initState() {
     super.initState();
     _textController = TextEditingController();
-    _scrollController = ScrollController();
+    _scrollController = ScrollController()..addListener(_onListScrolled);
   }
 
   @override
   void dispose() {
     _textController.dispose();
+    _scrollController.removeListener(_onListScrolled);
     _scrollController.dispose();
     super.dispose();
   }
@@ -50,10 +57,35 @@ class _ScaleAssistBottomSheetState
     if (text.isEmpty) return;
 
     _textController.clear();
+    _shouldAutoFollowStreaming = _isNearBottom();
     await ref
         .read(scaleAssistControllerProvider(_args).notifier)
         .sendDraft(text);
-    _scrollToBottom();
+    _shouldAutoFollowStreaming = false;
+    _lastAutoFollowAt = null;
+  }
+
+  void _onListScrolled() {
+    if (!_shouldAutoFollowStreaming) return;
+    if (_isNearBottom()) return;
+    _shouldAutoFollowStreaming = false;
+  }
+
+  bool _isNearBottom() {
+    if (!_scrollController.hasClients) return true;
+    final position = _scrollController.position;
+    final distanceToBottom = position.maxScrollExtent - position.pixels;
+    return distanceToBottom <= _bottomFollowThreshold;
+  }
+
+  bool _didStreamTextUpdate(ScaleAssistState? previous, ScaleAssistState next) {
+    if (previous == null) return false;
+    if (previous.messages.isEmpty || next.messages.isEmpty) return false;
+    final previousLast = previous.messages.last;
+    final nextLast = next.messages.last;
+    if (previousLast.id != nextLast.id) return false;
+    if (!nextLast.isStreaming) return false;
+    return previousLast.text != nextLast.text;
   }
 
   void _scrollToBottom() {
@@ -77,8 +109,25 @@ class _ScaleAssistBottomSheetState
       previous,
       next,
     ) {
-      if (next.messages.length != previous?.messages.length) {
-        _scrollToBottom();
+      final sendingStarted =
+          (previous?.isSending ?? false) == false && next.isSending;
+      if (sendingStarted) {
+        _shouldAutoFollowStreaming = _isNearBottom();
+      }
+      if ((previous?.isSending ?? false) && !next.isSending) {
+        _shouldAutoFollowStreaming = false;
+        _lastAutoFollowAt = null;
+      }
+
+      final hasNewMessages = next.messages.length != previous?.messages.length;
+      final hasStreamUpdate = _didStreamTextUpdate(previous, next);
+      if (_shouldAutoFollowStreaming && (hasNewMessages || hasStreamUpdate)) {
+        final now = DateTime.now();
+        final last = _lastAutoFollowAt;
+        if (last == null || now.difference(last) >= _autoFollowThrottle) {
+          _lastAutoFollowAt = now;
+          _scrollToBottom();
+        }
       }
       final message = next.errorMessage;
       if (message == null ||
@@ -379,10 +428,7 @@ class _AssistantFullWidthMessage extends StatelessWidget {
             const SizedBox(height: 8),
             SizedBox.square(
               dimension: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.8,
-                color: colorScheme.primary,
-              ),
+              child: const FittedBox(child: CircularProgressIndicatorM3E()),
             ),
           ],
         ],

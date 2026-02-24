@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mindisle_client/core/static.dart';
 import 'package:mindisle_client/data/preference/hive_pref_tool.dart';
 import 'package:mindisle_client/shared/session/session_expired_signal.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
@@ -47,6 +48,7 @@ class App extends ConsumerWidget {
     });
 
     return MaterialApp(
+      title: appDisplayName,
       debugShowCheckedModeBanner: false,
       locale: const Locale('zh', 'CN'),
       supportedLocales: const <Locale>[Locale('zh', 'CN'), Locale('en', 'US')],

@@ -50,13 +50,6 @@ class ChatComposer extends StatelessWidget {
         sendIconColor: colorScheme.primary,
         emptyFieldSendIconColor: colorScheme.onSurface.withValues(alpha: 0.35),
         hintColor: colorScheme.onSurfaceVariant,
-        topWidget: isSending
-            ? LinearProgressIndicator(
-                minHeight: 2,
-                color: colorScheme.primary,
-                backgroundColor: Colors.transparent,
-              )
-            : null,
       ),
     );
   }
