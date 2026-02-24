@@ -120,8 +120,6 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
                   if (_result!.resultFlags.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Card(
-                      elevation: 0,
-                      color: colorScheme.surfaceContainerLow,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),

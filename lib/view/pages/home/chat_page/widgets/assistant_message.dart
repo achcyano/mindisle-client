@@ -148,8 +148,6 @@ class _AssistantOptionsColumn extends StatelessWidget {
             (option) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Card(
-                elevation: 0,
-                color: colorScheme.surfaceContainerLow,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),

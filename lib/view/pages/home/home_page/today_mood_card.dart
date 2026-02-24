@@ -84,18 +84,10 @@ class _TodayMoodCardState extends State<TodayMoodCard>
     );
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(
-        color: colorScheme.primary,
-        width: 0.9,
-      ),
+      borderSide: BorderSide(color: colorScheme.primary, width: 0.9),
     );
 
     return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
         child: Column(
@@ -179,10 +171,7 @@ class _TodayMoodCardState extends State<TodayMoodCard>
   List<Widget> _buildLowMoodDetails(TextStyle? descriptionTextStyle) {
     return <Widget>[
       const SizedBox(height: 14),
-      _SectionTitle(
-        title: '今天发生了什么？',
-        textStyle: descriptionTextStyle,
-      ),
+      _SectionTitle(title: '今天发生了什么？', textStyle: descriptionTextStyle),
       const SizedBox(height: 8),
       _FilterChipGrid(
         labels: _eventTags,
@@ -197,29 +186,26 @@ class _TodayMoodCardState extends State<TodayMoodCard>
   List<Widget> _buildBodyFeelingDetails(TextStyle? descriptionTextStyle) {
     return <Widget>[
       const SizedBox(height: 14),
-      _SectionTitle(
-        title: '身体感觉如何？',
-        textStyle: descriptionTextStyle,
-      ),
+      _SectionTitle(title: '身体感觉如何？', textStyle: descriptionTextStyle),
       const SizedBox(height: 8),
       Wrap(
         spacing: 6,
         runSpacing: 8,
-        children: _bodyTags.map((tag) {
-          final selected = _selectedBody.contains(tag.label);
-          return FilterChip(
-            selected: selected,
-            showCheckmark: false,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
-            avatar: Icon(tag.icon, size: 16),
-            label: Text(tag.label, style: descriptionTextStyle),
-            onSelected: (value) => _onBodyTagSelected(
-              label: tag.label,
-              selected: value,
-            ),
-          );
-        }).toList(growable: false),
+        children: _bodyTags
+            .map((tag) {
+              final selected = _selectedBody.contains(tag.label);
+              return FilterChip(
+                selected: selected,
+                showCheckmark: false,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                avatar: Icon(tag.icon, size: 16),
+                label: Text(tag.label, style: descriptionTextStyle),
+                onSelected: (value) =>
+                    _onBodyTagSelected(label: tag.label, selected: value),
+              );
+            })
+            .toList(growable: false),
       ),
     ];
   }
@@ -351,9 +337,9 @@ class _TodayMoodCardState extends State<TodayMoodCard>
     setState(() {
       _isLockedForToday = true;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('已轻轻记下今天。')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('已轻轻记下今天。')));
   }
 
   void _syncLockStateWithToday() {
@@ -416,20 +402,22 @@ class _FilterChipGrid extends StatelessWidget {
     return Wrap(
       spacing: 6,
       runSpacing: 8,
-      children: labels.map((label) {
-        final selected = selectedValues.contains(label);
-        return FilterChip(
-          selected: selected,
-          showCheckmark: false,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          label: Text(label, style: labelStyle),
-          onSelected: (_) {
-            if (!enabled) return;
-            onSelect(label);
-          },
-        );
-      }).toList(growable: false),
+      children: labels
+          .map((label) {
+            final selected = selectedValues.contains(label);
+            return FilterChip(
+              selected: selected,
+              showCheckmark: false,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              label: Text(label, style: labelStyle),
+              onSelected: (_) {
+                if (!enabled) return;
+                onSelect(label);
+              },
+            );
+          })
+          .toList(growable: false),
     );
   }
 }
@@ -481,10 +469,7 @@ class _MoodButton extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({
-    required this.title,
-    this.textStyle,
-  });
+  const _SectionTitle({required this.title, this.textStyle});
 
   final String title;
   final TextStyle? textStyle;
@@ -502,18 +487,13 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _MoodOption {
-  const _MoodOption({
-    required this.emoji,
-  });
+  const _MoodOption({required this.emoji});
 
   final String emoji;
 }
 
 class _BodyTag {
-  const _BodyTag({
-    required this.icon,
-    required this.label,
-  });
+  const _BodyTag({required this.icon, required this.label});
 
   final IconData icon;
   final String label;

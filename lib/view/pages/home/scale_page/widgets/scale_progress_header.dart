@@ -12,7 +12,6 @@ class ScaleProgressHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final safeTotal = total <= 0 ? 1 : total;
     final safeIndex = currentIndex < 0
         ? 0
@@ -20,9 +19,7 @@ class ScaleProgressHeader extends StatelessWidget {
     final progress = (safeIndex + 1) / safeTotal;
 
     return Card(
-      elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         child: Column(

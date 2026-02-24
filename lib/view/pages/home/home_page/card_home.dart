@@ -26,8 +26,6 @@ class HomeActionCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
       child: InkWell(
         borderRadius: BorderRadius.circular(borderRadius),
         onTap: onTap,

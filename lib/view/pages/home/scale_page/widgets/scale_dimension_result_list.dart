@@ -10,16 +10,12 @@ class ScaleDimensionResultList extends StatelessWidget {
   Widget build(BuildContext context) {
     final dimensionResults = result.dimensionResults;
     final dimensionScores = result.dimensionScores;
-    final colorScheme = Theme.of(context).colorScheme;
 
     if (dimensionResults.isEmpty && dimensionScores.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         child: Column(

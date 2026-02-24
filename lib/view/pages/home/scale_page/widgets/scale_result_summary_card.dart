@@ -15,9 +15,6 @@ class ScaleResultSummaryCard extends StatelessWidget {
         : result.totalScore!.toStringAsFixed(1);
 
     return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(

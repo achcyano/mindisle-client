@@ -20,8 +20,6 @@ class StartupNetworkErrorCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-      elevation: 0,
       color: colorScheme.errorContainer,
       child: InkWell(
         borderRadius: BorderRadius.circular(22),

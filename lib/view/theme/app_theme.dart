@@ -18,6 +18,11 @@ class AppTheme {
       colorScheme: swappedScheme,
       scaffoldBackgroundColor: swappedScheme.surface,
       textTheme: AppTextTheme.build(base.textTheme),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: swappedScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      ),
       chipTheme: base.chipTheme.copyWith(
         side: thinChipBorder,
         shape: StadiumBorder(side: thinChipBorder),
