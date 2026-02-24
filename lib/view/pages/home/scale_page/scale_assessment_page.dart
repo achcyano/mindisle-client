@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
+import 'package:mindisle_client/features/scale/presentation/assist/scale_assist_controller.dart';
+import 'package:mindisle_client/features/scale/presentation/assist/scale_assist_state.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_args.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_controller.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_state.dart';
@@ -56,7 +58,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       canPop: _allowPop,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _handlePopRequest(context);
+        _handlePopRequest();
       },
       child: Scaffold(
         appBar: AppBar(
@@ -72,21 +74,22 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     );
   }
 
-  Future<void> _handlePopRequest(BuildContext context) async {
+  Future<void> _handlePopRequest() async {
     if (_allowPop || _isHandlingPop) return;
     _isHandlingPop = true;
 
-    final shouldExit = await _showExitConfirmDialog(context);
+    final shouldExit = await _showExitConfirmDialog();
     _isHandlingPop = false;
     if (!mounted || !shouldExit) return;
 
+    _clearAllAssistHistory(ref.read(scaleAssessmentControllerProvider(_args)));
     setState(() {
       _allowPop = true;
     });
     Navigator.of(context).pop();
   }
 
-  Future<bool> _showExitConfirmDialog(BuildContext context) async {
+  Future<bool> _showExitConfirmDialog() async {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
@@ -121,9 +124,46 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       previous,
       next,
     ) {
+      final previousQuestionId = _questionIdFromState(previous);
+      final nextQuestionId = _questionIdFromState(next);
+      if (previousQuestionId != nextQuestionId) {
+        _clearAssistHistoryForQuestion(previousQuestionId);
+        _clearAssistHistoryForQuestion(nextQuestionId);
+      }
       _maybeHandleError(context, previous, next);
       _maybeHandleSubmitted(context, previous, next);
     });
+  }
+
+  int? _questionIdFromState(ScaleAssessmentState? state) {
+    final detail = state?.detail;
+    if (detail == null || detail.questions.isEmpty) {
+      return null;
+    }
+    final index = state!.currentQuestionIndex.clamp(
+      0,
+      detail.questions.length - 1,
+    );
+    return detail.questions[index].questionId;
+  }
+
+  void _clearAssistHistoryForQuestion(int? questionId) {
+    if (questionId == null) return;
+    ref.invalidate(
+      scaleAssistControllerProvider(
+        ScaleAssistArgs(sessionId: _args.sessionId, questionId: questionId),
+      ),
+    );
+  }
+
+  void _clearAllAssistHistory(ScaleAssessmentState state) {
+    final questions = state.detail?.questions;
+    if (questions == null || questions.isEmpty) {
+      return;
+    }
+    for (final question in questions) {
+      _clearAssistHistoryForQuestion(question.questionId);
+    }
   }
 
   void _maybeHandleError(
@@ -152,6 +192,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     if (submittedSessionId == previous?.submittedSessionId) return;
     if (!mounted) return;
 
+    _clearAllAssistHistory(next);
     _controller.clearSubmitted();
     unawaited(ScaleResultPage.route.replace(context, submittedSessionId));
   }

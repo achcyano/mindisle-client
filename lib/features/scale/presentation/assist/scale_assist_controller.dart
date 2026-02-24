@@ -5,11 +5,12 @@ import 'package:mindisle_client/features/scale/domain/entities/scale_entities.da
 import 'package:mindisle_client/features/scale/presentation/assist/scale_assist_state.dart';
 import 'package:mindisle_client/features/scale/presentation/providers/scale_providers.dart';
 
-final scaleAssistControllerProvider = StateNotifierProvider.autoDispose
-    .family<ScaleAssistController, ScaleAssistState, ScaleAssistArgs>((
-      ref,
-      args,
-    ) {
+final scaleAssistControllerProvider =
+    StateNotifierProvider.family<
+      ScaleAssistController,
+      ScaleAssistState,
+      ScaleAssistArgs
+    >((ref, args) {
       return ScaleAssistController(ref, args);
     });
 
