@@ -1,4 +1,4 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:mindisle_client/core/network/api_envelope.dart';
 import 'package:mindisle_client/core/network/error_mapper.dart';
 import 'package:mindisle_client/core/result/result.dart';
@@ -13,8 +13,8 @@ final class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required AuthApi authApi,
     required SessionStore sessionStore,
-  })  : _authApi = authApi,
-        _sessionStore = sessionStore;
+  }) : _authApi = authApi,
+       _sessionStore = sessionStore;
 
   final AuthApi _authApi;
   final SessionStore _sessionStore;
@@ -49,8 +49,9 @@ final class AuthRepositoryImpl implements AuthRepository {
           profile: profile,
         ),
       ),
-      (raw) => AuthResponseDto.fromJson(Map<String, dynamic>.from(raw as Map))
-          .toDomain(),
+      (raw) => AuthResponseDto.fromJson(
+        Map<String, dynamic>.from(raw as Map),
+      ).toDomain(),
     );
 
     await _saveSessionIfSuccess(result);
@@ -76,8 +77,9 @@ final class AuthRepositoryImpl implements AuthRepository {
       () => _authApi.loginDirect(
         DirectLoginRequest(phone: phone, ticket: ticket),
       ),
-      (raw) => AuthResponseDto.fromJson(Map<String, dynamic>.from(raw as Map))
-          .toDomain(),
+      (raw) => AuthResponseDto.fromJson(
+        Map<String, dynamic>.from(raw as Map),
+      ).toDomain(),
     );
 
     await _saveSessionIfSuccess(result);
@@ -93,8 +95,9 @@ final class AuthRepositoryImpl implements AuthRepository {
       () => _authApi.loginPassword(
         PasswordLoginRequest(phone: phone, password: password),
       ),
-      (raw) => AuthResponseDto.fromJson(Map<String, dynamic>.from(raw as Map))
-          .toDomain(),
+      (raw) => AuthResponseDto.fromJson(
+        Map<String, dynamic>.from(raw as Map),
+      ).toDomain(),
     );
 
     await _saveSessionIfSuccess(result);
@@ -105,16 +108,16 @@ final class AuthRepositoryImpl implements AuthRepository {
   Future<Result<AuthSessionResult>> refreshToken() async {
     final refreshToken = await _sessionStore.readRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
-      return Failure(mapServerCodeToAppError(
-        code: 40100,
-        message: '\u7f3a\u5c11\u5237\u65b0\u4ee4\u724c',
-      ));
+      return Failure(mapServerCodeToAppError(code: 40100, message: '缺少刷新令牌'));
     }
 
     final result = await _run(
-      () => _authApi.refreshToken(TokenRefreshRequest(refreshToken: refreshToken)),
-      (raw) => AuthResponseDto.fromJson(Map<String, dynamic>.from(raw as Map))
-          .toDomain(),
+      () => _authApi.refreshToken(
+        TokenRefreshRequest(refreshToken: refreshToken),
+      ),
+      (raw) => AuthResponseDto.fromJson(
+        Map<String, dynamic>.from(raw as Map),
+      ).toDomain(),
     );
 
     await _saveSessionIfSuccess(result);
@@ -172,7 +175,10 @@ final class AuthRepositoryImpl implements AuthRepository {
       final envelope = ApiEnvelope<T>.fromJson(json, dataParser);
       if (!envelope.isSuccess) {
         return Failure(
-          mapServerCodeToAppError(code: envelope.code, message: envelope.message),
+          mapServerCodeToAppError(
+            code: envelope.code,
+            message: envelope.message,
+          ),
         );
       }
       return Success(envelope.data as T);
@@ -190,13 +196,13 @@ final class AuthRepositoryImpl implements AuthRepository {
   ) async {
     try {
       final json = await request();
-      final envelope = ApiEnvelope<Object?>.fromJson(
-        json,
-        (raw) => raw,
-      );
+      final envelope = ApiEnvelope<Object?>.fromJson(json, (raw) => raw);
       if (!envelope.isSuccess) {
         return Failure(
-          mapServerCodeToAppError(code: envelope.code, message: envelope.message),
+          mapServerCodeToAppError(
+            code: envelope.code,
+            message: envelope.message,
+          ),
         );
       }
       return const Success(null);
@@ -209,4 +215,3 @@ final class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
-

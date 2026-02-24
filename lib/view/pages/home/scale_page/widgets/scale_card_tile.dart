@@ -86,14 +86,14 @@ class ScaleCardTile extends StatelessWidget {
 
   String _buildLastCompletedLabel(DateTime? value) {
     if (value == null) {
-      return '\u4e0a\u6b21\u5b8c\u6210\uff1a\u6682\u65e0\u8bb0\u5f55';
+      return '上次完成：暂无记录';
     }
     final beijingTime = _toBeijingTime(value);
     final month = beijingTime.month.toString().padLeft(2, '0');
     final day = beijingTime.day.toString().padLeft(2, '0');
     final hour = beijingTime.hour.toString().padLeft(2, '0');
     final minute = beijingTime.minute.toString().padLeft(2, '0');
-    return '\u4e0a\u6b21\u5b8c\u6210\uff1a'
+    return '上次完成：'
         '${beijingTime.year}-$month-$day $hour:$minute';
   }
 

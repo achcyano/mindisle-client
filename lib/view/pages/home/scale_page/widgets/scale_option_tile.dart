@@ -20,18 +20,11 @@ class ScaleOptionTile extends StatelessWidget {
     final selectedColor = colorScheme.secondaryContainer.withValues(
       alpha: 0.62,
     );
+    final unselectedColor = colorScheme.surface;
 
     return Material(
-      color: selected ? selectedColor : colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          width: 0.8,
-          color: selected
-              ? colorScheme.secondary
-              : colorScheme.outlineVariant.withValues(alpha: 0.42),
-        ),
-      ),
+      color: selected ? selectedColor : unselectedColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(16),
