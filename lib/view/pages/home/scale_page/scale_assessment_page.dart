@@ -64,7 +64,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text(data.detail?.name ?? '閲忚〃浣滅瓟'),
+          title: Text(data.detail?.name ?? '量表作答'),
         ),
         floatingActionButton: _buildPrimaryFab(state: state, data: data),
         body: SafeArea(
@@ -96,22 +96,20 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       barrierDismissible: true,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('\u9000\u51fa\u7b54\u9898'),
-          content: const Text(
-            '\u672c\u6b21\u7b54\u9898\u5c06\u4f1a\u88ab\u4fdd\u5b58\uff0c\u540e\u7eed\u53ef\u4ee5\u7ee7\u7eed\u7b54\u9898\u3002',
-          ),
+          title: const Text('退出答题'),
+          content: const Text('本次答题将会被保存，后续可以继续答题。'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(false);
               },
-              child: const Text('\u7ee7\u7eed\u7b54\u9898'),
+              child: const Text('继续答题'),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
-              child: const Text('\u786e\u8ba4\u9000\u51fa'),
+              child: const Text('确认退出'),
             ),
           ],
         );
@@ -231,11 +229,9 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     required bool isLastQuestion,
   }) {
     if (isLastQuestion) {
-      return state.isSubmitting
-          ? '\u63d0\u4ea4\u4e2d...'
-          : '\u63d0\u4ea4\u91cf\u8868';
+      return state.isSubmitting ? '提交中...' : '提交量表';
     }
-    return '\u4e0b\u4e00\u9898';
+    return '下一题';
   }
 
   Widget _buildBody({
@@ -256,7 +252,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     return Center(
       child: FilledButton(
         onPressed: _controller.initialize,
-        child: const Text('閲嶈瘯'),
+        child: const Text('重试'),
       ),
     );
   }
@@ -289,7 +285,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
                   ),
                 const SizedBox(height: 10),
                 Text(
-                  '\u4f5c\u7b54\u5c06\u81ea\u52a8\u4fdd\u5b58\u3002AI \u5efa\u8bae\u4ec5\u4f9b\u53c2\u8003\uff0c\u5982\u6709\u7591\u95ee\u8bf7\u54a8\u8be2\u533b\u751f\u3002',
+                  '作答将自动保存。AI 建议仅供参考，如有疑问请咨询医生。',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
@@ -360,13 +356,13 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
               onPressed: state.currentQuestionIndex <= 0 || state.isSubmitting
                   ? null
                   : _controller.goPreviousQuestion,
-              child: const Text('\u4e0a\u4e00\u9898'),
+              child: const Text('上一题'),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              '宸茬瓟 ${state.singleChoiceAnswers.length}/$questionCount',
+              '已答 ${state.singleChoiceAnswers.length}/$questionCount',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.labelMedium,
             ),
