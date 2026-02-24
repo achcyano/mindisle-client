@@ -44,7 +44,14 @@ class QuestionStepCard extends StatelessWidget {
                 IconButton(
                   tooltip: '问 AI',
                   onPressed: enabled ? onAskAi : null,
-                  icon: const Icon(Icons.auto_awesome_outlined),
+                  style: IconButton.styleFrom(
+                    shape: const CircleBorder(),
+                    backgroundColor: colorScheme.primaryContainer.withValues(
+                      alpha: 0.78,
+                    ),
+                    foregroundColor: colorScheme.onPrimaryContainer,
+                  ),
+                  icon: const Icon(Icons.question_mark_rounded, size: 18),
                 ),
               ],
             ),
