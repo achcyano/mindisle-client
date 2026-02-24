@@ -23,6 +23,7 @@ final class ScaleSummary {
     required this.status,
     this.versionId,
     this.version,
+    this.lastCompletedAt,
   });
 
   final int scaleId;
@@ -32,6 +33,7 @@ final class ScaleSummary {
   final ScalePublishStatus status;
   final int? versionId;
   final int? version;
+  final DateTime? lastCompletedAt;
 }
 
 final class ScaleScoreRange {

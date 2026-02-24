@@ -39,6 +39,7 @@ final class ScaleSummaryDto {
     required this.status,
     this.versionId,
     this.version,
+    this.lastCompletedAt,
   });
 
   factory ScaleSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -50,6 +51,9 @@ final class ScaleSummaryDto {
       status: scalePublishStatusFromWire(json['status'] as String?),
       versionId: _toInt(json['versionId']),
       version: _toInt(json['version']),
+      lastCompletedAt:
+          _parseDateTime(json['lastCompletedAt']) ??
+          _parseDateTime(json['last_completed_at']),
     );
   }
 
@@ -60,6 +64,7 @@ final class ScaleSummaryDto {
   final ScalePublishStatus status;
   final int? versionId;
   final int? version;
+  final DateTime? lastCompletedAt;
 
   ScaleSummary toDomain() {
     return ScaleSummary(
@@ -70,6 +75,7 @@ final class ScaleSummaryDto {
       status: status,
       versionId: versionId,
       version: version,
+      lastCompletedAt: lastCompletedAt,
     );
   }
 }

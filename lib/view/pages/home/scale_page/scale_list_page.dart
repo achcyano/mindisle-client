@@ -88,6 +88,7 @@ class _ScaleListPageState extends ConsumerState<ScaleListPage> {
                               title: item.name,
                               subtitle: item.description,
                               code: item.code,
+                              lastCompletedAt: item.lastCompletedAt,
                               isOpening: state.openingScaleId == item.scaleId,
                               onTap: () async {
                                 final session = await controller.openScale(

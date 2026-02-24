@@ -8,6 +8,7 @@ class ScaleCardTile extends StatelessWidget {
     required this.code,
     required this.onTap,
     this.isOpening = false,
+    this.lastCompletedAt,
   });
 
   final String title;
@@ -15,6 +16,7 @@ class ScaleCardTile extends StatelessWidget {
   final String code;
   final VoidCallback onTap;
   final bool isOpening;
+  final DateTime? lastCompletedAt;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,13 @@ class ScaleCardTile extends StatelessWidget {
                         color: colorScheme.onSurface.withValues(alpha: 0.72),
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _buildLastCompletedLabel(lastCompletedAt),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -78,5 +87,23 @@ class ScaleCardTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _buildLastCompletedLabel(DateTime? value) {
+    if (value == null) {
+      return '\u4e0a\u6b21\u5b8c\u6210\uff1a\u6682\u65e0\u8bb0\u5f55';
+    }
+    final beijingTime = _toBeijingTime(value);
+    final month = beijingTime.month.toString().padLeft(2, '0');
+    final day = beijingTime.day.toString().padLeft(2, '0');
+    final hour = beijingTime.hour.toString().padLeft(2, '0');
+    final minute = beijingTime.minute.toString().padLeft(2, '0');
+    return '\u4e0a\u6b21\u5b8c\u6210\uff1a'
+        '${beijingTime.year}-$month-$day $hour:$minute';
+  }
+
+  DateTime _toBeijingTime(DateTime value) {
+    final utc = value.isUtc ? value : value.toUtc();
+    return utc.add(const Duration(hours: 8));
   }
 }

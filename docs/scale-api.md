@@ -38,6 +38,9 @@
 说明：
 
 - 当前列表仅返回“存在已发布版本（`ScaleVersion.status=PUBLISHED`）”的量表
+- 列表项新增 `lastCompletedAt`：当前用户最近一次完成（`SUBMITTED`）该量表的时间
+- `lastCompletedAt` 使用固定时区 `UTC+8`，格式 `ISO8601 +08:00`（示例：`2026-02-24T21:30:00+08:00`）
+- 若该用户从未完成该量表，`lastCompletedAt` 为 `null`
 
 ### 3.2 获取量表详情（题目+选项+维度）
 

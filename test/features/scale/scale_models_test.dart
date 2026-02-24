@@ -53,5 +53,21 @@ void main() {
       expect(result.resultFlags, contains('SUICIDE_RISK'));
       expect(result.dimensionResults.length, 1);
     });
+
+    test('parses scale summary lastCompletedAt', () {
+      final dto = ScaleSummaryDto.fromJson(const <String, dynamic>{
+        'scaleId': 1,
+        'code': 'PHQ9',
+        'name': 'PHQ-9',
+        'description': '抑郁筛查',
+        'status': 'PUBLISHED',
+        'lastCompletedAt': '2026-02-24T21:30:00+08:00',
+      });
+
+      final summary = dto.toDomain();
+      expect(summary.lastCompletedAt, isNotNull);
+      expect(summary.lastCompletedAt!.toUtc().hour, 13);
+      expect(summary.lastCompletedAt!.toUtc().minute, 30);
+    });
   });
 }
