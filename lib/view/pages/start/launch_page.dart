@@ -5,6 +5,7 @@ import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/providers/app_providers.dart';
 import 'package:mindisle_client/data/preference/const.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
+import 'package:mindisle_client/shared/session/startup_network_issue_signal.dart';
 import 'package:mindisle_client/view/pages/home_shell.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/pages/start/welcome_page.dart';
@@ -27,6 +28,8 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
   }
 
   Future<void> _bootstrap() async {
+    ref.read(startupNetworkIssueProvider.notifier).state = null;
+
     final sessionStore = ref.read(sessionStoreProvider);
     final session = await sessionStore.readSession();
     if (!mounted) return;
@@ -46,13 +49,28 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
     switch (result) {
       case Success():
         await AppPrefs.hasCompletedFirstLogin.set(true);
+        ref.read(startupNetworkIssueProvider.notifier).state = null;
         if (!mounted) return;
         await HomeShell.route.replace(context);
         return;
       case Failure(error: final error):
         if (error.type == AppErrorType.unauthorized) {
+          ref.read(startupNetworkIssueProvider.notifier).state = null;
           await LoginPage.route.replace(context);
         } else {
+          final isNetworkError = error.type == AppErrorType.network;
+          final message = error.message.isEmpty
+              ? (isNetworkError ? '网络连接失败，请检查网络后重试' : '请求失败，请稍后重试')
+              : error.message;
+
+          ref
+              .read(startupNetworkIssueProvider.notifier)
+              .state = StartupNetworkIssue(
+            message: message,
+            issueId: DateTime.now().microsecondsSinceEpoch,
+            isNetwork: isNetworkError,
+            showSnackBar: !isNetworkError,
+          );
           await HomeShell.route.replace(context);
         }
         return;
@@ -61,10 +79,6 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicatorM3E(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicatorM3E()));
   }
 }
