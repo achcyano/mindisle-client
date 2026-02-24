@@ -293,8 +293,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
             ),
           ),
         ),
-        if (data.hasQuestion)
-          _buildBottomBar(state: state, questionCount: data.questionCount),
+        if (data.hasQuestion) _buildBottomBar(state: state),
       ],
     );
   }
@@ -343,10 +342,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     );
   }
 
-  Widget _buildBottomBar({
-    required ScaleAssessmentState state,
-    required int questionCount,
-  }) {
+  Widget _buildBottomBar({required ScaleAssessmentState state}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       child: Row(
@@ -357,14 +353,6 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
                   ? null
                   : _controller.goPreviousQuestion,
               child: const Text('上一题'),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '已答 ${state.singleChoiceAnswers.length}/$questionCount',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelMedium,
             ),
           ),
         ],
