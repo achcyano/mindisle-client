@@ -1,9 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/features/auth/domain/entities/auth_entities.dart';
 import 'package:mindisle_client/features/auth/presentation/login/login_flow_state.dart';
 import 'package:mindisle_client/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/view/pages/home_shell.dart';
 import 'package:mindisle_client/view/route/app_navigator.dart';
 
@@ -79,6 +82,7 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
         _fail(error.message);
         return;
       case Success(data: final data):
+        if (!context.mounted) return;
         await _handleLoginDecision(context, phone: phone, result: data);
     }
   }
@@ -234,6 +238,8 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
         _fail(error.message);
         return;
       case Success():
+        await _warmUpAvatarCache();
+        _refreshProfileInBackground();
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
         await HomeShell.route.replace(context);
@@ -252,6 +258,8 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
         _fail(error.message);
         return;
       case Success():
+        await _warmUpAvatarCache();
+        _refreshProfileInBackground();
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
         await HomeShell.route.replace(context);
@@ -285,6 +293,8 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
         _fail(error.message);
         return;
       case Success():
+        await _warmUpAvatarCache();
+        _refreshProfileInBackground();
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
         await HomeShell.route.replace(context);
@@ -324,6 +334,21 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
     );
   }
 
+  Future<void> _warmUpAvatarCache() async {
+    try {
+      await _ref
+          .read(avatarWarmupServiceProvider)
+          .warmUp()
+          .timeout(const Duration(seconds: 2));
+    } catch (_) {
+      // Ignore warm-up failures to avoid blocking login flow.
+    }
+  }
+
+  void _refreshProfileInBackground() {
+    unawaited(_ref.read(getBasicProfileUseCaseProvider).execute());
+  }
+
   bool _isDigit(String value) {
     return value.length == 1 && value.codeUnitAt(0) >= 48 && value.codeUnitAt(0) <= 57;
   }
@@ -332,3 +357,4 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
     return RegExp(r'^1[3-9]\d{9}$').hasMatch(phone);
   }
 }
+

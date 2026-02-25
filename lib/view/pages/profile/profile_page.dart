@@ -1,4 +1,6 @@
+﻿
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mindisle_client/features/user/domain/entities/user_profile.dart';
@@ -48,13 +50,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final controller = ref.read(profileControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('个人资料')),
-      body: SafeArea(
-        child: _buildBody(
-          context: context,
-          state: state,
-          controller: controller,
-        ),
+      body: _buildBody(
+        context: context,
+        state: state,
+        controller: controller,
       ),
     );
   }
@@ -71,7 +70,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       return Center(
         child: FilledButton(
           onPressed: () => controller.initialize(refresh: true),
-          child: const Text('重试'),
+          child: const Text('Retry'),
         ),
       );
     }
@@ -87,164 +86,173 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       profile.waistCm?.toString() ?? '',
       profile.diseaseHistory.join('|'),
     ].join('#');
-
-    return RefreshIndicator(
-      onRefresh: () => controller.initialize(refresh: true),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-        children: [
-          _buildAvatarCard(
-            context: context,
-            state: state,
-            onTapChangeAvatar: _showAvatarPickerSheet,
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              key: ValueKey(formIdentity),
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('基本资料', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    label: '姓名',
-                    initialValue: state.fullName,
-                    textInputAction: TextInputAction.next,
-                    onChanged: controller.setFullName,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildGenderField(
-                    value: state.gender,
-                    onChanged: controller.setGender,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    label: '出生日期（yyyy-MM-dd）',
-                    initialValue: state.birthDate,
-                    textInputAction: TextInputAction.next,
-                    onChanged: controller.setBirthDate,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    label: '身高（cm）',
-                    initialValue: state.heightCm,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+    return CustomScrollView(
+      physics: const ClampingScrollPhysics(),
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          centerTitle: true,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Colors.transparent,
+          title: const Text('Profile'),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              children: [
+                _buildAvatarSelector(
+                  context: context,
+                  state: state,
+                  onTapChangeAvatar: _showAvatarPickerSheet,
+                ),
+                const SizedBox(height: 18),
+                Card(
+                  child: Padding(
+                    key: ValueKey(formIdentity),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Basic Info',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildTextField(
+                          label: 'Name',
+                          initialValue: state.fullName,
+                          textInputAction: TextInputAction.next,
+                          onChanged: controller.setFullName,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildGenderField(
+                          value: state.gender,
+                          onChanged: controller.setGender,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          label: 'Birth date (yyyy-MM-dd)',
+                          initialValue: state.birthDate,
+                          textInputAction: TextInputAction.next,
+                          onChanged: controller.setBirthDate,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          label: 'Height (cm)',
+                          initialValue: state.heightCm,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          textInputAction: TextInputAction.next,
+                          onChanged: controller.setHeightCm,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          label: 'Weight (kg)',
+                          initialValue: state.weightKg,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          textInputAction: TextInputAction.next,
+                          onChanged: controller.setWeightKg,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          label: 'Waist (cm)',
+                          initialValue: state.waistCm,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          textInputAction: TextInputAction.next,
+                          onChanged: controller.setWaistCm,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          label: 'Medical history (one per line)',
+                          initialValue: state.diseaseHistoryInput,
+                          minLines: 3,
+                          maxLines: 6,
+                          textInputAction: TextInputAction.newline,
+                          onChanged: controller.setDiseaseHistoryInput,
+                        ),
+                        const SizedBox(height: 14),
+                        FilledButton.icon(
+                          onPressed: state.isSaving
+                              ? null
+                              : () => _saveProfile(controller),
+                          icon: state.isSaving
+                              ? const SizedBox.square(
+                                  dimension: 16,
+                                  child: FittedBox(
+                                    child: CircularProgressIndicatorM3E(),
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined),
+                          label: Text(state.isSaving ? 'Saving...' : 'Save'),
+                        ),
+                      ],
                     ),
-                    textInputAction: TextInputAction.next,
-                    onChanged: controller.setHeightCm,
                   ),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    label: '体重（kg）',
-                    initialValue: state.weightKg,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textInputAction: TextInputAction.next,
-                    onChanged: controller.setWeightKg,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    label: '腰围（cm）',
-                    initialValue: state.waistCm,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    textInputAction: TextInputAction.next,
-                    onChanged: controller.setWaistCm,
-                  ),
-                  const SizedBox(height: 10),
-                  _buildTextField(
-                    label: '疾病史（每行一项）',
-                    initialValue: state.diseaseHistoryInput,
-                    minLines: 3,
-                    maxLines: 6,
-                    textInputAction: TextInputAction.newline,
-                    onChanged: controller.setDiseaseHistoryInput,
-                  ),
-                  const SizedBox(height: 14),
-                  FilledButton.icon(
-                    onPressed: state.isSaving
-                        ? null
-                        : () => _saveProfile(controller),
-                    icon: state.isSaving
-                        ? const SizedBox.square(
-                            dimension: 16,
-                            child: FittedBox(
-                              child: CircularProgressIndicatorM3E(),
-                            ),
-                          )
-                        : const Icon(Icons.save_outlined),
-                    label: Text(state.isSaving ? '保存中...' : '保存资料'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '提示：选择图片后将进入裁剪，并自动缩放为 1024x1024 后上传。',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildAvatarCard({
+  Widget _buildAvatarSelector({
     required BuildContext context,
     required ProfileState state,
     required VoidCallback onTapChangeAvatar,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 36,
-              backgroundColor: colorScheme.primaryContainer,
-              backgroundImage:
-                  state.avatarBytes == null ? null : MemoryImage(state.avatarBytes!),
-              child: state.avatarBytes == null
-                  ? Icon(
-                      Icons.person_outline,
-                      size: 30,
-                      color: colorScheme.onPrimaryContainer,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('用户头像', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(
-                    state.isUploadingAvatar ? '上传中...' : '支持拍照或从相册选择，上传前会先裁剪',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
+    return Center(
+      child: InkWell(
+        onTap: state.isUploadingAvatar ? null : onTapChangeAvatar,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 132,
+          height: 132,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircleAvatar(
+                radius: 66,
+                backgroundColor: colorScheme.primaryContainer,
+                backgroundImage: state.avatarBytes == null
+                    ? null
+                    : MemoryImage(state.avatarBytes!),
+                child: state.avatarBytes == null
+                    ? Icon(
+                        Icons.person_outline,
+                        size: 42,
+                        color: colorScheme.onPrimaryContainer,
+                      )
+                    : null,
               ),
-            ),
-            OutlinedButton.icon(
-              onPressed: state.isUploadingAvatar ? null : onTapChangeAvatar,
-              icon: state.isUploadingAvatar
-                  ? const SizedBox.square(
-                      dimension: 14,
-                      child: FittedBox(child: CircularProgressIndicatorM3E()),
-                    )
-                  : const Icon(Icons.edit_outlined),
-              label: const Text('更换'),
-            ),
-          ],
+              if (state.isUploadingAvatar)
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.35),
+                  ),
+                  child: const SizedBox(
+                    width: 132,
+                    height: 132,
+                    child: Center(
+                      child: SizedBox.square(
+                        dimension: 22,
+                        child: CircularProgressIndicatorM3E(),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -256,12 +264,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }) {
     return DropdownButtonFormField<UserGender>(
       initialValue: value,
-      decoration: const InputDecoration(labelText: '性别'),
+      decoration: const InputDecoration(labelText: 'Gender'),
       items: const [
-        DropdownMenuItem(value: UserGender.unknown, child: Text('未知')),
-        DropdownMenuItem(value: UserGender.male, child: Text('男')),
-        DropdownMenuItem(value: UserGender.female, child: Text('女')),
-        DropdownMenuItem(value: UserGender.other, child: Text('其他')),
+        DropdownMenuItem(value: UserGender.unknown, child: Text('Unknown')),
+        DropdownMenuItem(value: UserGender.male, child: Text('Male')),
+        DropdownMenuItem(value: UserGender.female, child: Text('Female')),
+        DropdownMenuItem(value: UserGender.other, child: Text('Other')),
       ],
       onChanged: (next) {
         if (next == null) return;
@@ -309,12 +317,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_camera_outlined),
-                title: const Text('拍照'),
+                title: const Text('Take photo'),
                 onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('从相册选择'),
+                title: const Text('Choose from gallery'),
                 onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
               ),
               const SizedBox(height: 8),
@@ -334,3 +342,4 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     messenger?.showSnackBar(SnackBar(content: Text(message)));
   }
 }
+

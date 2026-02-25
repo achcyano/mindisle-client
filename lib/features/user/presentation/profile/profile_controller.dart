@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mindisle_client/core/result/result.dart';
+import 'package:mindisle_client/data/preference/const.dart';
 import 'package:mindisle_client/features/user/domain/entities/user_basic_profile.dart';
 import 'package:mindisle_client/features/user/domain/entities/user_profile.dart';
+import 'package:mindisle_client/features/user/presentation/profile/avatar_cache_store.dart';
 import 'package:mindisle_client/features/user/presentation/profile/avatar_image_processor.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
@@ -19,25 +21,41 @@ final class ProfileController extends StateNotifier<ProfileState> {
     this._ref, {
     ImagePicker? picker,
     AvatarImageProcessor? avatarImageProcessor,
+    AvatarCacheStore? avatarCacheStore,
   })
     : _picker = picker ?? ImagePicker(),
       _avatarImageProcessor = avatarImageProcessor ?? AvatarImageProcessor(),
+      _avatarCacheStore = avatarCacheStore ?? const AvatarCacheStore(),
       super(const ProfileState());
 
   final Ref _ref;
   final ImagePicker _picker;
   final AvatarImageProcessor _avatarImageProcessor;
+  final AvatarCacheStore _avatarCacheStore;
 
   Future<void> initialize({bool refresh = false}) async {
+    final userId = AppPrefs.sessionUserId.value;
+    final cachedAvatarBytes = _avatarCacheStore.readForUser(userId);
+    final cachedAvatarETag = _avatarCacheStore.readETagForUser(userId);
+    final seedAvatarBytes = state.avatarBytes ?? cachedAvatarBytes;
+    final seedAvatarETag = state.avatarETag ?? cachedAvatarETag;
+
     if (refresh) {
       if (state.isRefreshing) return;
-      state = state.copyWith(isRefreshing: true, errorMessage: null);
+      state = state.copyWith(
+        isRefreshing: true,
+        errorMessage: null,
+        avatarBytes: seedAvatarBytes,
+        avatarETag: seedAvatarETag,
+      );
     } else {
       if (state.isLoading) return;
       state = state.copyWith(
         initialized: true,
         isLoading: true,
         errorMessage: null,
+        avatarBytes: seedAvatarBytes,
+        avatarETag: seedAvatarETag,
       );
     }
 
@@ -62,6 +80,7 @@ final class ProfileController extends StateNotifier<ProfileState> {
     switch (avatarResult) {
       case Failure(error: final error):
         if (error.code == 40403) {
+          await _avatarCacheStore.clearForUser(userId);
           state = state.copyWith(
             avatarBytes: null,
             avatarETag: null,
@@ -85,10 +104,18 @@ final class ProfileController extends StateNotifier<ProfileState> {
           );
           return;
         }
+        final avatarBytes = avatar.bytes;
+        if (avatarBytes != null && avatarBytes.isNotEmpty && userId > 0) {
+          await _avatarCacheStore.saveForUser(
+            userId: userId,
+            bytes: avatarBytes,
+            eTag: avatar.eTag,
+          );
+        }
         state = state.copyWith(
           isLoading: false,
           isRefreshing: false,
-          avatarBytes: avatar.bytes,
+          avatarBytes: avatarBytes,
           avatarETag: avatar.eTag,
         );
         return;
@@ -214,9 +241,20 @@ final class ProfileController extends StateNotifier<ProfileState> {
       case Failure(error: final error):
         return _failUploadingAvatar(error.message);
       case Success(data: final avatar):
+        final currentUserId = AppPrefs.sessionUserId.value;
+        final avatarBytes = avatar.bytes;
+        if (avatarBytes != null &&
+            avatarBytes.isNotEmpty &&
+            currentUserId > 0) {
+          await _avatarCacheStore.saveForUser(
+            userId: currentUserId,
+            bytes: avatarBytes,
+            eTag: avatar.eTag,
+          );
+        }
         state = state.copyWith(
           isUploadingAvatar: false,
-          avatarBytes: avatar.bytes ?? state.avatarBytes,
+          avatarBytes: avatarBytes ?? state.avatarBytes,
           avatarETag: avatar.eTag,
         );
         return '头像已更新';

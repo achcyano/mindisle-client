@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/app_error.dart';
@@ -50,6 +52,8 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
       case Success():
         await AppPrefs.hasCompletedFirstLogin.set(true);
         ref.read(startupNetworkIssueProvider.notifier).state = null;
+        unawaited(ref.read(getBasicProfileUseCaseProvider).execute());
+        unawaited(ref.read(avatarWarmupServiceProvider).warmUp());
         if (!mounted) return;
         await HomeShell.route.replace(context);
         return;

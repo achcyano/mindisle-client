@@ -49,6 +49,21 @@ abstract final class AppPrefs {
     defaultValue: <String, dynamic>{},
     decode: _decodeStringDynamicMap,
   );
+
+  static const cachedAvatarUserId = PrefVar<int>(
+    'cached_avatar_user_id',
+    defaultValue: 0,
+  );
+
+  static const cachedAvatarBase64 = PrefVar<String>(
+    'cached_avatar_base64',
+    defaultValue: '',
+  );
+
+  static const cachedAvatarETag = PrefVar<String>(
+    'cached_avatar_etag',
+    defaultValue: '',
+  );
 }
 
 List<String> _decodeStringList(Object? raw) {
