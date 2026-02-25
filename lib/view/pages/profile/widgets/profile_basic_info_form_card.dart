@@ -1,13 +1,61 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:mindisle_client/features/user/domain/entities/user_profile.dart';
+import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
-class ProfileBasicInfoFormCard extends StatelessWidget {
-  const ProfileBasicInfoFormCard({
-    super.key,
+@immutable
+class ProfileBasicInfoFormData {
+  const ProfileBasicInfoFormData({
     required this.formIdentity,
-    required this.state,
+    required this.isSaving,
+    required this.fullName,
+    required this.gender,
+    required this.birthDate,
+    required this.heightCm,
+    required this.weightKg,
+    required this.waistCm,
+    required this.diseaseHistoryInput,
+  });
+
+  factory ProfileBasicInfoFormData.fromState(ProfileState state) {
+    final profile = state.profile;
+    return ProfileBasicInfoFormData(
+      formIdentity: [
+        profile?.userId ?? 0,
+        state.fullName,
+        state.gender.name,
+        state.birthDate,
+        state.heightCm,
+        state.weightKg,
+        state.waistCm,
+        state.diseaseHistoryInput,
+      ].join('#'),
+      isSaving: state.isSaving,
+      fullName: state.fullName,
+      gender: state.gender,
+      birthDate: state.birthDate,
+      heightCm: state.heightCm,
+      weightKg: state.weightKg,
+      waistCm: state.waistCm,
+      diseaseHistoryInput: state.diseaseHistoryInput,
+    );
+  }
+
+  final String formIdentity;
+  final bool isSaving;
+  final String fullName;
+  final UserGender gender;
+  final String birthDate;
+  final String heightCm;
+  final String weightKg;
+  final String waistCm;
+  final String diseaseHistoryInput;
+}
+
+@immutable
+class ProfileBasicInfoFormActions {
+  const ProfileBasicInfoFormActions({
     required this.onFullNameChanged,
     required this.onGenderChanged,
     required this.onBirthDateChanged,
@@ -18,8 +66,22 @@ class ProfileBasicInfoFormCard extends StatelessWidget {
     required this.onSavePressed,
   });
 
-  final String formIdentity;
-  final ProfileState state;
+  factory ProfileBasicInfoFormActions.fromController({
+    required ProfileController controller,
+    required VoidCallback? onSavePressed,
+  }) {
+    return ProfileBasicInfoFormActions(
+      onFullNameChanged: controller.setFullName,
+      onGenderChanged: controller.setGender,
+      onBirthDateChanged: controller.setBirthDate,
+      onHeightChanged: controller.setHeightCm,
+      onWeightChanged: controller.setWeightKg,
+      onWaistChanged: controller.setWaistCm,
+      onDiseaseHistoryChanged: controller.setDiseaseHistoryInput,
+      onSavePressed: onSavePressed,
+    );
+  }
+
   final ValueChanged<String> onFullNameChanged;
   final ValueChanged<UserGender> onGenderChanged;
   final ValueChanged<String> onBirthDateChanged;
@@ -28,84 +90,96 @@ class ProfileBasicInfoFormCard extends StatelessWidget {
   final ValueChanged<String> onWaistChanged;
   final ValueChanged<String> onDiseaseHistoryChanged;
   final VoidCallback? onSavePressed;
+}
+
+class ProfileBasicInfoFormCard extends StatelessWidget {
+  const ProfileBasicInfoFormCard({
+    super.key,
+    required this.data,
+    required this.actions,
+  });
+
+  final ProfileBasicInfoFormData data;
+  final ProfileBasicInfoFormActions actions;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        key: ValueKey(formIdentity),
+        key: ValueKey(data.formIdentity),
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Basic Info',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Basic Info', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             _buildTextField(
               label: 'Name',
-              initialValue: state.fullName,
+              initialValue: data.fullName,
               textInputAction: TextInputAction.next,
-              onChanged: onFullNameChanged,
+              onChanged: actions.onFullNameChanged,
             ),
             const SizedBox(height: 10),
             _buildGenderField(
-              value: state.gender,
-              onChanged: onGenderChanged,
+              value: data.gender,
+              onChanged: actions.onGenderChanged,
             ),
             const SizedBox(height: 10),
             _buildTextField(
               label: 'Birth date (yyyy-MM-dd)',
-              initialValue: state.birthDate,
+              initialValue: data.birthDate,
               textInputAction: TextInputAction.next,
-              onChanged: onBirthDateChanged,
+              onChanged: actions.onBirthDateChanged,
             ),
             const SizedBox(height: 10),
             _buildTextField(
               label: 'Height (cm)',
-              initialValue: state.heightCm,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              initialValue: data.heightCm,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.next,
-              onChanged: onHeightChanged,
+              onChanged: actions.onHeightChanged,
             ),
             const SizedBox(height: 10),
             _buildTextField(
               label: 'Weight (kg)',
-              initialValue: state.weightKg,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              initialValue: data.weightKg,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.next,
-              onChanged: onWeightChanged,
+              onChanged: actions.onWeightChanged,
             ),
             const SizedBox(height: 10),
             _buildTextField(
               label: 'Waist (cm)',
-              initialValue: state.waistCm,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              initialValue: data.waistCm,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.next,
-              onChanged: onWaistChanged,
+              onChanged: actions.onWaistChanged,
             ),
             const SizedBox(height: 10),
             _buildTextField(
               label: 'Medical history (one per line)',
-              initialValue: state.diseaseHistoryInput,
+              initialValue: data.diseaseHistoryInput,
               minLines: 3,
               maxLines: 6,
               textInputAction: TextInputAction.newline,
-              onChanged: onDiseaseHistoryChanged,
+              onChanged: actions.onDiseaseHistoryChanged,
             ),
             const SizedBox(height: 14),
             FilledButton.icon(
-              onPressed: onSavePressed,
-              icon: state.isSaving
+              onPressed: actions.onSavePressed,
+              icon: data.isSaving
                   ? const SizedBox.square(
                       dimension: 16,
-                      child: FittedBox(
-                        child: CircularProgressIndicatorM3E(),
-                      ),
+                      child: FittedBox(child: CircularProgressIndicatorM3E()),
                     )
                   : const Icon(Icons.save_outlined),
-              label: Text(state.isSaving ? 'Saving...' : 'Save'),
+              label: Text(data.isSaving ? 'Saving...' : 'Save'),
             ),
           ],
         ),

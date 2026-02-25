@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_controller.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_state.dart';
+import 'package:mindisle_client/view/widget/app_dialog.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ChatConversationDrawer extends ConsumerWidget {
@@ -97,7 +98,7 @@ class ChatConversationDrawer extends ConsumerWidget {
 
   String _formatConversationTime(AiConversation conversation) {
     final timestamp = conversation.updatedAt ?? conversation.createdAt;
-    if (timestamp == null) return '未知时间';
+    if (timestamp == null) return '鏈煡鏃堕棿';
     final local = timestamp.toLocal();
     return '${local.year}-${_twoDigits(local.month)}-${_twoDigits(local.day)} '
         '${_twoDigits(local.hour)}:${_twoDigits(local.minute)}';
@@ -115,10 +116,10 @@ class ChatConversationDrawer extends ConsumerWidget {
     final initial = conversation.title.trim();
     var draftTitle = initial;
 
-    final title = await showDialog<String>(
+    final title = await showAppDialog<String>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
+        return buildAppAlertDialog(
           title: const Text('修改标题'),
           content: TextFormField(
             initialValue: initial,
@@ -135,7 +136,7 @@ class ChatConversationDrawer extends ConsumerWidget {
               },
               child: const Text('取消'),
             ),
-            FilledButton(
+            TextButton(
               onPressed: () {
                 final value = draftTitle.trim();
                 if (value.isEmpty) return;
@@ -160,10 +161,11 @@ class ChatConversationDrawer extends ConsumerWidget {
     required AiChatController controller,
     required AiConversation conversation,
   }) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
+        final errorColor = Theme.of(dialogContext).colorScheme.error;
+        return buildAppAlertDialog(
           title: const Text('删除对话'),
           content: const Text('删除后不可恢复，是否继续？'),
           actions: [
@@ -173,7 +175,8 @@ class ChatConversationDrawer extends ConsumerWidget {
               },
               child: const Text('取消'),
             ),
-            FilledButton(
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: errorColor),
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },

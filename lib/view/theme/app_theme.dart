@@ -40,6 +40,13 @@ class AppTheme {
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: swappedScheme.surfaceContainerLow,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        actionsPadding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+        constraints: const BoxConstraints(maxWidth: 640),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
     );
   }
 }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
@@ -39,102 +39,75 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (message == null || message.isEmpty) return;
       if (message == _lastErrorMessage) return;
       _lastErrorMessage = message;
-
-      final messenger = ScaffoldMessenger.maybeOf(context);
-      messenger?.hideCurrentSnackBar();
-      messenger?.showSnackBar(SnackBar(content: Text(message)));
+      _showSnack(message);
     });
 
     final state = ref.watch(profileControllerProvider);
     final controller = ref.read(profileControllerProvider.notifier);
 
     return Scaffold(
-      body: _buildBody(
-        context: context,
-        state: state,
-        controller: controller,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: _buildContent(state: state, controller: controller),
+        ),
       ),
     );
   }
 
-  Widget _buildBody({
-    required BuildContext context,
+  Widget _buildContent({
     required ProfileState state,
     required ProfileController controller,
   }) {
     if (state.isLoading && state.profile == null) {
-      return const Center(child: CircularProgressIndicatorM3E());
+      return const SizedBox(
+        height: 320,
+        child: Center(child: CircularProgressIndicatorM3E()),
+      );
     }
+
     if (state.profile == null) {
-      return Center(
-        child: FilledButton(
-          onPressed: () => controller.initialize(refresh: true),
-          child: const Text('Retry'),
+      return SizedBox(
+        height: 320,
+        child: Center(
+          child: FilledButton(
+            onPressed: () => controller.initialize(refresh: true),
+            child: const Text('Retry'),
+          ),
         ),
       );
     }
 
-    return CustomScrollView(
-      physics: const ClampingScrollPhysics(),
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          centerTitle: true,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          surfaceTintColor: Colors.transparent,
-          title: const Text('Profile'),
+    return Column(
+      children: [
+        ProfileAvatarSelector(
+          state: state,
+          onTapChangeAvatar: _showAvatarPickerSheet,
         ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-            child: Column(
-              children: [
-                ProfileAvatarSelector(
-                  state: state,
-                  onTapChangeAvatar: _showAvatarPickerSheet,
-                ),
-                const SizedBox(height: 16),
-                ProfileBasicInfoFormCard(
-                  formIdentity: _buildFormIdentity(state),
-                  state: state,
-                  onFullNameChanged: controller.setFullName,
-                  onGenderChanged: controller.setGender,
-                  onBirthDateChanged: controller.setBirthDate,
-                  onHeightChanged: controller.setHeightCm,
-                  onWeightChanged: controller.setWeightKg,
-                  onWaistChanged: controller.setWaistCm,
-                  onDiseaseHistoryChanged: controller.setDiseaseHistoryInput,
-                  onSavePressed:
-                      state.isSaving ? null : () => _saveProfile(controller),
-                ),
-              ],
-            ),
+        const SizedBox(height: 16),
+        ProfileBasicInfoFormCard(
+          data: ProfileBasicInfoFormData.fromState(state),
+          actions: ProfileBasicInfoFormActions.fromController(
+            controller: controller,
+            onSavePressed: state.isSaving
+                ? null
+                : () => _saveProfile(controller),
           ),
         ),
       ],
     );
   }
 
-  String _buildFormIdentity(ProfileState state) {
-    final profile = state.profile!;
-    return [
-      profile.userId,
-      profile.fullName ?? '',
-      profile.gender.name,
-      profile.birthDate ?? '',
-      profile.heightCm?.toString() ?? '',
-      profile.weightKg?.toString() ?? '',
-      profile.waistCm?.toString() ?? '',
-      profile.diseaseHistory.join('|'),
-    ].join('#');
+  void _showSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _saveProfile(ProfileController controller) async {
     final message = await controller.saveProfile();
     if (!mounted || message == null || message.isEmpty) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.hideCurrentSnackBar();
-    messenger?.showSnackBar(SnackBar(content: Text(message)));
+    _showSnack(message);
   }
 
   Future<void> _showAvatarPickerSheet() async {
@@ -145,9 +118,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         .read(profileControllerProvider.notifier)
         .pickAndUploadAvatar(source);
     if (!mounted || message == null || message.isEmpty) return;
-
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.hideCurrentSnackBar();
-    messenger?.showSnackBar(SnackBar(content: Text(message)));
+    _showSnack(message);
   }
 }

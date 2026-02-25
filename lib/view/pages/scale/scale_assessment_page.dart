@@ -13,6 +13,7 @@ import 'package:mindisle_client/view/pages/scale/widgets/question_step_card.dart
 import 'package:mindisle_client/view/pages/scale/widgets/scale_assist_bottom_sheet.dart';
 import 'package:mindisle_client/view/pages/scale/widgets/scale_progress_header.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
+import 'package:mindisle_client/view/widget/app_dialog.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ScaleAssessmentPage extends ConsumerStatefulWidget {
@@ -62,9 +63,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
         _handlePopRequest();
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(data.detail?.name ?? '量表作答'),
-        ),
+        appBar: AppBar(title: Text(data.detail?.name ?? '量表作答')),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: _buildFloatingActions(state: state, data: data),
         body: SafeArea(
@@ -91,11 +90,12 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
   }
 
   Future<bool> _showExitConfirmDialog() async {
-    final result = await showDialog<bool>(
+    final result = await showAppDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
-        return AlertDialog(
+        final errorColor = Theme.of(dialogContext).colorScheme.error;
+        return buildAppAlertDialog(
           title: const Text('退出答题'),
           content: const Text('本次答题将会被保存，后续可以继续答题。'),
           actions: [
@@ -105,7 +105,8 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
               },
               child: const Text('继续答题'),
             ),
-            FilledButton(
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: errorColor),
               onPressed: () {
                 Navigator.of(dialogContext).pop(true);
               },
@@ -281,7 +282,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
 
   Widget _buildRetry() {
     return Center(
-      child: FilledButton(
+      child: TextButton(
         onPressed: _controller.initialize,
         child: const Text('重试'),
       ),
@@ -371,7 +372,6 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       },
     );
   }
-
 }
 
 final class _AssessmentViewData {
