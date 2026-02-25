@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
 import 'package:mindisle_client/features/scale/presentation/providers/scale_providers.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_dimension_result_list.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_result_summary_card.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_dimension_result_list.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_result_summary_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
@@ -75,7 +75,6 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
 
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
         title: const Text('量表结果'),
         actions: [
           IconButton(

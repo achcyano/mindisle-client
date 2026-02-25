@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/scale/presentation/list/scale_list_controller.dart';
 import 'package:mindisle_client/features/scale/presentation/list/scale_list_state.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_args.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/scale_assessment_page.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/scale_history_page.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_card_tile.dart';
+import 'package:mindisle_client/view/pages/scale/scale_assessment_page.dart';
+import 'package:mindisle_client/view/pages/scale/scale_history_page.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_card_tile.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
@@ -52,7 +52,6 @@ class _ScaleListPageState extends ConsumerState<ScaleListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
         title: const Text('量表评估'),
         actions: [
           IconButton(

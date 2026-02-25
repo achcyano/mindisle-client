@@ -7,12 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_controller.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_state.dart';
-import 'package:mindisle_client/view/pages/home/chat_page/widgets/assistant_message.dart';
-import 'package:mindisle_client/view/pages/home/chat_page/widgets/chat_composer.dart';
-import 'package:mindisle_client/view/pages/home/chat_page/widgets/chat_conversation_drawer.dart';
-import 'package:mindisle_client/view/pages/home/chat_page/widgets/chat_empty_state.dart';
-import 'package:mindisle_client/view/pages/home/chat_page/widgets/history_loading_indicator.dart';
-import 'package:mindisle_client/view/pages/home/chat_page/widgets/user_text_message.dart';
+import 'package:mindisle_client/view/pages/chat/widgets/assistant_message.dart';
+import 'package:mindisle_client/view/pages/chat/widgets/chat_composer.dart';
+import 'package:mindisle_client/view/pages/chat/widgets/chat_conversation_drawer.dart';
+import 'package:mindisle_client/view/pages/chat/widgets/chat_empty_state.dart';
+import 'package:mindisle_client/view/pages/chat/widgets/history_loading_indicator.dart';
+import 'package:mindisle_client/view/pages/chat/widgets/user_text_message.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 

@@ -5,13 +5,13 @@ import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/static.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/shared/session/startup_network_issue_signal.dart';
-import 'package:mindisle_client/view/pages/home/chat_page/chat_page.dart';
-import 'package:mindisle_client/view/pages/home/home_page/card_home.dart';
-import 'package:mindisle_client/view/pages/home/home_page/startup_network_error_card.dart';
-import 'package:mindisle_client/view/pages/home/home_page/today_mood_card.dart';
-import 'package:mindisle_client/view/pages/home/medicine_page.dart';
-import 'package:mindisle_client/view/pages/home/profile_page.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/scale_list_page.dart';
+import 'package:mindisle_client/view/pages/chat/chat_page.dart';
+import 'package:mindisle_client/view/pages/home/card_home.dart';
+import 'package:mindisle_client/view/pages/home/startup_network_error_card.dart';
+import 'package:mindisle_client/view/pages/home/today_mood_card.dart';
+import 'package:mindisle_client/view/pages/medicine_page.dart';
+import 'package:mindisle_client/view/pages/profile/profile_page.dart';
+import 'package:mindisle_client/view/pages/scale/scale_list_page.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 
@@ -100,17 +100,8 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.home_outlined, size: 25),
-              const SizedBox(width: 8),
-              const Text(appDisplayName),
-            ],
-          ),
-        ),
+        leading: const Icon(Icons.home_outlined),
+        title: const Text(appDisplayName),
         actions: [
           IconButton(
             icon: const Icon(Icons.person),

@@ -8,10 +8,10 @@ import 'package:mindisle_client/features/scale/presentation/assist/scale_assist_
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_args.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_controller.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_state.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/scale_result_page.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/widgets/question_step_card.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_assist_bottom_sheet.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_progress_header.dart';
+import 'package:mindisle_client/view/pages/scale/scale_result_page.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/question_step_card.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_assist_bottom_sheet.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_progress_header.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
@@ -63,10 +63,10 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          centerTitle: true,
           title: Text(data.detail?.name ?? '量表作答'),
         ),
-        floatingActionButton: _buildPrimaryFab(state: state, data: data),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: _buildFloatingActions(state: state, data: data),
         body: SafeArea(
           top: false,
           child: _buildBody(context: context, state: state, data: data),
@@ -196,13 +196,44 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     unawaited(ScaleResultPage.route.replace(context, submittedSessionId));
   }
 
-  Widget? _buildPrimaryFab({
+  Widget? _buildFloatingActions({
     required ScaleAssessmentState state,
     required _AssessmentViewData data,
   }) {
     if (!data.hasQuestion) return null;
 
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+
+    return SizedBox(
+      width: viewportWidth - 24,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          FloatingActionButton(
+            heroTag: 'scale_prev_fab',
+            elevation: 1,
+            highlightElevation: 2,
+            disabledElevation: 0,
+            onPressed: state.currentQuestionIndex <= 0 || state.isSubmitting
+                ? null
+                : _controller.goPreviousQuestion,
+            child: const Icon(Icons.arrow_back_rounded),
+          ),
+          _buildPrimaryFab(state: state, data: data),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrimaryFab({
+    required ScaleAssessmentState state,
+    required _AssessmentViewData data,
+  }) {
     return FloatingActionButton.extended(
+      heroTag: 'scale_primary_fab',
+      elevation: 1,
+      highlightElevation: 2,
+      disabledElevation: 0,
       onPressed: state.isSubmitting
           ? null
           : () {
@@ -293,7 +324,6 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
             ),
           ),
         ),
-        if (data.hasQuestion) _buildBottomBar(state: state),
       ],
     );
   }
@@ -342,23 +372,6 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     );
   }
 
-  Widget _buildBottomBar({required ScaleAssessmentState state}) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: state.currentQuestionIndex <= 0 || state.isSubmitting
-                  ? null
-                  : _controller.goPreviousQuestion,
-              child: const Text('上一题'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 final class _AssessmentViewData {

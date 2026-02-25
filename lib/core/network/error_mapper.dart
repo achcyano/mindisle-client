@@ -82,6 +82,7 @@ AppError mapServerCodeToAppError({
     40101 => AppErrorType.invalidCredentials,
     40401 ||
     40402 ||
+    40403 ||
     40410 ||
     40411 ||
     40420 ||
@@ -128,6 +129,7 @@ String? _localizedMessageForCode(int code, String serverMessage) {
     40320 => '无权访问该量表会话',
     40401 => '该手机号尚未注册',
     40402 => '该手机号未注册',
+    40403 => '尚未上传头像',
     40410 => '会话不存在',
     40411 => '生成任务不存在',
     40420 => '量表不存在',

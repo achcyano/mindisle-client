@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/widgets/scale_option_tile.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_option_tile.dart';
 
 class QuestionStepCard extends StatelessWidget {
   const QuestionStepCard({

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
 import 'package:mindisle_client/features/scale/presentation/history/scale_history_controller.dart';
 import 'package:mindisle_client/features/scale/presentation/history/scale_history_state.dart';
-import 'package:mindisle_client/view/pages/home/scale_page/scale_result_page.dart';
+import 'package:mindisle_client/view/pages/scale/scale_result_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
@@ -51,7 +51,7 @@ class _ScaleHistoryPageState extends ConsumerState<ScaleHistoryPage> {
     final controller = ref.read(scaleHistoryControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: const Text('量表历史')),
+      appBar: AppBar(title: const Text('量表历史')),
       body: SafeArea(
         top: false,
         child: state.isLoading && state.items.isEmpty

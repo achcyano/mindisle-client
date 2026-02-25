@@ -1,4 +1,4 @@
-﻿# MindIsle 认证与用户接口说明（客户端对接版）
+# MindIsle 认证与用户接口说明（客户端对接版）
 
 本文档基于当前 `mindisle-server` 源码整理，覆盖认证与用户模块路由（`/api/v1/auth/**`、`/api/v1/users/**`）的请求/响应格式、鉴权与设备头要求、错误码及触发原因，并说明相关服务机制。
 
@@ -30,6 +30,10 @@
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/users/me`
 - `PUT /api/v1/users/me/profile`
+- `GET /api/v1/users/me/basic-profile`
+- `PUT /api/v1/users/me/basic-profile`
+- `PUT /api/v1/users/me/avatar`
+- `GET /api/v1/users/me/avatar`
 - `DELETE /api/v1/users`（仅 `DEBUG=true` 时注册，用于内部调试删号）
 
 ## 2. 通用约定
@@ -60,7 +64,7 @@
 - `message`: 文本消息。
 - `data`: 业务数据，可为 `null`。
 
-说明：`GET /` 和 `POST /test` 返回纯文本，不使用该包装。
+说明：`GET /`、`POST /test` 与 `GET /api/v1/users/me/avatar` 不使用该包装。
 
 ### 2.3 鉴权与请求头
 
@@ -170,6 +174,22 @@
 - 列表字段传入后会“整表替换”：先删旧数据，再写入新列表。
 - 列表项会 `trim()` 后写入，空字符串项会被丢弃。
 
+`UpsertBasicProfileRequest`
+
+- `fullName: String?`（可选，最多 200 字符，且不能包含控制字符）
+- `gender: Gender?`（可选）
+- `birthDate: String?`（可选，必须 `yyyy-MM-dd`，且不能晚于当前日期）
+- `heightCm: Double?`（可选，范围 `50.0 ~ 260.0`）
+- `weightKg: Double?`（可选，范围 `10.0 ~ 500.0`）
+- `waistCm: Double?`（可选，范围 `30.0 ~ 220.0`）
+- `diseaseHistory: List<String>?`（可选，最多 50 项；每项最多 200 字符，且不能包含控制字符；内容不做固定枚举限制）
+
+更新语义（`PUT /users/me/basic-profile`）：
+
+- 字段为 `null` 表示不修改该字段。
+- `diseaseHistory` 传入后会“整表替换”：先删旧数据，再写入新列表。
+- `diseaseHistory` 每项会 `trim()` 后写入，空字符串项会被丢弃；重复值会自动去重并保留首次出现顺序。
+
 ### 3.3 主要响应体
 
 `TokenPairResponse`
@@ -200,6 +220,26 @@
 - `familyHistory: List<String>`
 - `medicalHistory: List<String>`
 - `medicationHistory: List<String>`
+
+`UserBasicProfileResponse`
+
+- `userId: Long`
+- `fullName: String?`
+- `gender: Gender`
+- `birthDate: String?`
+- `heightCm: Double?`
+- `weightKg: Double?`
+- `waistCm: Double?`
+- `diseaseHistory: List<String>`
+
+`UserAvatarMetaResponse`
+
+- `avatarUrl: String`（固定为 `/api/v1/users/me/avatar`）
+- `contentType: String`（固定为 `image/png`）
+- `width: Int`（固定为 `1024`）
+- `height: Int`（固定为 `1024`）
+- `sizeBytes: Long`
+- `updatedAt: String`（UTC，ISO-8601）
 
 ## 4. 接口详情
 
@@ -475,6 +515,85 @@ This is a test endpoint.
 - `40000` 请求体非法、`birthDate` 格式错误、文本超长或含控制字符
 - `40100` access token 无效/缺失，或用户不存在
 
+### `GET /api/v1/users/me/basic-profile`
+
+- 鉴权：需要 JWT
+- 请求头：
+- `Authorization` 必填
+- 请求体：无
+- 成功：`200 OK`
+
+成功响应：`ApiResponse<UserBasicProfileResponse>`。
+
+行为说明：
+
+- 若用户 profile 行不存在，会自动创建默认 profile（`gender=UNKNOWN`）。
+
+接口级可能错误码：
+
+- `40100` access token 无效/缺失，或用户不存在
+
+### `PUT /api/v1/users/me/basic-profile`
+
+- 鉴权：需要 JWT
+- 请求头：
+- `Authorization` 必填
+- `Content-Type: application/json`
+- 请求体：`UpsertBasicProfileRequest`
+- 成功：`200 OK`
+
+成功响应：`ApiResponse<UserBasicProfileResponse>`（返回更新后的完整资料）。
+
+接口级可能错误码：
+
+- `40000` 请求体非法、`birthDate` 格式错误或为未来日期、身高/体重/腰围越界、`diseaseHistory` 超过 50 项、文本超长或含控制字符
+- `40100` access token 无效/缺失，或用户不存在
+
+### `PUT /api/v1/users/me/avatar`
+
+- 鉴权：需要 JWT
+- 请求头：
+- `Authorization` 必填
+- `Content-Type: multipart/form-data`
+- 请求体：表单文件字段 `file`
+- 成功：`200 OK`
+
+成功响应：`ApiResponse<UserAvatarMetaResponse>`。
+
+上传约束：
+
+- `file` 必填
+- 文件必须是可解码图片
+- 分辨率必须严格为 `1024x1024`
+- 文件大小上限为 `5MB`
+- 服务端统一转码并存储为 `image/png`
+
+接口级可能错误码：
+
+- `40000` 缺少 `file` 字段、文件超限、文件非图片、分辨率不为 `1024x1024`
+- `40100` access token 无效/缺失，或用户不存在
+
+### `GET /api/v1/users/me/avatar`
+
+- 鉴权：需要 JWT
+- 请求头：
+- `Authorization` 必填
+- 可选 `If-None-Match`
+- 请求体：无
+- 成功：`200 image/png`（二进制）或 `304 Not Modified`
+
+响应头：
+
+- `Content-Type: image/png`
+- `ETag: "<sha256>"`
+- `Last-Modified: <RFC 1123>`
+- `Cache-Control: private, max-age=300`
+
+接口级可能错误码：
+
+- `40100` access token 无效/缺失，或用户不存在
+- `40403` 用户尚未上传头像
+
 ## 4.4 调试接口（仅内部测试）
 
 ### `DELETE /api/v1/users`
@@ -500,6 +619,7 @@ This is a test endpoint.
 - 通过 `phone` 定位用户并删除账号。
 - `users` 删除会触发关联表级联清理（依赖外键 `onDelete = CASCADE`）。
 - 额外清理手机号维度短信记录：`sms_verification_codes`、`sms_verification_attempts`。
+- 若用户存在头像文件，会一并删除头像文件。
 - 该接口用于内部测试，不应在生产环境暴露。
 
 接口级可能错误码：
@@ -513,7 +633,7 @@ This is a test endpoint.
 | 业务码 | HTTP 状态 | 含义 | 触发原因（可能） |
 |---|---|---|---|
 | 0 | 200/201/202 | 成功 | 请求处理成功 |
-| 40000 | 400 | INVALID_REQUEST | 请求体反序列化失败；枚举值非法；缺少必填字段；缺失 `X-Device-Id`；`X-Device-Id` 超长或含控制字符；`ticket`/`refreshToken` 超长或含控制字符；`birthDate` 非 `yyyy-MM-dd`；密码含控制字符；资料文本超过 200 字符或含控制字符 |
+| 40000 | 400 | INVALID_REQUEST | 请求体反序列化失败；枚举值非法；缺少必填字段；缺失 `X-Device-Id`；`X-Device-Id` 超长或含控制字符；`ticket`/`refreshToken` 超长或含控制字符；`birthDate` 非 `yyyy-MM-dd`（`/users/me/profile`）或为未来日期（`/users/me/basic-profile`）；身高/体重/腰围数值越界（`/users/me/basic-profile`）；`diseaseHistory` 超过 50 项（`/users/me/basic-profile`）；头像上传缺少 `file` 字段、文件大小超限、不是可解码图片、或分辨率不是 `1024x1024`（`/users/me/avatar`）；密码含控制字符；资料文本超过 200 字符或含控制字符 |
 | 40001 | 400 | INVALID_PHONE | 手机号不符合中国大陆手机号规则 |
 | 40002 | 400 | PASSWORD_TOO_SHORT | `password` 或 `newPassword` 长度不在 6-20 位区间 |
 | 40003 | 400 | INVALID_SMS_CODE | 验证码格式非法，或验证码错误、过期、已消费 |
@@ -522,6 +642,7 @@ This is a test endpoint.
 | 40101 | 401 | INVALID_CREDENTIALS | 密码登录时密码错误 |
 | 40401 | 404 | REGISTER_REQUIRED | 密码登录/直登时手机号未注册 |
 | 40402 | 404 | PHONE_NOT_REGISTERED | 重置密码发码或重置密码时手机号未注册；debug 删号时手机号未注册 |
+| 40403 | 404 | AVATAR_NOT_FOUND | 调用 `GET /api/v1/users/me/avatar` 时用户未上传头像，或头像文件缺失 |
 | 40901 | 409 | PHONE_ALREADY_REGISTERED | 注册发码或注册时手机号已注册 |
 | 42901 | 429 | SMS_TOO_FREQUENT | 短信发送触发冷却间隔限制 |
 | 42902 | 429 | SMS_DAILY_LIMIT | 当日短信发送次数达到上限 |
@@ -595,8 +716,10 @@ This is a test endpoint.
 ### 6.4 资料存储机制
 
 - 用户基础信息在 `user_profiles`（一行）
-- 家族史/病史/用药史在独立子表（一对多）
-- 更新资料时，若提交列表字段，则对应子表全量替换
+- 家族史/病史/用药史在独立子表（一对多），由 `/users/me/profile` 维护
+- 疾病史在 `user_disease_histories`（一对多），由 `/users/me/basic-profile` 维护
+- 头像元信息在 `user_avatars`（一行），头像文件落盘在 `data/avatars/`，由 `/api/v1/users/me/avatar` 维护
+- 更新资料时，若提交对应列表字段，则执行全量替换
 
 ## 7. 客户端接入建议流程
 

@@ -20,3 +20,20 @@ final getMeUseCaseProvider = Provider<GetMeUseCase>((ref) {
 final updateProfileUseCaseProvider = Provider<UpdateProfileUseCase>((ref) {
   return UpdateProfileUseCase(ref.watch(userRepositoryProvider));
 });
+
+final getBasicProfileUseCaseProvider = Provider<GetBasicProfileUseCase>((ref) {
+  return GetBasicProfileUseCase(ref.watch(userRepositoryProvider));
+});
+
+final updateBasicProfileUseCaseProvider =
+    Provider<UpdateBasicProfileUseCase>((ref) {
+      return UpdateBasicProfileUseCase(ref.watch(userRepositoryProvider));
+    });
+
+final uploadAvatarUseCaseProvider = Provider<UploadAvatarUseCase>((ref) {
+  return UploadAvatarUseCase(ref.watch(userRepositoryProvider));
+});
+
+final getAvatarUseCaseProvider = Provider<GetAvatarUseCase>((ref) {
+  return GetAvatarUseCase(ref.watch(userRepositoryProvider));
+});

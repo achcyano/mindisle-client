@@ -34,6 +34,9 @@ dependencies:
   flutter_chat_ui: ^2.11.1
   flutter_chat_types: ^3.6.2
   flutter_markdown: ^0.7.7+1
+  image_picker: 1.1.2
+  image_cropper: ^9.1.0
+  image: ^4.7.2
 
 dev_dependencies:
   flutter_test:
@@ -43,6 +46,9 @@ dev_dependencies:
   retrofit_generator: ^10.2.3
   json_serializable: ^6.9.3
   freezed: ^3.2.5
+
+dependency_overrides:
+  image_picker_android: 0.8.13+5
 
 flutter:
   uses-material-design: true
