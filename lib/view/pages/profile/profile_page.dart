@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
+import 'package:mindisle_client/view/pages/info/info_page.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_picker_sheet.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_selector.dart';
-import 'package:mindisle_client/view/pages/profile/widgets/profile_basic_info_form_card.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
+import 'package:mindisle_client/view/widget/settings_card.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -73,7 +74,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         child: Center(
           child: FilledButton(
             onPressed: () => controller.initialize(refresh: true),
-            child: const Text('Retry'),
+            child: const Text('重试'),
           ),
         ),
       );
@@ -87,7 +88,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         ProfileAvatarSelector(state: state, onTapChangeAvatar: null),
         const SizedBox(height: 3),
         Text(
-            "用户姓名",
+          _displayName(state),
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         Row(
@@ -102,42 +103,26 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Expanded(
               child: ProfileCard(
                 icon: Icons.edit_outlined,
-                title: '编辑信息', //TODO 编辑信息页面
-                onTap: null,
+                title: '编辑信息',
+                onTap: () => InfoPage.route.goRoot(context),
               ),
             ),
             Expanded(
               child: ProfileCard(
                 icon: Icons.person_add_alt,
-                title: '我的医生',  //TODO 文案变化/绑定医生页面
-                onTap: null,
+                title: '我的医生',   //TODO 文案
+                onTap: null,  //TODO 点击事件
               ),
             ),
           ],
         ),
-        ProfileBasicInfoFormCard(
-          data: ProfileBasicInfoFormData.fromState(state),
-          actions: ProfileBasicInfoFormActions.fromController(
-            controller: controller,
-            onSavePressed: state.isSaving
-                ? null
-                : () => _saveProfile(controller),
-          ),
-        ),
+        SettingsGroup(
+          children: [
+
+          ],
+        )
       ],
     );
-  }
-
-  void _showSnack(String message) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.hideCurrentSnackBar();
-    messenger?.showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  Future<void> _saveProfile(ProfileController controller) async {
-    final message = await controller.saveProfile();
-    if (!mounted || message == null || message.isEmpty) return;
-    _showSnack(message);
   }
 
   Future<void> _showAvatarPickerSheet() async {
@@ -149,5 +134,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         .pickAndUploadAvatar(source);
     if (!mounted || message == null || message.isEmpty) return;
     _showSnack(message);
+  }
+
+  String _displayName(ProfileState state) {
+    return state.profile?.fullName?.trim() ?? '';
+  }
+
+  void _showSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(message)));
   }
 }

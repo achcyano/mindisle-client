@@ -31,7 +31,7 @@ class ProfileCard extends StatelessWidget {
             children: [
               Icon(
                   icon,
-                  size: 24,
+                  size: 23,
               ),
               SizedBox(height: 2),
               Text(
