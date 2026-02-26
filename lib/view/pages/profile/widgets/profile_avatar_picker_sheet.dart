@@ -12,12 +12,12 @@ Future<ImageSource?> showProfileAvatarPickerSheet(BuildContext context) {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take photo'),
+              title: const Text('拍照'),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: const Text('从相册选择'),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
             const SizedBox(height: 8),

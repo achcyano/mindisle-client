@@ -21,9 +21,9 @@ class AppListTile extends StatelessWidget {
     this.leadingGap = 12,
     this.trailingGap = 12,
     this.borderRadius,
-    this.autoBorderRadius = false,
+    this.autoBorderRadius = true,
     this.position = AppListTilePosition.middle,
-    this.autoRadius = 22,
+    this.autoRadius = 18,
   });
 
   final Widget title;

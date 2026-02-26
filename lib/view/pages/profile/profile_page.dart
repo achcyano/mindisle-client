@@ -134,7 +134,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             AppListTile(
               title: Text(_displayPhone(state)),
               subtitle: const Text('手机'),
-              autoBorderRadius: true,
               position: AppListTilePosition.first,
               onTap: () {
                 // TODO: 添加修改手机号页面
@@ -143,14 +142,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             AppListTile(
               title: Text(_displayUserId(state)),
               subtitle: const Text('ID'),
-              autoBorderRadius: true,
               position: AppListTilePosition.middle,
               onTap: () {},
             ),
             AppListTile(
               title: Text(_displayBirthDate(state)),
               subtitle: const Text('生日'),
-              autoBorderRadius: true,
               position: AppListTilePosition.last,
               onTap: () {
                 InfoPage.route.goRoot(context);
@@ -162,7 +159,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           children: [
             AppListTile(
               title: const Text('退出登录'),
-              autoBorderRadius: true,
               position: AppListTilePosition.first,
               leading: Icon(
                 Icons.logout_outlined,
@@ -172,13 +168,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
             AppListTile(
               title: const Text('修改密码'),
-              autoBorderRadius: true,
               position: AppListTilePosition.last,
               leading: Icon(
                 Icons.edit_note,
                 color: Theme.of(context).colorScheme.error,
               ),
-              onTap: () => _openResetPassword(state),
+              onTap: () => _confirmOpenResetPassword(state),
             ),
           ],
         ),
@@ -186,7 +181,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           children: [
             AppListTile(
               title: const Text('关于心岛'),
-              autoBorderRadius: true,
               position: AppListTilePosition.single,
               leading: const Icon(Icons.info_outlined),
               onTap: _showAboutAppDialog,
@@ -205,52 +199,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         ? '版本信息暂不可用'
         : '${info.version} (${info.buildNumber})';
 
-    await showAppDialog<void>(
+    showAboutDialog(
       context: context,
-      builder: (dialogContext) {
-        return buildAppAlertDialog(
-          title: const Text('关于心岛'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Image.asset(
-                  'assets/icon/app_icon_foreground.png',
-                  width: 64,
-                  height: 64,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text('心岛'),
-              const SizedBox(height: 4),
-              Text(versionText),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('关闭'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                if (!await launchUrl(
-                  Uri.parse(homeUrl),
-                  mode: LaunchMode.externalApplication,
-                )) {
-                  if (mounted) {
-                    _showSnack('无法打开网页');
-                  }
+      applicationName: '心岛',
+      applicationVersion: versionText,
+      applicationIcon: Image.asset(
+        'assets/icon/app_icon_foreground.png',
+        width: 64,
+        height: 64,
+      ),
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: () async {
+              if (!await launchUrl(
+                Uri.parse(homeUrl),
+                mode: LaunchMode.externalApplication,
+              )) {
+                if (mounted) {
+                  _showSnack('无法打开网页');
                 }
-              },
-              child: const Text('GitHub'),
-            ),
-          ],
-        );
-      },
+              }
+            },
+            child: const Text('GitHub'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -330,6 +305,32 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     if (!mounted) return;
     await ResetPasswordPage.route.goRoot(context, phone);
+  }
+
+  Future<void> _confirmOpenResetPassword(ProfileState state) async {
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final errorColor = Theme.of(dialogContext).colorScheme.error;
+        return buildAppAlertDialog(
+          title: const Text('修改密码'),
+          content: const Text('将通过短信验证码验证身份后重置密码，是否继续？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: errorColor),
+              child: const Text('继续'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !mounted) return;
+    await _openResetPassword(state);
   }
 
   Future<void> _confirmLogout() async {
