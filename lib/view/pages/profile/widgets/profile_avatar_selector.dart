@@ -9,7 +9,7 @@ class ProfileAvatarSelector extends StatelessWidget {
     this.onTapChangeAvatar,
   });
 
-  static const _avatarSize = 132.0;
+  static const _avatarSize = 100.0;
 
   final ProfileState state;
   final VoidCallback? onTapChangeAvatar;

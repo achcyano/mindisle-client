@@ -5,7 +5,7 @@ import 'package:mindisle_client/features/user/presentation/profile/profile_state
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_picker_sheet.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_selector.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_basic_info_form_card.dart';
-import 'package:mindisle_client/view/pages/profile/widgets/profile_quick_action_card.dart';
+import 'package:mindisle_client/view/pages/profile/widgets/profile_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
@@ -82,27 +82,27 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 20),
+        const SizedBox(height: 25),
         ProfileAvatarSelector(state: state, onTapChangeAvatar: null),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: ProfileQuickActionCard(
+              child: ProfileCard(
                 icon: Icons.add_a_photo_outlined,
                 title: '设置照片',
                 onTap: state.isUploadingAvatar ? null : _showAvatarPickerSheet,
               ),
             ),
             Expanded(
-              child: ProfileQuickActionCard(
+              child: ProfileCard(
                 icon: Icons.edit_outlined,
                 title: '编辑信息',
                 onTap: null,
               ),
             ),
             Expanded(
-              child: ProfileQuickActionCard(
+              child: ProfileCard(
                 icon: Icons.person_add_alt,
                 title: '我的医生',
                 onTap: null,
