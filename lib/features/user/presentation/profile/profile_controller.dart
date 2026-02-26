@@ -8,6 +8,7 @@ import 'package:mindisle_client/features/user/domain/entities/user_basic_profile
 import 'package:mindisle_client/features/user/domain/entities/user_profile.dart';
 import 'package:mindisle_client/features/user/presentation/profile/avatar_cache_store.dart';
 import 'package:mindisle_client/features/user/presentation/profile/avatar_image_processor.dart';
+import 'package:mindisle_client/features/user/presentation/profile/basic_profile_cache_store.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 
@@ -22,44 +23,58 @@ final class ProfileController extends StateNotifier<ProfileState> {
     ImagePicker? picker,
     AvatarImageProcessor? avatarImageProcessor,
     AvatarCacheStore? avatarCacheStore,
-  })
-    : _picker = picker ?? ImagePicker(),
-      _avatarImageProcessor = avatarImageProcessor ?? AvatarImageProcessor(),
-      _avatarCacheStore = avatarCacheStore ?? const AvatarCacheStore(),
-      super(const ProfileState());
+    BasicProfileCacheStore? basicProfileCacheStore,
+  }) : _picker = picker ?? ImagePicker(),
+       _avatarImageProcessor = avatarImageProcessor ?? AvatarImageProcessor(),
+       _avatarCacheStore = avatarCacheStore ?? const AvatarCacheStore(),
+       _basicProfileCacheStore =
+           basicProfileCacheStore ?? const BasicProfileCacheStore(),
+       super(const ProfileState());
 
   final Ref _ref;
   final ImagePicker _picker;
   final AvatarImageProcessor _avatarImageProcessor;
   final AvatarCacheStore _avatarCacheStore;
+  final BasicProfileCacheStore _basicProfileCacheStore;
 
   Future<void> initialize({bool refresh = false}) async {
     final userId = AppPrefs.sessionUserId.value;
+    final cachedProfile = _basicProfileCacheStore.readForUser(userId);
     final cachedAvatarBytes = _avatarCacheStore.readForUser(userId);
     final cachedAvatarETag = _avatarCacheStore.readETagForUser(userId);
+    final seedProfile = state.profile ?? cachedProfile;
     final seedAvatarBytes = state.avatarBytes ?? cachedAvatarBytes;
     final seedAvatarETag = state.avatarETag ?? cachedAvatarETag;
 
     if (refresh) {
       if (state.isRefreshing) return;
       state = state.copyWith(
+        initialized: true,
         isRefreshing: true,
         errorMessage: null,
+        profile: seedProfile,
         avatarBytes: seedAvatarBytes,
         avatarETag: seedAvatarETag,
       );
     } else {
-      if (state.isLoading) return;
+      if (state.isLoading || state.isRefreshing) return;
       state = state.copyWith(
         initialized: true,
-        isLoading: true,
+        isLoading: seedProfile == null,
+        isRefreshing: seedProfile != null,
         errorMessage: null,
+        profile: seedProfile,
         avatarBytes: seedAvatarBytes,
         avatarETag: seedAvatarETag,
       );
     }
+    if (seedProfile != null) {
+      _hydrateProfileInputs(seedProfile);
+    }
 
-    final profileResult = await _ref.read(getBasicProfileUseCaseProvider).execute();
+    final profileResult = await _ref
+        .read(getBasicProfileUseCaseProvider)
+        .execute();
     switch (profileResult) {
       case Failure(error: final error):
         state = state.copyWith(
@@ -70,6 +85,7 @@ final class ProfileController extends StateNotifier<ProfileState> {
         );
         return;
       case Success(data: final profile):
+        await _basicProfileCacheStore.saveForUser(profile);
         _applyProfileToState(profile);
     }
 
@@ -194,6 +210,7 @@ final class ProfileController extends StateNotifier<ProfileState> {
         state = state.copyWith(isSaving: false, errorMessage: error.message);
         return error.message;
       case Success(data: final profile):
+        await _basicProfileCacheStore.saveForUser(profile);
         _applyProfileToState(profile, isSaving: false);
         return '基本资料已保存';
     }
@@ -315,6 +332,18 @@ final class ProfileController extends StateNotifier<ProfileState> {
     return result;
   }
 
+  void _hydrateProfileInputs(UserBasicProfile profile) {
+    state = state.copyWith(
+      fullName: profile.fullName ?? '',
+      birthDate: profile.birthDate ?? '',
+      heightCm: _formatDouble(profile.heightCm),
+      weightKg: _formatDouble(profile.weightKg),
+      waistCm: _formatDouble(profile.waistCm),
+      diseaseHistoryInput: profile.diseaseHistory.join('\n'),
+      gender: profile.gender,
+    );
+  }
+
   void _applyProfileToState(UserBasicProfile profile, {bool? isSaving}) {
     state = state.copyWith(
       profile: profile,
@@ -339,6 +368,8 @@ final class ProfileController extends StateNotifier<ProfileState> {
     }
 
     final fixed = value.toStringAsFixed(2);
-    return fixed.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+    return fixed
+        .replaceFirst(RegExp(r'0+$'), '')
+        .replaceFirst(RegExp(r'\.$'), '');
   }
 }

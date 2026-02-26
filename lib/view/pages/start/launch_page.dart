@@ -45,6 +45,9 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
       return;
     }
 
+    unawaited(ref.read(basicProfileWarmupServiceProvider).warmUp());
+    unawaited(ref.read(avatarWarmupServiceProvider).warmUp());
+
     final result = await ref.read(getMeUseCaseProvider).execute();
     if (!mounted) return;
 
@@ -52,8 +55,6 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
       case Success():
         await AppPrefs.hasCompletedFirstLogin.set(true);
         ref.read(startupNetworkIssueProvider.notifier).state = null;
-        unawaited(ref.read(getBasicProfileUseCaseProvider).execute());
-        unawaited(ref.read(avatarWarmupServiceProvider).warmUp());
         if (!mounted) return;
         await HomeShell.route.replace(context);
         return;

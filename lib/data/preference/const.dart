@@ -7,15 +7,9 @@ abstract final class AppPrefs {
     defaultValue: false,
   );
 
-  static const deviceId = PrefVar<String>(
-    'device_id',
-    defaultValue: '',
-  );
+  static const deviceId = PrefVar<String>('device_id', defaultValue: '');
 
-  static const sessionUserId = PrefVar<int>(
-    'session_user_id',
-    defaultValue: 0,
-  );
+  static const sessionUserId = PrefVar<int>('session_user_id', defaultValue: 0);
 
   static const accessTokenExpiresAtMs = PrefVar<int>(
     'access_token_expires_at_ms',
@@ -27,10 +21,7 @@ abstract final class AppPrefs {
     defaultValue: 0,
   );
 
-  static const themeMode = PrefVar<int>(
-    'test_int',
-    defaultValue: 0,
-  );
+  static const themeMode = PrefVar<int>('test_int', defaultValue: 0);
 
   static const favoriteServerIds = PrefVar<List<String>>(
     'favorite_server_ids',
@@ -63,6 +54,17 @@ abstract final class AppPrefs {
   static const cachedAvatarETag = PrefVar<String>(
     'cached_avatar_etag',
     defaultValue: '',
+  );
+
+  static const cachedBasicProfileUserId = PrefVar<int>(
+    'cached_basic_profile_user_id',
+    defaultValue: 0,
+  );
+
+  static const cachedBasicProfileData = PrefVar<Map<String, dynamic>>(
+    'cached_basic_profile_data',
+    defaultValue: <String, dynamic>{},
+    decode: _decodeStringDynamicMap,
   );
 }
 

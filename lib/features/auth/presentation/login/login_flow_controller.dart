@@ -10,10 +10,12 @@ import 'package:mindisle_client/features/user/presentation/providers/user_provid
 import 'package:mindisle_client/view/pages/home_shell.dart';
 import 'package:mindisle_client/view/route/app_navigator.dart';
 
-final loginFlowControllerProvider = StateNotifierProvider.autoDispose<
-    LoginFlowController, LoginFlowState>((ref) {
-  return LoginFlowController(ref);
-});
+final loginFlowControllerProvider =
+    StateNotifierProvider.autoDispose<LoginFlowController, LoginFlowState>((
+      ref,
+    ) {
+      return LoginFlowController(ref);
+    });
 
 final class LoginFlowController extends StateNotifier<LoginFlowState> {
   LoginFlowController(this._ref) : super(const LoginFlowState());
@@ -76,7 +78,9 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
 
     state = state.copyWith(isSubmitting: true, inlineError: null);
 
-    final checkResult = await _ref.read(loginCheckUseCaseProvider).execute(phone);
+    final checkResult = await _ref
+        .read(loginCheckUseCaseProvider)
+        .execute(phone);
     switch (checkResult) {
       case Failure(error: final error):
         _fail(error.message);
@@ -200,10 +204,9 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
         );
         return;
       case AuthLoginDecision.registerRequired:
-        final sendCodeResult = await _ref.read(sendSmsCodeUseCaseProvider).execute(
-              phone: phone,
-              purpose: SmsPurpose.register,
-            );
+        final sendCodeResult = await _ref
+            .read(sendSmsCodeUseCaseProvider)
+            .execute(phone: phone, purpose: SmsPurpose.register);
 
         switch (sendCodeResult) {
           case Failure(error: final error):
@@ -228,18 +231,16 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
     required String phone,
     required String ticket,
   }) async {
-    final result = await _ref.read(loginDirectUseCaseProvider).execute(
-          phone: phone,
-          ticket: ticket,
-        );
+    final result = await _ref
+        .read(loginDirectUseCaseProvider)
+        .execute(phone: phone, ticket: ticket);
 
     switch (result) {
       case Failure(error: final error):
         _fail(error.message);
         return;
       case Success():
-        await _warmUpAvatarCache();
-        _refreshProfileInBackground();
+        await _warmUpProfileCaches();
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
         await HomeShell.route.replace(context);
@@ -248,18 +249,16 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
   }
 
   Future<void> _loginWithPassword(BuildContext context) async {
-    final result = await _ref.read(loginPasswordUseCaseProvider).execute(
-          phone: state.phoneDigits,
-          password: state.password,
-        );
+    final result = await _ref
+        .read(loginPasswordUseCaseProvider)
+        .execute(phone: state.phoneDigits, password: state.password);
 
     switch (result) {
       case Failure(error: final error):
         _fail(error.message);
         return;
       case Success():
-        await _warmUpAvatarCache();
-        _refreshProfileInBackground();
+        await _warmUpProfileCaches();
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
         await HomeShell.route.replace(context);
@@ -268,7 +267,9 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
   }
 
   Future<void> _registerAccount(BuildContext context) async {
-    final result = await _ref.read(registerUseCaseProvider).execute(
+    final result = await _ref
+        .read(registerUseCaseProvider)
+        .execute(
           phone: state.phoneDigits,
           smsCode: state.otpDigits,
           password: state.password,
@@ -293,8 +294,7 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
         _fail(error.message);
         return;
       case Success():
-        await _warmUpAvatarCache();
-        _refreshProfileInBackground();
+        await _warmUpProfileCaches();
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
         await HomeShell.route.replace(context);
@@ -334,27 +334,24 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
     );
   }
 
-  Future<void> _warmUpAvatarCache() async {
+  Future<void> _warmUpProfileCaches() async {
     try {
-      await _ref
-          .read(avatarWarmupServiceProvider)
-          .warmUp()
-          .timeout(const Duration(seconds: 2));
+      await Future.wait([
+        _ref.read(avatarWarmupServiceProvider).warmUp(),
+        _ref.read(basicProfileWarmupServiceProvider).warmUp(),
+      ]).timeout(const Duration(seconds: 2));
     } catch (_) {
       // Ignore warm-up failures to avoid blocking login flow.
     }
   }
 
-  void _refreshProfileInBackground() {
-    unawaited(_ref.read(getBasicProfileUseCaseProvider).execute());
-  }
-
   bool _isDigit(String value) {
-    return value.length == 1 && value.codeUnitAt(0) >= 48 && value.codeUnitAt(0) <= 57;
+    return value.length == 1 &&
+        value.codeUnitAt(0) >= 48 &&
+        value.codeUnitAt(0) <= 57;
   }
 
   bool _isValidPhone(String phone) {
     return RegExp(r'^1[3-9]\d{9}$').hasMatch(phone);
   }
 }
-
