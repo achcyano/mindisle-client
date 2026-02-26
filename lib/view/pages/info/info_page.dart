@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
+import 'package:mindisle_client/view/pages/info/info_field_label.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:mindisle_client/view/widget/app_dialog.dart';
 import 'package:mindisle_client/view/widget/app_list_tile.dart';
 import 'package:mindisle_client/view/widget/settings_card.dart';
+import 'package:mindisle_client/view/widget/settings_input_field.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class InfoPage extends ConsumerStatefulWidget {
@@ -22,6 +25,15 @@ class InfoPage extends ConsumerStatefulWidget {
 
 class _InfoPageState extends ConsumerState<InfoPage> {
   String? _lastErrorMessage;
+  bool _allowPop = false;
+  bool _isHandlingBack = false;
+  static final TextInputFormatter _twoDecimalInputFormatter =
+      TextInputFormatter.withFunction((oldValue, newValue) {
+        final text = newValue.text;
+        if (text.isEmpty) return newValue;
+        final ok = RegExp(r'^\d+(\.\d{0,2})?$').hasMatch(text);
+        return ok ? newValue : oldValue;
+      });
 
   @override
   void initState() {
@@ -45,13 +57,26 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     final state = ref.watch(profileControllerProvider);
     final controller = ref.read(profileControllerProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('编辑资料')),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-          child: _buildContent(state: state, controller: controller),
+    return PopScope<void>(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _saveAndPop(controller);
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('编辑资料')),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: _buildContent(state: state, controller: controller),
+          ),
         ),
+        floatingActionButton: state.profile == null
+            ? null
+            : FloatingActionButton(
+                onPressed: state.isSaving ? null : () => _saveProfile(controller),
+                child: const Icon(Icons.arrow_forward),
+              ),
       ),
     );
   }
@@ -105,11 +130,64 @@ class _InfoPageState extends ConsumerState<InfoPage> {
           ],
         ),
         SettingsGroup(
-            title: "您的姓名",
+          title: "您的姓名",
+          children: [
+            SettingsInputField(
+              value: state.fullName,
+              enabled: !state.isSaving,
+              hintText: '请输入姓名',
+              onChanged: controller.setFullName,
+              onCommit: () => _saveProfile(controller),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+            ),
+          ],
+        ),
+        SettingsGroup(
             children: [
-
+              const InfoFieldLabel(text: '身高/cm'),
+              SettingsInputField(
+                  value: state.heightCm,
+                  enabled: !state.isSaving,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [_twoDecimalInputFormatter],
+                  onChanged: controller.setHeightCm,
+                  onCommit: () => _saveProfile(controller),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0)
+              ),
+              const Divider(
+                height: 1,
+                thickness: 0.2,
+                indent: 16,
+                endIndent: 16,
+              ),
+              const InfoFieldLabel(text: "体重/kg"),
+              SettingsInputField(
+                  value: state.weightKg,
+                  enabled: !state.isSaving,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [_twoDecimalInputFormatter],
+                  onChanged: controller.setWeightKg,
+                  onCommit: () => _saveProfile(controller),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0)
+              ),
+              const Divider(
+                height: 1,
+                thickness: 0.2,
+                indent: 16,
+                endIndent: 16,
+              ),
+              const InfoFieldLabel(text: "腰围/cm"),
+              SettingsInputField(
+                  value: state.waistCm,
+                  enabled: !state.isSaving,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [_twoDecimalInputFormatter],
+                  onChanged: controller.setWaistCm,
+                  onCommit: () => _saveProfile(controller),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 6)
+              ),
             ]
-        )
+        ),
       ],
     );
   }
@@ -213,6 +291,27 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     final messenger = ScaffoldMessenger.maybeOf(context);
     messenger?.hideCurrentSnackBar();
     messenger?.showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _saveAndPop(ProfileController controller) async {
+    if (_isHandlingBack) return;
+    _isHandlingBack = true;
+    try {
+      await _saveProfile(controller);
+      if (!mounted) return;
+      setState(() {
+        _allowPop = true;
+      });
+      final popped = await Navigator.of(context).maybePop();
+      if (!mounted || popped) return;
+      setState(() {
+        _allowPop = false;
+      });
+    } finally {
+      if (mounted) {
+        _isHandlingBack = false;
+      }
+    }
   }
 
   Future<void> _saveProfile(ProfileController controller) async {
