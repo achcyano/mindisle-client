@@ -14,6 +14,7 @@ final class ProfileState {
     this.avatarBytes,
     this.avatarETag,
     this.errorMessage,
+    this.phone = '',
     this.fullName = '',
     this.birthDate = '',
     this.heightCm = '',
@@ -33,6 +34,7 @@ final class ProfileState {
   final String? avatarETag;
   final String? errorMessage;
 
+  final String phone;
   final String fullName;
   final String birthDate;
   final String heightCm;
@@ -51,6 +53,7 @@ final class ProfileState {
     Object? avatarBytes = _sentinel,
     Object? avatarETag = _sentinel,
     Object? errorMessage = _sentinel,
+    String? phone,
     String? fullName,
     String? birthDate,
     String? heightCm,
@@ -77,6 +80,7 @@ final class ProfileState {
       errorMessage: identical(errorMessage, _sentinel)
           ? this.errorMessage
           : errorMessage as String?,
+      phone: phone ?? this.phone,
       fullName: fullName ?? this.fullName,
       birthDate: birthDate ?? this.birthDate,
       heightCm: heightCm ?? this.heightCm,

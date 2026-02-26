@@ -89,6 +89,14 @@ final class ProfileController extends StateNotifier<ProfileState> {
         _applyProfileToState(profile);
     }
 
+    final meResult = await _ref.read(getMeUseCaseProvider).execute();
+    switch (meResult) {
+      case Success(data: final me):
+        state = state.copyWith(phone: me.phone.trim());
+      case Failure():
+      // Ignore getMe failure here, basic profile and avatar should still load.
+    }
+
     final avatarResult = await _ref
         .read(getAvatarUseCaseProvider)
         .execute(ifNoneMatch: state.avatarETag);

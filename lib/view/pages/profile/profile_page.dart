@@ -118,30 +118,37 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ],
         ),
         SettingsGroup(
-          children: const [
+          children: [
             AppListTile(
-              title: Text('153-0561-2881'),
-              subtitle: Text('手机'),
+              title: Text(_displayPhone(state)),
+              subtitle: const Text('手机'),
               autoBorderRadius: true,
               position: AppListTilePosition.first,
               paddingTop: 8,
               paddingBottom: 8,
+              onTap: (){
+                // TODO 添加修改手机号ui
+              },
             ),
             AppListTile(
-              title: Text('用户ID，从登录获取'),
-              subtitle: Text('用户ID'),
+              title: Text(_displayUserId(state)),
+              subtitle: const Text('ID'),
               autoBorderRadius: true,
               position: AppListTilePosition.middle,
               paddingTop: 8,
               paddingBottom: 8,
+              onTap: (){},
             ),
             AppListTile(
-              title: Text('6月9日'),
-              subtitle: Text('生日'),
+              title: Text(_displayBirthDate(state)),
+              subtitle: const Text('生日'),
               autoBorderRadius: true,
               position: AppListTilePosition.last,
               paddingTop: 8,
               paddingBottom: 8,
+              onTap: (){
+                InfoPage.route.goRoot(context);
+              },
             ),
           ],
         ),
@@ -161,7 +168,31 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   String _displayName(ProfileState state) {
-    return state.profile?.fullName?.trim() ?? '';
+    final text = state.profile?.fullName?.trim() ?? '';
+    if (text.isEmpty) return '未设置姓名';
+    return text;
+  }
+
+  String _displayPhone(ProfileState state) {
+    final text = state.phone.trim();
+    if (text.isEmpty) return '未绑定手机号';
+    return text;
+  }
+
+  String _displayUserId(ProfileState state) {
+    final id = state.profile?.userId ?? 0;
+    if (id <= 0) return '未获取';
+    return id.toString();
+  }
+
+  String _displayBirthDate(ProfileState state) {
+    final text =
+        (state.birthDate.isNotEmpty
+                ? state.birthDate
+                : (state.profile?.birthDate ?? ''))
+            .trim();
+    if (text.isEmpty) return '未设置生日';
+    return text;
   }
 
   void _showSnack(String message) {
