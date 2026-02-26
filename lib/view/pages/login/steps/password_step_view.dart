@@ -10,6 +10,7 @@ class PasswordStepView extends StatelessWidget {
     required this.isSubmitting,
     required this.onPasswordChanged,
     required this.onSubmit,
+    this.onForgotPassword,
     super.key,
   });
 
@@ -19,6 +20,7 @@ class PasswordStepView extends StatelessWidget {
   final bool isSubmitting;
   final ValueChanged<String> onPasswordChanged;
   final VoidCallback onSubmit;
+  final VoidCallback? onForgotPassword;
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +108,22 @@ class PasswordStepView extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (!isRegister && onForgotPassword != null) ...[
+                  const SizedBox(height: 2),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        textStyle: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      onPressed: isSubmitting ? null : onForgotPassword,
+                      child: Text(
+                        '忘记密码？',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

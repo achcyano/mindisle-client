@@ -5,10 +5,12 @@ import 'package:mindisle_client/core/providers/app_providers.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/static.dart';
 import 'package:mindisle_client/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
 import 'package:mindisle_client/view/pages/info/info_page.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
+import 'package:mindisle_client/view/pages/login/reset_password_page.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_picker_sheet.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_selector.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_card.dart';
@@ -176,7 +178,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 Icons.edit_note,
                 color: Theme.of(context).colorScheme.error,
               ),
-              onTap: () {},
+              onTap: () => _openResetPassword(state),
             ),
           ],
         ),
@@ -305,6 +307,29 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             .trim();
     if (text.isEmpty) return '未设置生日';
     return text;
+  }
+
+  Future<void> _openResetPassword(ProfileState state) async {
+    var phone = state.phone.trim();
+    if (phone.isEmpty) {
+      final meResult = await ref.read(getMeUseCaseProvider).execute();
+      switch (meResult) {
+        case Success(data: final me):
+          phone = me.phone.trim();
+        case Failure(error: final error):
+          final message = error.message.trim();
+          _showSnack(message.isEmpty ? '无法获取手机号，请稍后重试' : message);
+          return;
+      }
+    }
+
+    if (phone.isEmpty) {
+      _showSnack('未绑定手机号，暂无法修改密码');
+      return;
+    }
+
+    if (!mounted) return;
+    await ResetPasswordPage.route.goRoot(context, phone);
   }
 
   Future<void> _confirmLogout() async {

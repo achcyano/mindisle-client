@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/auth/presentation/login/login_flow_controller.dart';
 import 'package:mindisle_client/features/auth/presentation/login/login_flow_state.dart';
+import 'package:mindisle_client/view/pages/login/reset_password_page.dart';
 import 'package:mindisle_client/view/pages/login/steps/otp_step_view.dart';
 import 'package:mindisle_client/view/pages/login/steps/password_step_view.dart';
 import 'package:mindisle_client/view/pages/login/steps/phone_step_view.dart';
@@ -74,6 +75,14 @@ class LoginPage extends ConsumerWidget {
                   isSubmitting: state.isSubmitting,
                   onPasswordChanged: controller.setPassword,
                   onSubmit: () => controller.submitPassword(context),
+                  onForgotPassword:
+                      state.mode == LoginFlowMode.passwordLogin &&
+                          state.phoneDigits.length == 11
+                      ? () => ResetPasswordPage.route.go(
+                          context,
+                          state.phoneDigits,
+                        )
+                      : null,
                 ),
             },
           ),
