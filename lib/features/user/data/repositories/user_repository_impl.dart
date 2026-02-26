@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:mindisle_client/core/network/api_envelope.dart';
 import 'package:mindisle_client/core/network/error_mapper.dart';
+import 'package:mindisle_client/core/result/app_error.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/features/user/data/models/user_models.dart';
 import 'package:mindisle_client/features/user/data/remote/user_api.dart';
@@ -79,8 +81,9 @@ final class UserRepositoryImpl implements UserRepository {
       final eTag = headers.value('etag');
       final lastModified = headers.value('last-modified');
       final cacheControl = headers.value('cache-control');
+      final statusCode = response.statusCode;
 
-      if (response.statusCode == 304) {
+      if (statusCode == 304) {
         return Success(
           UserAvatarBinaryDto(
             isNotModified: true,
@@ -90,6 +93,10 @@ final class UserRepositoryImpl implements UserRepository {
             cacheControl: cacheControl,
           ).toDomain(),
         );
+      }
+
+      if (statusCode == 404) {
+        return Failure(_parseAvatarNotFoundError(response.data));
       }
 
       final rawBytes = response.data ?? const <int>[];
@@ -108,6 +115,37 @@ final class UserRepositoryImpl implements UserRepository {
     } catch (e) {
       return Failure(mapServerCodeToAppError(code: 50000, message: e.toString()));
     }
+  }
+
+  AppError _parseAvatarNotFoundError(List<int>? rawData) {
+    if (rawData != null && rawData.isNotEmpty) {
+      try {
+        final text = utf8.decode(rawData, allowMalformed: true).trim();
+        if (text.isNotEmpty) {
+          final decoded = jsonDecode(text);
+          if (decoded is Map) {
+            final map = Map<String, dynamic>.from(decoded);
+            final code = (map['code'] as num?)?.toInt();
+            final message = (map['message'] as String?) ?? '';
+            if (code != null) {
+              return mapServerCodeToAppError(
+                code: code,
+                message: message,
+                statusCode: 404,
+              );
+            }
+          }
+        }
+      } catch (_) {
+        // Fallback to avatar-not-found semantics below.
+      }
+    }
+
+    return mapServerCodeToAppError(
+      code: 40403,
+      message: 'Avatar not found',
+      statusCode: 404,
+    );
   }
 
   Future<Result<T>> _run<T>(

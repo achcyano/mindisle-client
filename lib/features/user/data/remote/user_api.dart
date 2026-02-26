@@ -64,7 +64,7 @@ final class UserApi {
         },
         validateStatus: (status) {
           if (status == null) return false;
-          return status == 304 || (status >= 200 && status < 300);
+          return status == 304 || status == 404 || (status >= 200 && status < 300);
         },
       ),
     );
