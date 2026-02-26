@@ -25,6 +25,21 @@ class InfoPage extends ConsumerStatefulWidget {
 }
 
 class _InfoPageState extends ConsumerState<InfoPage> {
+  static const List<String> _diseaseHistoryOptions = <String>[
+    '其它',
+    '肠胃炎',
+    '腹泻',
+    '便秘',
+    '过敏性结膜炎',
+    '高血压',
+    '糖尿病',
+    '高脂血症',
+    '冠心病',
+    '脑梗死',
+    '失眠',
+    '哮喘',
+  ];
+
   String? _lastErrorMessage;
   bool _allowPop = false;
   bool _isHandlingBack = false;
@@ -77,9 +92,7 @@ class _InfoPageState extends ConsumerState<InfoPage> {
             : FloatingActionButton(
                 onPressed: state.isSaving
                     ? null
-                    : () async {
-                        await _saveProfileBeforeExit(controller);
-                      },
+                    : () => _saveAndPop(controller),
                 child: const Icon(Icons.arrow_forward),
               ),
       ),
@@ -202,8 +215,97 @@ class _InfoPageState extends ConsumerState<InfoPage> {
               ),
             ]
         ),
+        SettingsGroup(
+          title: '疾病史',
+          children: _buildDiseaseHistoryEntries(
+            state: state,
+            controller: controller,
+          ),
+        ),
       ],
     );
+  }
+
+  List<Widget> _buildDiseaseHistoryEntries({
+    required ProfileState state,
+    required ProfileController controller,
+  }) {
+    final entries = _diseaseHistoryEntries(state);
+    final tiles = <Widget>[];
+
+    if (entries.isNotEmpty) {
+      for (var i = 0; i < entries.length; i++) {
+        tiles.add(
+          AppListTile(
+            title: Text(entries[i]),
+            position: AppListTilePosition.middle,
+            paddingBottom: 0,
+            paddingTop: 0,
+            trailing: IconButton(
+              tooltip: '删除',
+              icon: Icon(
+                Icons.delete_outline,
+                color: Theme.of(context).colorScheme.error,
+                size: 20,
+              ),
+              onPressed: state.isSaving
+                  ? null
+                  : () => _removeDiseaseHistory(
+                        state: state,
+                        controller: controller,
+                        entry: entries[i],
+                      ),
+            ),
+            onTap: (){},
+          ),
+        );
+      }
+    }
+
+    tiles.add(
+      AppListTile(
+        title: Text(
+          '添加',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+        ),
+        leading: Icon(
+          Icons.add,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        position: AppListTilePosition.last,
+        onTap: state.isSaving
+            ? null
+            : () => _addDiseaseHistory(
+                  state: state,
+                  controller: controller,
+                ),
+      ),
+    );
+
+    return tiles;
+  }
+
+  List<String> _diseaseHistoryEntries(ProfileState state) {
+    final raw = state.diseaseHistoryInput.trim();
+    if (raw.isEmpty) return const <String>[];
+    return _normalizeDiseaseHistoryTokens(
+      raw.split(RegExp(r'[\n,，、;；]+')),
+    );
+  }
+
+  List<String> _normalizeDiseaseHistoryTokens(Iterable<String> source) {
+    final result = <String>[];
+    final dedup = <String>{};
+    for (final raw in source) {
+      final token = raw.trim();
+      if (token.isEmpty) continue;
+      if (dedup.contains(token)) continue;
+      dedup.add(token);
+      result.add(token);
+    }
+    return result;
   }
 
   String _displayPhone(ProfileState state) {
@@ -347,6 +449,132 @@ class _InfoPageState extends ConsumerState<InfoPage> {
 
     controller.setGender(picked);
     await _saveProfile(controller);
+  }
+
+  Future<void> _addDiseaseHistory({
+    required ProfileState state,
+    required ProfileController controller,
+  }) async {
+    final selected = await _pickDiseaseHistoryOption();
+    if (!mounted || selected == null) return;
+
+    var entry = selected;
+    if (selected == '其它') {
+      final custom = await _inputCustomDiseaseHistory();
+      if (!mounted || custom == null) return;
+      entry = custom;
+    }
+
+    if (entry.length > 200) {
+      _showSnack('疾病名称不能超过 200 个字符');
+      return;
+    }
+    if (_containsControlChars(entry)) {
+      _showSnack('疾病名称包含非法字符');
+      return;
+    }
+
+    final entries = _diseaseHistoryEntries(state);
+    if (entries.contains(entry)) {
+      _showSnack('该疾病已录入');
+      return;
+    }
+    if (entries.length >= 50) {
+      _showSnack('疾病史最多可填写 50 项');
+      return;
+    }
+
+    entries.add(entry);
+    controller.setDiseaseHistoryInput(entries.join('\n'));
+  }
+
+  Future<void> _removeDiseaseHistory({
+    required ProfileState state,
+    required ProfileController controller,
+    required String entry,
+  }) async {
+    final entries = _diseaseHistoryEntries(state);
+    final removed = entries.remove(entry);
+    if (!removed) return;
+    controller.setDiseaseHistoryInput(entries.join('\n'));
+  }
+
+  Future<String?> _pickDiseaseHistoryOption() async {
+    return showAppDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return buildAppAlertDialog(
+          title: const Text('添加疾病史'),
+          scrollable: true,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final option in _diseaseHistoryOptions)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(option),
+                  onTap: () => Navigator.of(dialogContext).pop(option),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('取消'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<String?> _inputCustomDiseaseHistory() async {
+    var inputValue = '';
+    final value = await showAppDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return buildAppAlertDialog(
+          title: const Text('填写其它疾病'),
+          content: TextField(
+            autofocus: true,
+            maxLength: 200,
+            textInputAction: TextInputAction.done,
+            onChanged: (value) {
+              inputValue = value;
+            },
+            onSubmitted: (_) {
+              Navigator.of(dialogContext).pop(inputValue.trim());
+            },
+            decoration: const InputDecoration(
+              hintText: '请输入疾病名称',
+              border: OutlineInputBorder(),
+              isDense: true,
+              counterText: '',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(inputValue.trim());
+              },
+              child: const Text('确定'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      _showSnack('请输入疾病名称');
+      return null;
+    }
+    return trimmed;
   }
 
   void _showSnack(String message) {
