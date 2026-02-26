@@ -8,6 +8,7 @@ const apiScheme = 'http';
 const apiHost = '192.168.0.101';
 const apiPort = 80;
 const apiPrefix = '/api/v1';
+const homeUrl = "https://github.com/achcyano/mindisle-client";
 
 Uri buildApiUri(String path, [Map<String, dynamic>? queryParameters]) {
   final normalizedPath = path.startsWith('/') ? path : '/$path';

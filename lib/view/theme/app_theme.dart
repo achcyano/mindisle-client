@@ -18,10 +18,14 @@ class AppTheme {
       colorScheme: swappedScheme,
       scaffoldBackgroundColor: swappedScheme.surface,
       textTheme: AppTextTheme.build(base.textTheme),
+      iconTheme: base.iconTheme.copyWith(color: swappedScheme.onSurface),
+      primaryIconTheme: base.primaryIconTheme.copyWith(
+        color: swappedScheme.onSurface,
+      ),
       cardTheme: CardThemeData(
         elevation: 0,
         color: swappedScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       chipTheme: base.chipTheme.copyWith(
         side: thinChipBorder,
@@ -46,6 +50,15 @@ class AppTheme {
         actionsPadding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
         constraints: const BoxConstraints(maxWidth: 640),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      listTileTheme: ListTileThemeData(
+        titleTextStyle: AppTextTheme.build(base.textTheme).bodyMedium,
+        subtitleTextStyle: AppTextTheme.build(base.textTheme).bodySmall
+            ?.copyWith(color: swappedScheme.onSurface.withValues(alpha: 0.6)),
+        leadingAndTrailingTextStyle: AppTextTheme.build(
+          base.textTheme,
+        ).labelMedium,
+        iconColor: swappedScheme.onSurfaceVariant,
       ),
     );
   }

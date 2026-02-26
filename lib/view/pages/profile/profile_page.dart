@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mindisle_client/core/static.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
 import 'package:mindisle_client/view/pages/info/info_page.dart';
@@ -9,7 +11,9 @@ import 'package:mindisle_client/view/pages/profile/widgets/profile_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:mindisle_client/view/widget/app_list_tile.dart';
 import 'package:mindisle_client/view/widget/settings_card.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -97,7 +101,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Expanded(
               child: ProfileCard(
                 icon: Icons.add_a_photo_outlined,
-                title: '设置照片',
+                title: '设置头像',
                 onTap: state.isUploadingAvatar ? null : _showAvatarPickerSheet,
               ),
             ),
@@ -124,10 +128,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               subtitle: const Text('手机'),
               autoBorderRadius: true,
               position: AppListTilePosition.first,
-              paddingTop: 8,
-              paddingBottom: 8,
-              onTap: (){
-                // TODO 添加修改手机号ui
+              onTap: () {
+                // TODO: 添加修改手机号页面
               },
             ),
             AppListTile(
@@ -135,25 +137,104 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               subtitle: const Text('ID'),
               autoBorderRadius: true,
               position: AppListTilePosition.middle,
-              paddingTop: 8,
-              paddingBottom: 8,
-              onTap: (){},
+              onTap: () {},
             ),
             AppListTile(
               title: Text(_displayBirthDate(state)),
               subtitle: const Text('生日'),
               autoBorderRadius: true,
               position: AppListTilePosition.last,
-              paddingTop: 8,
-              paddingBottom: 8,
-              onTap: (){
+              onTap: () {
                 InfoPage.route.goRoot(context);
               },
             ),
           ],
         ),
+        SettingsGroup(
+          children: [
+            AppListTile(
+              title: const Text('退出登录'),
+              autoBorderRadius: true,
+              position: AppListTilePosition.first,
+              leading: Icon(
+                Icons.logout_outlined,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              onTap: () {},
+            ),
+            AppListTile(
+              title: const Text('修改密码'),
+              autoBorderRadius: true,
+              position: AppListTilePosition.last,
+              leading: Icon(
+                Icons.edit_note,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              onTap: () {},
+            ),
+          ],
+        ),
+        SettingsGroup(
+          children: [
+            AppListTile(
+              title: const Text('关于心岛'),
+              autoBorderRadius: true,
+              position: AppListTilePosition.single,
+              leading: const Icon(Icons.info_outlined),
+              onTap: _showAboutAppDialog,
+            ),
+          ],
+        ),
       ],
     );
+  }
+
+  Future<void> _showAboutAppDialog() async {
+    final info = await _loadPackageInfoSafely();
+    if (!mounted) return;
+
+    showAboutDialog(
+      context: context,
+      applicationName: '心岛',
+      applicationVersion: info == null
+          ? '版本信息暂不可用'
+          : '${info.version} (${info.buildNumber})',
+      applicationIcon: Image.asset(
+        'assets/icon/app_icon_foreground.png',
+        width: 64,
+        height: 64,
+      ),
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.open_in_new),
+          label: const Text("GitHub"),
+          onPressed: () async {
+            if (!await launchUrl(
+              Uri.parse(homeUrl),
+              mode: LaunchMode.externalApplication,
+            )) {
+              _showSnack("无法打开网页");
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<PackageInfo?> _loadPackageInfoSafely() async {
+    try {
+      return await PackageInfo.fromPlatform();
+    } on MissingPluginException {
+      if (mounted) {
+        _showSnack('版本信息暂不可用，请重启应用后再试');
+      }
+      return null;
+    } on PlatformException {
+      if (mounted) {
+        _showSnack('版本信息获取失败，请稍后重试');
+      }
+      return null;
+    }
   }
 
   Future<void> _showAvatarPickerSheet() async {

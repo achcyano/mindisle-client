@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/ai/domain/entities/ai_entities.dart';
 import 'package:mindisle_client/features/ai/presentation/chat/chat_controller.dart';
@@ -98,7 +98,7 @@ class ChatConversationDrawer extends ConsumerWidget {
 
   String _formatConversationTime(AiConversation conversation) {
     final timestamp = conversation.updatedAt ?? conversation.createdAt;
-    if (timestamp == null) return '鏈煡鏃堕棿';
+    if (timestamp == null) return '未知时间';
     final local = timestamp.toLocal();
     return '${local.year}-${_twoDigits(local.month)}-${_twoDigits(local.day)} '
         '${_twoDigits(local.hour)}:${_twoDigits(local.minute)}';
@@ -387,3 +387,4 @@ class _ConversationListItem extends StatelessWidget {
     );
   }
 }
+
