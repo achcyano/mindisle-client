@@ -14,14 +14,16 @@ class ProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final border = BorderRadius.circular(18);
+
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: border,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: border,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
           child: Column(
