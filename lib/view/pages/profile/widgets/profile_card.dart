@@ -25,11 +25,14 @@ class ProfileCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: border,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+          padding: const EdgeInsets.fromLTRB(0,  6, 0, 6),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon),
+              Icon(
+                  icon,
+                  size: 24,
+              ),
               SizedBox(height: 2),
               Text(
                 title,

@@ -80,11 +80,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      spacing: 5,
       children: [
-        const SizedBox(height: 25),
+        const SizedBox(height: 20),
         ProfileAvatarSelector(state: state, onTapChangeAvatar: null),
-        const SizedBox(height: 16),
+        const SizedBox(height: 3),
+        Text(
+            "用户姓名",
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         Row(
           children: [
             Expanded(
@@ -97,20 +102,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Expanded(
               child: ProfileCard(
                 icon: Icons.edit_outlined,
-                title: '编辑信息',
+                title: '编辑信息', //TODO 编辑信息页面
                 onTap: null,
               ),
             ),
             Expanded(
               child: ProfileCard(
                 icon: Icons.person_add_alt,
-                title: '我的医生',
+                title: '我的医生',  //TODO 文案变化/绑定医生页面
                 onTap: null,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
         ProfileBasicInfoFormCard(
           data: ProfileBasicInfoFormData.fromState(state),
           actions: ProfileBasicInfoFormActions.fromController(

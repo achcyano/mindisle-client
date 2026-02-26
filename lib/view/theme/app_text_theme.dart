@@ -24,6 +24,10 @@ class AppTextTheme {
       titleSmall: (base.titleSmall ?? const TextStyle()).copyWith(
         fontSize: 17,
       ),
+      labelSmall: (base.labelSmall ?? const TextStyle()).copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
       labelLarge: (base.labelLarge ?? const TextStyle()).copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w600,
