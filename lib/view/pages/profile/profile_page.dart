@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mindisle_client/core/providers/app_providers.dart';
+import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/static.dart';
+import 'package:mindisle_client/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
 import 'package:mindisle_client/view/pages/info/info_page.dart';
+import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_picker_sheet.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_selector.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
+import 'package:mindisle_client/view/widget/app_dialog.dart';
 import 'package:mindisle_client/view/widget/app_list_tile.dart';
 import 'package:mindisle_client/view/widget/settings_card.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -29,6 +34,7 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   String? _lastErrorMessage;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
@@ -160,7 +166,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 Icons.logout_outlined,
                 color: Theme.of(context).colorScheme.error,
               ),
-              onTap: () {},
+              onTap: _isLoggingOut ? null : _confirmLogout,
             ),
             AppListTile(
               title: const Text('修改密码'),
@@ -193,31 +199,56 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final info = await _loadPackageInfoSafely();
     if (!mounted) return;
 
-    showAboutDialog(
+    final versionText = info == null
+        ? '版本信息暂不可用'
+        : '${info.version} (${info.buildNumber})';
+
+    await showAppDialog<void>(
       context: context,
-      applicationName: '心岛',
-      applicationVersion: info == null
-          ? '版本信息暂不可用'
-          : '${info.version} (${info.buildNumber})',
-      applicationIcon: Image.asset(
-        'assets/icon/app_icon_foreground.png',
-        width: 64,
-        height: 64,
-      ),
-      children: [
-        TextButton.icon(
-          icon: const Icon(Icons.open_in_new),
-          label: const Text("GitHub"),
-          onPressed: () async {
-            if (!await launchUrl(
-              Uri.parse(homeUrl),
-              mode: LaunchMode.externalApplication,
-            )) {
-              _showSnack("无法打开网页");
-            }
-          },
-        ),
-      ],
+      builder: (dialogContext) {
+        return buildAppAlertDialog(
+          title: const Text('关于心岛'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Image.asset(
+                  'assets/icon/app_icon_foreground.png',
+                  width: 64,
+                  height: 64,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text('心岛'),
+              const SizedBox(height: 4),
+              Text(versionText),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('关闭'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                if (!await launchUrl(
+                  Uri.parse(homeUrl),
+                  mode: LaunchMode.externalApplication,
+                )) {
+                  if (mounted) {
+                    _showSnack('无法打开网页');
+                  }
+                }
+              },
+              child: const Text('GitHub'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -274,6 +305,64 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             .trim();
     if (text.isEmpty) return '未设置生日';
     return text;
+  }
+
+  Future<void> _confirmLogout() async {
+    if (_isLoggingOut) return;
+
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final errorColor = Theme.of(dialogContext).colorScheme.error;
+        return buildAppAlertDialog(
+          title: const Text('退出登录'),
+          content: const Text('确定退出登录吗？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: errorColor),
+              child: const Text('退出登录'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+    await _logout();
+  }
+
+  Future<void> _logout() async {
+    if (_isLoggingOut) return;
+    setState(() {
+      _isLoggingOut = true;
+    });
+
+    try {
+      final refreshToken = await ref.read(sessionStoreProvider).readRefreshToken();
+      final result = await ref
+          .read(logoutUseCaseProvider)
+          .execute(refreshToken: refreshToken);
+      if (!mounted) return;
+
+      switch (result) {
+        case Success<void>():
+          await LoginPage.route.replaceRoot(context);
+        case Failure<void>(error: final error):
+          final message = error.message.trim();
+          _showSnack(message.isEmpty ? '退出登录失败，请稍后重试' : message);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoggingOut = false;
+        });
+      }
+    }
   }
 
   void _showSnack(String message) {

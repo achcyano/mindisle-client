@@ -46,7 +46,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         case Failure(error: final error):
           if (error.type == AppErrorType.unauthorized) {
             ref.read(startupNetworkIssueProvider.notifier).state = null;
-            await LoginPage.route.replace(context);
+            await LoginPage.route.replaceRoot(context);
             return;
           }
 
