@@ -21,7 +21,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         color: swappedScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       chipTheme: base.chipTheme.copyWith(
         side: thinChipBorder,

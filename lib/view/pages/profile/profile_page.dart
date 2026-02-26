@@ -7,6 +7,7 @@ import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_picker
 import 'package:mindisle_client/view/pages/profile/widgets/profile_avatar_selector.dart';
 import 'package:mindisle_client/view/pages/profile/widgets/profile_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
+import 'package:mindisle_client/view/widget/app_list_tile.dart';
 import 'package:mindisle_client/view/widget/settings_card.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
@@ -110,17 +111,40 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             Expanded(
               child: ProfileCard(
                 icon: Icons.person_add_alt,
-                title: '我的医生',   //TODO 文案
-                onTap: null,  //TODO 点击事件
+                title: '我的医生',
+                onTap: null,
               ),
             ),
           ],
         ),
         SettingsGroup(
-          children: [
-
+          children: const [
+            AppListTile(
+              title: Text('153-0561-2881'),
+              subtitle: Text('手机'),
+              autoBorderRadius: true,
+              position: AppListTilePosition.first,
+              paddingTop: 8,
+              paddingBottom: 8,
+            ),
+            AppListTile(
+              title: Text('用户ID，从登录获取'),
+              subtitle: Text('用户ID'),
+              autoBorderRadius: true,
+              position: AppListTilePosition.middle,
+              paddingTop: 8,
+              paddingBottom: 8,
+            ),
+            AppListTile(
+              title: Text('6月9日'),
+              subtitle: Text('生日'),
+              autoBorderRadius: true,
+              position: AppListTilePosition.last,
+              paddingTop: 8,
+              paddingBottom: 8,
+            ),
           ],
-        )
+        ),
       ],
     );
   }

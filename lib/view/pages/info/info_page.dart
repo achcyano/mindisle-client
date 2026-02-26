@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
-import 'package:mindisle_client/view/pages/profile/widgets/profile_basic_info_form_card.dart';
+import 'package:mindisle_client/view/pages/info/profile_basic_info_form_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
