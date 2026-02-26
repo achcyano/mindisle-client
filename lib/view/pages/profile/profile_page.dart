@@ -135,9 +135,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               title: Text(_displayPhone(state)),
               subtitle: const Text('手机'),
               position: AppListTilePosition.first,
-              onTap: () {
-                // TODO: 添加修改手机号页面
-              },
+              onTap: () {},
             ),
             AppListTile(
               title: Text(_displayUserId(state)),

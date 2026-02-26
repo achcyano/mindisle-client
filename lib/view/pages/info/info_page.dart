@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mindisle_client/features/user/domain/entities/user_profile.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
 import 'package:mindisle_client/view/pages/info/info_field_label.dart';
@@ -74,7 +75,11 @@ class _InfoPageState extends ConsumerState<InfoPage> {
         floatingActionButton: state.profile == null
             ? null
             : FloatingActionButton(
-                onPressed: state.isSaving ? null : () => _saveProfile(controller),
+                onPressed: state.isSaving
+                    ? null
+                    : () async {
+                        await _saveProfileBeforeExit(controller);
+                      },
                 child: const Icon(Icons.arrow_forward),
               ),
       ),
@@ -115,8 +120,17 @@ class _InfoPageState extends ConsumerState<InfoPage> {
               title: Text(_displayPhone(state)),
               subtitle: const Text("手机号码"),
               leading: const Icon(Icons.phone_outlined),
-              position: AppListTilePosition.middle,
+              position: AppListTilePosition.first,
               onTap: () {},
+            ),
+            AppListTile(
+              title: Text(_displayGender(state.gender)),
+              subtitle: const Text("性别"),
+              leading: const Icon(Icons.wc_outlined),
+              position: AppListTilePosition.middle,
+              onTap: state.isSaving
+                  ? null
+                  : () => _pickGender(state: state, controller: controller),
             ),
             AppListTile(
               title: Text(_displayBirthDate(state)),
@@ -215,6 +229,15 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     return '${parsed.year}年${parsed.month}月${parsed.day}日';
   }
 
+  String _displayGender(UserGender gender) {
+    return switch (gender) {
+      UserGender.male => '男',
+      UserGender.female => '女',
+      UserGender.other => '其他',
+      UserGender.unknown => '未设置',
+    };
+  }
+
   DateTime? _tryParseBirthDate(String value) {
     final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value.trim());
     if (match == null) return null;
@@ -287,6 +310,45 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     await _saveProfile(controller);
   }
 
+  Future<void> _pickGender({
+    required ProfileState state,
+    required ProfileController controller,
+  }) async {
+    final picked = await showAppDialog<UserGender>(
+      context: context,
+      builder: (dialogContext) {
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+        return buildAppAlertDialog(
+          title: const Text('选择性别'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final gender in UserGender.values)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(_displayGender(gender)),
+                  trailing: gender == state.gender
+                      ? Icon(Icons.check, color: colorScheme.primary)
+                      : null,
+                  onTap: () => Navigator.of(dialogContext).pop(gender),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('取消'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || picked == null || picked == state.gender) return;
+
+    controller.setGender(picked);
+    await _saveProfile(controller);
+  }
+
   void _showSnack(String message) {
     final messenger = ScaffoldMessenger.maybeOf(context);
     messenger?.hideCurrentSnackBar();
@@ -297,13 +359,18 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     if (_isHandlingBack) return;
     _isHandlingBack = true;
     try {
-      await _saveProfile(controller);
-      if (!mounted) return;
+      final saved = await _saveProfileBeforeExit(controller);
+      if (!saved || !mounted) return;
       setState(() {
         _allowPop = true;
       });
-      final popped = await Navigator.of(context).maybePop();
-      if (!mounted || popped) return;
+      await Future<void>.delayed(Duration.zero);
+      if (!mounted) return;
+      final navigator = Navigator.of(context, rootNavigator: true);
+      if (navigator.canPop()) {
+        navigator.pop();
+        return;
+      }
       setState(() {
         _allowPop = false;
       });
@@ -315,12 +382,102 @@ class _InfoPageState extends ConsumerState<InfoPage> {
   }
 
   Future<void> _saveProfile(ProfileController controller) async {
+    await _saveProfileInternal(controller: controller, requireComplete: false);
+  }
+
+  Future<bool> _saveProfileBeforeExit(ProfileController controller) async {
+    return _saveProfileInternal(controller: controller, requireComplete: true);
+  }
+
+  Future<bool> _saveProfileInternal({
+    required ProfileController controller,
+    required bool requireComplete,
+  }) async {
+    if (requireComplete) {
+      final validationMessage =
+          _validateRequiredAndLegal(ref.read(profileControllerProvider));
+      if (validationMessage != null) {
+        _showSnack(validationMessage);
+        return false;
+      }
+    }
+
     final message = await controller.saveProfile();
-    if (!mounted || message == null || message.isEmpty) return;
+    if (!mounted || message == null || message.isEmpty) return false;
     final errorMessage = ref
         .read(profileControllerProvider)
         .errorMessage;
-    if (errorMessage != null && errorMessage == message) return;
+    if (errorMessage != null && errorMessage == message) return false;
     _showSnack(message);
+    return true;
+  }
+
+  String? _validateRequiredAndLegal(ProfileState state) {
+    final fullName = state.fullName.trim();
+    if (fullName.isEmpty) return '请填写姓名';
+    if (fullName.length > 200) return '姓名不能超过 200 个字符';
+    if (_containsControlChars(fullName)) return '姓名包含非法字符';
+
+    if (state.gender == UserGender.unknown) return '请选择性别';
+
+    final birthText = state.birthDate.trim();
+    if (birthText.isEmpty) return '请选择出生日期';
+    final birthDate = _tryParseBirthDate(birthText);
+    if (birthDate == null) return '出生日期格式应为 yyyy-MM-dd';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (birthDate.isAfter(today)) return '出生日期不能晚于今天';
+
+    final heightError = _validateRequiredNumberInRange(
+      state.heightCm,
+      fieldName: '身高',
+      min: 50,
+      max: 260,
+    );
+    if (heightError != null) return heightError;
+
+    final weightError = _validateRequiredNumberInRange(
+      state.weightKg,
+      fieldName: '体重',
+      min: 10,
+      max: 500,
+    );
+    if (weightError != null) return weightError;
+
+    final waistError = _validateRequiredNumberInRange(
+      state.waistCm,
+      fieldName: '腰围',
+      min: 30,
+      max: 220,
+    );
+    if (waistError != null) return waistError;
+
+    return null;
+  }
+
+  String? _validateRequiredNumberInRange(
+    String raw, {
+    required String fieldName,
+    required double min,
+    required double max,
+  }) {
+    final text = raw.trim();
+    if (text.isEmpty) return '请填写$fieldName';
+
+    final value = double.tryParse(text);
+    if (value == null) return '$fieldName格式不正确';
+    if (value < min || value > max) {
+      return '$fieldName需在 ${_formatRangeNumber(min)}-${_formatRangeNumber(max)} 之间';
+    }
+    return null;
+  }
+
+  String _formatRangeNumber(double value) {
+    if (value == value.roundToDouble()) return value.toInt().toString();
+    return value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  }
+
+  bool _containsControlChars(String value) {
+    return RegExp(r'[\x00-\x1F\x7F]').hasMatch(value);
   }
 }
