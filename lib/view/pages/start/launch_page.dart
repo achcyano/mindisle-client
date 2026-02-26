@@ -6,9 +6,11 @@ import 'package:mindisle_client/core/result/app_error.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/providers/app_providers.dart';
 import 'package:mindisle_client/data/preference/const.dart';
+import 'package:mindisle_client/features/user/presentation/profile/profile_completion_guard.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/shared/session/startup_network_issue_signal.dart';
 import 'package:mindisle_client/view/pages/home_shell.dart';
+import 'package:mindisle_client/view/pages/info/info_page.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/pages/start/welcome_page.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
@@ -53,16 +55,69 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
 
     switch (result) {
       case Success():
-        await AppPrefs.hasCompletedFirstLogin.set(true);
-        ref.read(startupNetworkIssueProvider.notifier).state = null;
+        final profileResult = await ref.read(getBasicProfileUseCaseProvider).execute();
         if (!mounted) return;
-        await HomeShell.route.replace(context);
-        return;
+
+        switch (profileResult) {
+          case Success(data: final profile):
+            ref.read(startupNetworkIssueProvider.notifier).state = null;
+            final isComplete = isBasicProfileComplete(profile);
+            await AppPrefs.hasCompletedFirstLogin.set(isComplete);
+            if (!mounted) return;
+
+            if (!isComplete) {
+              await _goRequiredInfoPage();
+              return;
+            }
+            await HomeShell.route.replace(context);
+            return;
+          case Failure(error: final error):
+            if (error.type == AppErrorType.unauthorized) {
+              ref.read(startupNetworkIssueProvider.notifier).state = null;
+              await LoginPage.route.replace(context);
+              return;
+            }
+
+            final cachedProfile = ref
+                .read(basicProfileCacheStoreProvider)
+                .readForUser(session.userId);
+
+            if (cachedProfile != null) {
+              final isComplete = isBasicProfileComplete(cachedProfile);
+              await AppPrefs.hasCompletedFirstLogin.set(isComplete);
+              if (!mounted) return;
+              if (!isComplete) {
+                await _goRequiredInfoPage();
+                return;
+              }
+            } else if (!AppPrefs.hasCompletedFirstLogin.value) {
+              await _goRequiredInfoPage();
+              return;
+            }
+
+            final isNetworkError = error.type == AppErrorType.network;
+            final message = error.message.isEmpty
+                ? (isNetworkError ? '网络连接失败，请检查网络后重试' : '请求失败，请稍后重试')
+                : error.message;
+
+            ref.read(startupNetworkIssueProvider.notifier).state = StartupNetworkIssue(
+              message: message,
+              issueId: DateTime.now().microsecondsSinceEpoch,
+              isNetwork: isNetworkError,
+              showSnackBar: !isNetworkError,
+            );
+            await HomeShell.route.replace(context);
+            return;
+        }
       case Failure(error: final error):
         if (error.type == AppErrorType.unauthorized) {
           ref.read(startupNetworkIssueProvider.notifier).state = null;
           await LoginPage.route.replace(context);
         } else {
+          if (!AppPrefs.hasCompletedFirstLogin.value) {
+            await _goRequiredInfoPage();
+            return;
+          }
           final isNetworkError = error.type == AppErrorType.network;
           final message = error.message.isEmpty
               ? (isNetworkError ? '网络连接失败，请检查网络后重试' : '请求失败，请稍后重试')
@@ -80,6 +135,11 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
         }
         return;
     }
+  }
+
+  Future<void> _goRequiredInfoPage() async {
+    ref.read(startupNetworkIssueProvider.notifier).state = null;
+    await InfoPage.requiredRoute.replace(context);
   }
 
   @override

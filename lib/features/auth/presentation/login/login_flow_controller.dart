@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/result.dart';
+import 'package:mindisle_client/data/preference/const.dart';
 import 'package:mindisle_client/features/auth/domain/entities/auth_entities.dart';
 import 'package:mindisle_client/features/auth/presentation/login/login_flow_state.dart';
 import 'package:mindisle_client/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/view/pages/home_shell.dart';
+import 'package:mindisle_client/view/pages/info/info_page.dart';
 import 'package:mindisle_client/view/route/app_navigator.dart';
 
 final loginFlowControllerProvider =
@@ -294,10 +296,11 @@ final class LoginFlowController extends StateNotifier<LoginFlowState> {
         _fail(error.message);
         return;
       case Success():
+        await AppPrefs.hasCompletedFirstLogin.set(false);
         await _warmUpProfileCaches();
         state = state.copyWith(isSubmitting: false, inlineError: null);
         if (!context.mounted) return;
-        await HomeShell.route.replace(context);
+        await InfoPage.requiredRoute.replaceRoot(context);
         return;
     }
   }

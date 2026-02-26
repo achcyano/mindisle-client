@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mindisle_client/data/preference/const.dart';
 import 'package:mindisle_client/features/user/domain/entities/user_profile.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_state.dart';
+import 'package:mindisle_client/view/pages/home_shell.dart';
 import 'package:mindisle_client/view/pages/info/info_disease_history_group.dart';
 import 'package:mindisle_client/view/pages/info/info_field_label.dart';
 import 'package:mindisle_client/view/pages/info/info_page_utils.dart';
@@ -15,11 +17,21 @@ import 'package:mindisle_client/view/widget/settings_input_field.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class InfoPage extends ConsumerStatefulWidget {
-  const InfoPage({super.key});
+  const InfoPage({
+    this.requireCompletion = false,
+    super.key,
+  });
+
+  final bool requireCompletion;
 
   static final route = AppRoute<void>(
     path: '/info',
     builder: (_) => const InfoPage(),
+  );
+
+  static final requiredRoute = AppRoute<void>(
+    path: '/info/required',
+    builder: (_) => const InfoPage(requireCompletion: true),
   );
 
   @override
@@ -55,13 +67,20 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     final controller = ref.read(profileControllerProvider.notifier);
 
     return PopScope<void>(
-      canPop: _allowPop,
+      canPop: widget.requireCompletion ? false : _allowPop,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        if (widget.requireCompletion) {
+          _showSnack('请先完成个人信息后继续');
+          return;
+        }
         _saveAndPop(controller);
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('编辑资料')),
+        appBar: AppBar(
+          title: Text(widget.requireCompletion ? '完善个人信息' : '编辑资料'),
+          automaticallyImplyLeading: !widget.requireCompletion,
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
@@ -159,7 +178,6 @@ class _InfoPageState extends ConsumerState<InfoPage> {
           enabled: !state.isSaving,
           hintText: '请输入姓名',
           onChanged: controller.setFullName,
-          onCommit: () => _saveProfile(controller),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
         ),
       ],
@@ -176,7 +194,6 @@ class _InfoPageState extends ConsumerState<InfoPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [InfoPageUtils.twoDecimalInputFormatter],
           onChanged: controller.setHeightCm,
-          onCommit: () => _saveProfile(controller),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
         ),
         const Divider(height: 1, thickness: 0.2, indent: 16, endIndent: 16),
@@ -187,7 +204,6 @@ class _InfoPageState extends ConsumerState<InfoPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [InfoPageUtils.twoDecimalInputFormatter],
           onChanged: controller.setWeightKg,
-          onCommit: () => _saveProfile(controller),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
         ),
         const Divider(height: 1, thickness: 0.2, indent: 16, endIndent: 16),
@@ -198,7 +214,6 @@ class _InfoPageState extends ConsumerState<InfoPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [InfoPageUtils.twoDecimalInputFormatter],
           onChanged: controller.setWaistCm,
-          onCommit: () => _saveProfile(controller),
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
         ),
       ],
@@ -240,7 +255,6 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     if (selectedValue == currentValue) return;
 
     controller.setBirthDate(selectedValue);
-    await _saveProfile(controller);
   }
 
   Future<void> _pickGender({
@@ -279,15 +293,21 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     if (!mounted || picked == null || picked == state.gender) return;
 
     controller.setGender(picked);
-    await _saveProfile(controller);
   }
 
   Future<void> _saveAndPop(ProfileController controller) async {
     if (_isHandlingBack) return;
     _isHandlingBack = true;
     try {
-      final saved = await _saveProfileBeforeExit(controller);
+      final saved = await _saveBeforeExit(controller);
       if (!saved || !mounted) return;
+
+      if (widget.requireCompletion) {
+        await AppPrefs.hasCompletedFirstLogin.set(true);
+        if (!mounted) return;
+        await HomeShell.route.replaceRoot(context);
+        return;
+      }
 
       setState(() {
         _allowPop = true;
@@ -311,25 +331,12 @@ class _InfoPageState extends ConsumerState<InfoPage> {
     }
   }
 
-  Future<void> _saveProfile(ProfileController controller) async {
-    await _saveProfileInternal(controller: controller, requireComplete: false);
-  }
-
-  Future<bool> _saveProfileBeforeExit(ProfileController controller) async {
-    return _saveProfileInternal(controller: controller, requireComplete: true);
-  }
-
-  Future<bool> _saveProfileInternal({
-    required ProfileController controller,
-    required bool requireComplete,
-  }) async {
-    if (requireComplete) {
-      final validationMessage =
-          validateInfoBeforeExit(ref.read(profileControllerProvider));
-      if (validationMessage != null) {
-        _showSnack(validationMessage);
-        return false;
-      }
+  Future<bool> _saveBeforeExit(ProfileController controller) async {
+    final validationMessage =
+        validateInfoBeforeExit(ref.read(profileControllerProvider));
+    if (validationMessage != null) {
+      _showSnack(validationMessage);
+      return false;
     }
 
     final message = await controller.saveProfile();
