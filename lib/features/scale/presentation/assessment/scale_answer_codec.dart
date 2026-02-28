@@ -159,7 +159,21 @@ abstract final class ScaleAnswerCodec {
     if (value.isEmpty) return null;
 
     final asInt = int.tryParse(value);
-    if (asInt != null) return asInt;
+    if (asInt != null) {
+      // Keep consistent with backend evaluator:
+      // <= 24 means hours, > 24 means minutes.
+      return asInt <= 24 ? asInt * 60 : asInt;
+    }
+
+    final hourMinuteByColon = RegExp(r'^(\d{1,2}):([0-5]\d)$').firstMatch(
+      value,
+    );
+    if (hourMinuteByColon != null) {
+      final hours = int.tryParse(hourMinuteByColon.group(1)!);
+      final minutes = int.tryParse(hourMinuteByColon.group(2)!);
+      if (hours == null || minutes == null) return null;
+      return hours * 60 + minutes;
+    }
 
     final minuteOnly = RegExp(r'^(\d+)\s*m$').firstMatch(value);
     if (minuteOnly != null) {
@@ -171,14 +185,6 @@ abstract final class ScaleAnswerCodec {
       final hours = int.tryParse(hourOnly.group(1)!);
       if (hours == null) return null;
       return hours * 60;
-    }
-
-    final hourMinute = RegExp(r'^(\d+)\s*h\s*(\d+)\s*m$').firstMatch(value);
-    if (hourMinute != null) {
-      final hours = int.tryParse(hourMinute.group(1)!);
-      final minutes = int.tryParse(hourMinute.group(2)!);
-      if (hours == null || minutes == null) return null;
-      return hours * 60 + minutes;
     }
 
     return null;

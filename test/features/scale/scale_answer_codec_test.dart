@@ -44,7 +44,7 @@ void main() {
           ),
           ScaleAnswer(
             questionId: 6,
-            rawAnswer: <String, dynamic>{'value': '6h30m'},
+            rawAnswer: <String, dynamic>{'value': '6:30'},
           ),
         ],
       );
@@ -55,6 +55,26 @@ void main() {
       expect(drafts[4]?.textValue, '睡眠变差');
       expect(drafts[5]?.timeValue, '08:30');
       expect(drafts[6]?.durationMinutes, 390);
+    });
+
+    test('parses numeric duration like backend evaluator', () {
+      final durationQuestion = _question(id: 6, type: ScaleQuestionType.duration);
+
+      final hoursLike = ScaleAnswerCodec.fromSessionAnswers(
+        questions: <ScaleQuestion>[durationQuestion],
+        answers: const <ScaleAnswer>[
+          ScaleAnswer(questionId: 6, rawAnswer: <String, dynamic>{'value': '12'}),
+        ],
+      );
+      final minutesLike = ScaleAnswerCodec.fromSessionAnswers(
+        questions: <ScaleQuestion>[durationQuestion],
+        answers: const <ScaleAnswer>[
+          ScaleAnswer(questionId: 6, rawAnswer: <String, dynamic>{'value': '90'}),
+        ],
+      );
+
+      expect(hoursLike[6]?.durationMinutes, 720);
+      expect(minutesLike[6]?.durationMinutes, 90);
     });
 
     test('toRequestAnswer builds payload for all supported question types', () {
