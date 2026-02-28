@@ -50,20 +50,20 @@ final class FetchScaleSessionDetailUseCase {
   }
 }
 
-final class SaveScaleSingleChoiceAnswerUseCase {
-  const SaveScaleSingleChoiceAnswerUseCase(this._repository);
+final class SaveScaleAnswerUseCase {
+  const SaveScaleAnswerUseCase(this._repository);
 
   final ScaleRepository _repository;
 
   Future<Result<bool>> execute({
     required int sessionId,
     required int questionId,
-    required int optionId,
+    required Object answer,
   }) {
-    return _repository.saveSingleChoiceAnswer(
+    return _repository.saveAnswer(
       sessionId: sessionId,
       questionId: questionId,
-      optionId: optionId,
+      answer: answer,
     );
   }
 }

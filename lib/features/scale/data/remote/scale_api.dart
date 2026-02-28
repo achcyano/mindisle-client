@@ -49,16 +49,14 @@ final class ScaleApi {
     return response.data ?? const <String, dynamic>{};
   }
 
-  Future<Map<String, dynamic>> saveSingleChoiceAnswer({
+  Future<Map<String, dynamic>> saveAnswer({
     required int sessionId,
     required int questionId,
-    required int optionId,
+    required Object answer,
   }) async {
     final response = await _dio.put<Map<String, dynamic>>(
       '/api/v1/scales/sessions/$sessionId/answers/$questionId',
-      data: <String, dynamic>{
-        'answer': <String, dynamic>{'optionId': optionId},
-      },
+      data: <String, dynamic>{'answer': answer},
     );
     return response.data ?? const <String, dynamic>{};
   }

@@ -35,12 +35,11 @@ final fetchScaleSessionDetailUseCaseProvider =
       return FetchScaleSessionDetailUseCase(ref.watch(scaleRepositoryProvider));
     });
 
-final saveScaleSingleChoiceAnswerUseCaseProvider =
-    Provider<SaveScaleSingleChoiceAnswerUseCase>((ref) {
-      return SaveScaleSingleChoiceAnswerUseCase(
+final saveScaleAnswerUseCaseProvider = Provider<SaveScaleAnswerUseCase>((ref) {
+  return SaveScaleAnswerUseCase(
         ref.watch(scaleRepositoryProvider),
       );
-    });
+});
 
 final submitScaleSessionUseCaseProvider = Provider<SubmitScaleSessionUseCase>((
   ref,

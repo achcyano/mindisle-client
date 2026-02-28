@@ -18,10 +18,10 @@ abstract interface class ScaleRepository {
     required int sessionId,
   });
 
-  Future<Result<bool>> saveSingleChoiceAnswer({
+  Future<Result<bool>> saveAnswer({
     required int sessionId,
     required int questionId,
-    required int optionId,
+    required Object answer,
   });
 
   Future<Result<bool>> submitSession({required int sessionId});

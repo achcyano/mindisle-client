@@ -7,12 +7,16 @@ class ScaleOptionTile extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.enabled = true,
+    this.selectedIcon,
+    this.unselectedIcon,
   });
 
   final String label;
   final bool selected;
   final bool enabled;
   final VoidCallback onTap;
+  final IconData? selectedIcon;
+  final IconData? unselectedIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +38,8 @@ class ScaleOptionTile extends StatelessWidget {
             children: [
               Icon(
                 selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off_outlined,
+                    ? (selectedIcon ?? Icons.radio_button_checked)
+                    : (unselectedIcon ?? Icons.radio_button_off_outlined),
                 size: 20,
                 color: selected
                     ? colorScheme.secondary

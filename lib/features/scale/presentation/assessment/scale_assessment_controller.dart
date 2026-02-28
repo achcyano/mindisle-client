@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
+import 'package:mindisle_client/features/scale/presentation/assessment/scale_answer_codec.dart';
+import 'package:mindisle_client/features/scale/presentation/assessment/scale_answer_draft.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_args.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_state.dart';
 import 'package:mindisle_client/features/scale/presentation/providers/scale_providers.dart';
@@ -53,18 +55,21 @@ final class ScaleAssessmentController
             );
             return;
           case Success<ScaleSessionDetail>(data: final sessionDetail):
-            final answerMap = _buildSingleChoiceAnswerMap(
-              sessionDetail.answers,
+            final answerDrafts = ScaleAnswerCodec.fromSessionAnswers(
+              answers: sessionDetail.answers,
+              questions: detail.questions,
             );
             final initialIndex = _findInitialQuestionIndex(
-              detail.questions,
-              answerMap,
+              questions: detail.questions,
+              answerDrafts: answerDrafts,
+              unansweredRequiredQuestionIds:
+                  sessionDetail.unansweredRequiredQuestionIds,
             );
             state = state.copyWith(
               isLoading: false,
               detail: detail,
               session: sessionDetail.session,
-              singleChoiceAnswers: answerMap,
+              answerDrafts: answerDrafts,
               unansweredRequiredQuestionIds:
                   sessionDetail.unansweredRequiredQuestionIds,
               currentQuestionIndex: initialIndex,
@@ -74,59 +79,30 @@ final class ScaleAssessmentController
     }
   }
 
-  Future<void> selectSingleChoice({
-    required int questionId,
-    required int optionId,
+  Future<void> updateDraft({
+    required ScaleQuestion question,
+    required ScaleAnswerDraft draft,
+    bool saveNow = false,
   }) async {
-    if (state.isSubmitting || state.savingQuestionIds.contains(questionId)) {
-      return;
-    }
+    if (state.isSubmitting) return;
+    if (state.savingQuestionIds.contains(question.questionId)) return;
 
-    final previousAnswers = Map<int, int>.from(state.singleChoiceAnswers);
-    final previousUnanswered = List<int>.from(
-      state.unansweredRequiredQuestionIds,
-    );
-    final nextAnswers = Map<int, int>.from(state.singleChoiceAnswers);
-    nextAnswers[questionId] = optionId;
-    final nextUnanswered = List<int>.from(previousUnanswered)
-      ..removeWhere((it) => it == questionId);
-    final savingIds = Set<int>.from(state.savingQuestionIds)..add(questionId);
+    final previousDraft = state.answerDrafts[question.questionId];
+    final nextDraft = draft.copyWith(isDirty: !saveNow);
+    _setDraft(question: question, draft: nextDraft);
 
-    state = state.copyWith(
-      singleChoiceAnswers: nextAnswers,
-      unansweredRequiredQuestionIds: nextUnanswered,
-      savingQuestionIds: savingIds,
-      errorMessage: null,
-    );
-
-    final result = await _ref
-        .read(saveScaleSingleChoiceAnswerUseCaseProvider)
-        .execute(
-          sessionId: _args.sessionId,
-          questionId: questionId,
-          optionId: optionId,
-        );
-
-    final finalSavingIds = Set<int>.from(state.savingQuestionIds)
-      ..remove(questionId);
-    switch (result) {
-      case Failure<bool>(error: final error):
-        state = state.copyWith(
-          singleChoiceAnswers: previousAnswers,
-          unansweredRequiredQuestionIds: previousUnanswered,
-          savingQuestionIds: finalSavingIds,
-          errorMessage: error.message,
-        );
-        return;
-      case Success<bool>():
-        state = state.copyWith(savingQuestionIds: finalSavingIds);
-        return;
-    }
+    if (!saveNow) return;
+    await _saveQuestion(question: question, rollbackDraft: previousDraft);
   }
 
-  void goNextQuestion() {
+  Future<void> goNextQuestion() async {
     final questions = _questions;
     if (questions.isEmpty) return;
+    final current = _currentQuestion;
+    if (current != null) {
+      await _persistQuestionIfDirty(current);
+    }
+
     final maxIndex = questions.length - 1;
     if (state.currentQuestionIndex >= maxIndex) return;
     state = state.copyWith(
@@ -134,7 +110,12 @@ final class ScaleAssessmentController
     );
   }
 
-  void goPreviousQuestion() {
+  Future<void> goPreviousQuestion() async {
+    final current = _currentQuestion;
+    if (current != null) {
+      await _persistQuestionIfDirty(current);
+    }
+
     if (state.currentQuestionIndex <= 0) return;
     state = state.copyWith(
       currentQuestionIndex: state.currentQuestionIndex - 1,
@@ -153,22 +134,32 @@ final class ScaleAssessmentController
     for (var i = 0; i < questions.length; i++) {
       final question = questions[i];
       if (!question.required) continue;
-      final answered = state.singleChoiceAnswers.containsKey(
-        question.questionId,
+      final answered = ScaleAnswerCodec.isAnswered(
+        question: question,
+        draft: state.answerDrafts[question.questionId],
       );
       if (!answered) return i;
     }
     return null;
   }
 
+  Future<bool> persistCurrentQuestionIfDirty() async {
+    final current = _currentQuestion;
+    if (current == null) return true;
+    return _persistQuestionIfDirty(current);
+  }
+
   Future<void> submit() async {
     if (state.isSubmitting) return;
+
+    final persisted = await _persistAllDirtyAnswers();
+    if (!persisted) return;
 
     final firstUnansweredIndex = firstUnansweredRequiredIndex();
     if (firstUnansweredIndex != null) {
       state = state.copyWith(
         currentQuestionIndex: firstUnansweredIndex,
-        errorMessage: '请先完成所有必答题',
+        errorMessage: '璇峰厛瀹屾垚鎵€鏈夊繀绛旈',
       );
       return;
     }
@@ -206,27 +197,177 @@ final class ScaleAssessmentController
     return state.detail?.questions ?? const <ScaleQuestion>[];
   }
 
-  Map<int, int> _buildSingleChoiceAnswerMap(List<ScaleAnswer> answers) {
-    final map = <int, int>{};
-    for (final answer in answers) {
-      final optionId = answer.selectedOptionId;
-      if (optionId == null) continue;
-      map[answer.questionId] = optionId;
-    }
-    return map;
+  ScaleQuestion? get _currentQuestion {
+    final questions = _questions;
+    if (questions.isEmpty) return null;
+    final index = state.currentQuestionIndex.clamp(0, questions.length - 1);
+    return questions[index];
   }
 
-  int _findInitialQuestionIndex(
-    List<ScaleQuestion> questions,
-    Map<int, int> answers,
-  ) {
+  void _setDraft({
+    required ScaleQuestion question,
+    required ScaleAnswerDraft draft,
+  }) {
+    final nextDrafts = Map<int, ScaleAnswerDraft>.from(state.answerDrafts);
+    nextDrafts[question.questionId] = draft;
+    final unansweredRequiredQuestionIds = _mergeUnansweredRequired(
+      base: state.unansweredRequiredQuestionIds,
+      question: question,
+      draft: draft,
+    );
+
+    state = state.copyWith(
+      answerDrafts: nextDrafts,
+      unansweredRequiredQuestionIds: unansweredRequiredQuestionIds,
+      errorMessage: null,
+    );
+  }
+
+  Future<bool> _persistAllDirtyAnswers() async {
+    for (final question in _questions) {
+      final ok = await _persistQuestionIfDirty(question);
+      if (!ok) return false;
+    }
+    return true;
+  }
+
+  Future<bool> _persistQuestionIfDirty(ScaleQuestion question) async {
+    final draft = state.answerDrafts[question.questionId];
+    if (draft == null || !draft.isDirty) return true;
+    return _saveQuestion(question: question, rollbackDraft: draft);
+  }
+
+  Future<bool> _saveQuestion({
+    required ScaleQuestion question,
+    required ScaleAnswerDraft? rollbackDraft,
+  }) async {
+    final questionId = question.questionId;
+    if (state.isSubmitting || state.savingQuestionIds.contains(questionId)) {
+      return false;
+    }
+
+    final draft = state.answerDrafts[questionId];
+    final answer = ScaleAnswerCodec.toRequestAnswer(
+      question: question,
+      draft: draft,
+    );
+
+    if (answer == null) {
+      if (draft == null) {
+        return true;
+      }
+      final nextDrafts = Map<int, ScaleAnswerDraft>.from(state.answerDrafts);
+      nextDrafts[questionId] = draft.copyWith(isDirty: false);
+      final unansweredRequiredQuestionIds = _mergeUnansweredRequired(
+        base: state.unansweredRequiredQuestionIds,
+        question: question,
+        draft: nextDrafts[questionId],
+      );
+      state = state.copyWith(
+        answerDrafts: nextDrafts,
+        unansweredRequiredQuestionIds: unansweredRequiredQuestionIds,
+      );
+      return true;
+    }
+
+    final savingQuestionIds = Set<int>.from(state.savingQuestionIds)
+      ..add(questionId);
+    state = state.copyWith(
+      savingQuestionIds: savingQuestionIds,
+      errorMessage: null,
+    );
+
+    final result = await _ref.read(saveScaleAnswerUseCaseProvider).execute(
+      sessionId: _args.sessionId,
+      questionId: questionId,
+      answer: answer,
+    );
+
+    final finalSavingIds = Set<int>.from(state.savingQuestionIds)
+      ..remove(questionId);
+
+    switch (result) {
+      case Failure<bool>(error: final error):
+        final rollbackMap = Map<int, ScaleAnswerDraft>.from(state.answerDrafts);
+        if (rollbackDraft == null) {
+          rollbackMap.remove(questionId);
+        } else {
+          rollbackMap[questionId] = rollbackDraft;
+        }
+        final unansweredRequiredQuestionIds = _mergeUnansweredRequired(
+          base: state.unansweredRequiredQuestionIds,
+          question: question,
+          draft: rollbackMap[questionId],
+        );
+        state = state.copyWith(
+          answerDrafts: rollbackMap,
+          savingQuestionIds: finalSavingIds,
+          unansweredRequiredQuestionIds: unansweredRequiredQuestionIds,
+          errorMessage: error.message,
+        );
+        return false;
+      case Success<bool>():
+        final nextDrafts = Map<int, ScaleAnswerDraft>.from(state.answerDrafts);
+        final currentDraft = nextDrafts[questionId];
+        if (currentDraft != null) {
+          nextDrafts[questionId] = currentDraft.copyWith(isDirty: false);
+        }
+        final unansweredRequiredQuestionIds = _mergeUnansweredRequired(
+          base: state.unansweredRequiredQuestionIds,
+          question: question,
+          draft: nextDrafts[questionId],
+        );
+        state = state.copyWith(
+          answerDrafts: nextDrafts,
+          savingQuestionIds: finalSavingIds,
+          unansweredRequiredQuestionIds: unansweredRequiredQuestionIds,
+        );
+        return true;
+    }
+  }
+
+  List<int> _mergeUnansweredRequired({
+    required List<int> base,
+    required ScaleQuestion question,
+    required ScaleAnswerDraft? draft,
+  }) {
+    final next = <int>{...base}..remove(question.questionId);
+    final isAnswered = ScaleAnswerCodec.isAnswered(
+      question: question,
+      draft: draft,
+    );
+    if (question.required && !isAnswered) {
+      next.add(question.questionId);
+    }
+    final sorted = next.toList(growable: false)..sort();
+    return sorted;
+  }
+
+  int _findInitialQuestionIndex({
+    required List<ScaleQuestion> questions,
+    required Map<int, ScaleAnswerDraft> answerDrafts,
+    required List<int> unansweredRequiredQuestionIds,
+  }) {
     if (questions.isEmpty) return 0;
+
     for (var i = 0; i < questions.length; i++) {
       final question = questions[i];
-      if (question.required && !answers.containsKey(question.questionId)) {
-        return i;
+      if (!question.required) continue;
+      final isAnswered = ScaleAnswerCodec.isAnswered(
+        question: question,
+        draft: answerDrafts[question.questionId],
+      );
+      if (!isAnswered) return i;
+    }
+
+    if (unansweredRequiredQuestionIds.isNotEmpty) {
+      for (var i = 0; i < questions.length; i++) {
+        if (unansweredRequiredQuestionIds.contains(questions[i].questionId)) {
+          return i;
+        }
       }
     }
+
     return 0;
   }
 }

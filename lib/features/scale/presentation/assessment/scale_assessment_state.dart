@@ -1,4 +1,5 @@
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
+import 'package:mindisle_client/features/scale/presentation/assessment/scale_answer_draft.dart';
 
 final class ScaleAssessmentState {
   const ScaleAssessmentState({
@@ -7,7 +8,7 @@ final class ScaleAssessmentState {
     this.isSubmitting = false,
     this.detail,
     this.session,
-    this.singleChoiceAnswers = const <int, int>{},
+    this.answerDrafts = const <int, ScaleAnswerDraft>{},
     this.unansweredRequiredQuestionIds = const <int>[],
     this.currentQuestionIndex = 0,
     this.savingQuestionIds = const <int>{},
@@ -20,7 +21,7 @@ final class ScaleAssessmentState {
   final bool isSubmitting;
   final ScaleDetail? detail;
   final ScaleSession? session;
-  final Map<int, int> singleChoiceAnswers;
+  final Map<int, ScaleAnswerDraft> answerDrafts;
   final List<int> unansweredRequiredQuestionIds;
   final int currentQuestionIndex;
   final Set<int> savingQuestionIds;
@@ -33,7 +34,7 @@ final class ScaleAssessmentState {
     bool? isSubmitting,
     Object? detail = _sentinel,
     Object? session = _sentinel,
-    Map<int, int>? singleChoiceAnswers,
+    Map<int, ScaleAnswerDraft>? answerDrafts,
     List<int>? unansweredRequiredQuestionIds,
     int? currentQuestionIndex,
     Set<int>? savingQuestionIds,
@@ -50,7 +51,7 @@ final class ScaleAssessmentState {
       session: identical(session, _sentinel)
           ? this.session
           : session as ScaleSession?,
-      singleChoiceAnswers: singleChoiceAnswers ?? this.singleChoiceAnswers,
+      answerDrafts: answerDrafts ?? this.answerDrafts,
       unansweredRequiredQuestionIds:
           unansweredRequiredQuestionIds ?? this.unansweredRequiredQuestionIds,
       currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,

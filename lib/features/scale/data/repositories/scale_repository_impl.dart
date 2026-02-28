@@ -56,16 +56,16 @@ final class ScaleRepositoryImpl implements ScaleRepository {
   }
 
   @override
-  Future<Result<bool>> saveSingleChoiceAnswer({
+  Future<Result<bool>> saveAnswer({
     required int sessionId,
     required int questionId,
-    required int optionId,
+    required Object answer,
   }) {
     return _runNoData(
-      () => _api.saveSingleChoiceAnswer(
+      () => _api.saveAnswer(
         sessionId: sessionId,
         questionId: questionId,
-        optionId: optionId,
+        answer: answer,
       ),
     );
   }

@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
-import 'package:mindisle_client/view/pages/scale/widgets/scale_option_tile.dart';
+import 'package:mindisle_client/features/scale/presentation/assessment/scale_answer_draft.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/question_inputs/question_input_factory.dart';
 
 class QuestionStepCard extends StatelessWidget {
   const QuestionStepCard({
     super.key,
     required this.question,
-    required this.selectedOptionId,
-    required this.onSelectOption,
+    required this.draft,
+    required this.onDraftChanged,
     required this.onAskAi,
     this.isSaving = false,
     this.enabled = true,
   });
 
   final ScaleQuestion question;
-  final int? selectedOptionId;
+  final ScaleAnswerDraft? draft;
   final bool isSaving;
   final bool enabled;
-  final ValueChanged<ScaleQuestionOption> onSelectOption;
+  final ScaleAnswerDraftChanged onDraftChanged;
   final VoidCallback onAskAi;
 
   @override
@@ -39,7 +40,7 @@ class QuestionStepCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  tooltip: '问 AI',
+                  tooltip: '闂?AI',
                   onPressed: enabled ? onAskAi : null,
                   style: IconButton.styleFrom(
                     shape: const CircleBorder(),
@@ -67,29 +68,12 @@ class QuestionStepCard extends StatelessWidget {
             else
               const SizedBox(height: 2),
             const SizedBox(height: 10),
-            if (question.type == ScaleQuestionType.singleChoice) ...[
-              for (final option in question.options) ...[
-                ScaleOptionTile(
-                  label: option.label,
-                  selected:
-                      selectedOptionId != null &&
-                      option.optionId != null &&
-                      selectedOptionId == option.optionId,
-                  enabled: enabled,
-                  onTap: () {
-                    onSelectOption(option);
-                  },
-                ),
-                const SizedBox(height: 8),
-              ],
-            ] else ...[
-              Text(
-                '当前版本仅支持单选题作答。',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: colorScheme.error),
-              ),
-            ],
+            QuestionInputFactory(
+              question: question,
+              draft: draft,
+              enabled: enabled,
+              onDraftChanged: onDraftChanged,
+            ),
           ],
         ),
       ),

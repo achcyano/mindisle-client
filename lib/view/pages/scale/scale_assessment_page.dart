@@ -82,6 +82,9 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     _isHandlingPop = false;
     if (!mounted || !shouldExit) return;
 
+    await _controller.persistCurrentQuestionIfDirty();
+    if (!mounted) return;
+
     _clearAllAssistHistory(ref.read(scaleAssessmentControllerProvider(_args)));
     setState(() {
       _allowPop = true;
@@ -217,7 +220,9 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
             disabledElevation: 0,
             onPressed: state.currentQuestionIndex <= 0 || state.isSubmitting
                 ? null
-                : _controller.goPreviousQuestion,
+                : () async {
+                    await _controller.goPreviousQuestion();
+                  },
             child: const Icon(Icons.arrow_back_rounded),
           ),
           _buildPrimaryFab(state: state, data: data),
@@ -237,11 +242,11 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
       disabledElevation: 0,
       onPressed: state.isSubmitting
           ? null
-          : () {
+          : () async {
               if (data.isLastQuestion) {
-                _controller.submit();
+                await _controller.submit();
               } else {
-                _controller.goNextQuestion();
+                await _controller.goNextQuestion();
               }
             },
       icon: state.isSubmitting
@@ -336,15 +341,18 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
   }) {
     return QuestionStepCard(
       question: question,
-      selectedOptionId: state.singleChoiceAnswers[question.questionId],
+      draft: state.answerDrafts[question.questionId],
       isSaving: state.savingQuestionIds.contains(question.questionId),
-      enabled: !state.isSubmitting,
-      onSelectOption: (option) {
-        final optionId = option.optionId;
-        if (optionId == null) return;
-        _controller.selectSingleChoice(
-          questionId: question.questionId,
-          optionId: optionId,
+      enabled:
+          !state.isSubmitting &&
+          !state.savingQuestionIds.contains(question.questionId),
+      onDraftChanged: (draft, saveNow) {
+        unawaited(
+          _controller.updateDraft(
+            question: question,
+            draft: draft,
+            saveNow: saveNow,
+          ),
         );
       },
       onAskAi: () {

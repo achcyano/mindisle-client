@@ -12,8 +12,6 @@ final scaleListControllerProvider =
 final class ScaleListController extends StateNotifier<ScaleListState> {
   ScaleListController(this._ref) : super(const ScaleListState());
 
-  static const Set<String> _supportedScaleCodes = <String>{'PHQ9', 'GAD7'};
-
   final Ref _ref;
 
   Future<void> initialize() async {
@@ -48,14 +46,11 @@ final class ScaleListController extends StateNotifier<ScaleListState> {
         );
         return;
       case Success<List<ScaleSummary>>(data: final scales):
-        final visibleScales = scales
-            .where((it) => _supportedScaleCodes.contains(it.code.toUpperCase()))
-            .toList(growable: false);
         state = state.copyWith(
           initialized: true,
           isLoading: false,
           isRefreshing: false,
-          items: visibleScales,
+          items: scales,
         );
         return;
     }
