@@ -9,7 +9,7 @@ import 'package:mindisle_client/view/pages/chat/chat_page.dart';
 import 'package:mindisle_client/view/pages/home/card_home.dart';
 import 'package:mindisle_client/view/pages/home/startup_network_error_card.dart';
 import 'package:mindisle_client/view/pages/home/today_mood_card.dart';
-import 'package:mindisle_client/view/pages/medicine_page.dart';
+import 'package:mindisle_client/view/pages/medicine/medicine_page.dart';
 import 'package:mindisle_client/view/pages/profile/profile_page.dart';
 import 'package:mindisle_client/view/pages/scale/scale_list_page.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';

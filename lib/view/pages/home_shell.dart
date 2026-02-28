@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindisle_client/view/pages/profile/profile_page.dart';
 import 'package:mindisle_client/view/pages/home/home_page.dart';
-import 'package:mindisle_client/view/pages/medicine_page.dart';
+import 'package:mindisle_client/view/pages/medicine/medicine_page.dart';
 import 'package:mindisle_client/view/pages/chat/chat_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 

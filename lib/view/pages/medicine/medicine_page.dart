@@ -11,6 +11,19 @@ class MedicinePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: const Center(child: Text('Placeholder')));
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text("用药"),
+          centerTitle: true,
+        ),
+        floatingActionButton: FloatingActionButton(
+            onPressed: (){}
+        ),
+        body: SafeArea(
+          child: Center(
+            child: Text("PlaceHolder"),
+          ),
+        )
+    );
   }
 }

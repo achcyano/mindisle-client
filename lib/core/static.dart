@@ -5,7 +5,7 @@ final logger = Logger();
 const appDisplayName = '心岛';
 
 const apiScheme = 'http';
-const apiHost = '192.168.0.113';
+const apiHost = '10.21.169.131';
 const apiPort = 80;
 const apiPrefix = '/api/v1';
 const homeUrl = "https://github.com/achcyano/mindisle-client";
