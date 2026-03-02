@@ -2,7 +2,9 @@
 import 'package:flutter/services.dart';
 import 'package:mindisle_client/features/medication/domain/entities/medication_entities.dart';
 import 'package:mindisle_client/features/medication/presentation/editor/medication_editor_state.dart';
+import 'package:mindisle_client/view/pages/medicine/medication_presets.dart';
 import 'package:mindisle_client/view/pages/medicine/widgets/dose_times_input.dart';
+import 'package:mindisle_client/view/widget/app_dialog.dart';
 import 'package:mindisle_client/view/widget/app_list_tile.dart';
 import 'package:mindisle_client/view/widget/settings_card.dart';
 import 'package:mindisle_client/view/widget/settings_input_field.dart';
@@ -66,10 +68,20 @@ class MedicationFormFields extends StatelessWidget {
         SettingsInputField(
           value: state.drugName,
           enabled: enabled,
-          hintText: '请输入药品名称',
+          hintText: '请输入药品名称（可手动输入）',
           maxLength: 200,
           onChanged: onDrugNameChanged,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+        ),
+        AppListTile(
+          title: const Text('从列表选择药品'),
+          subtitle: Text(
+            _selectedPresetNameText(state.drugName),
+          ),
+          leading: const Icon(Icons.playlist_add_check_circle_outlined),
+          trailingIcon: Icons.chevron_right,
+          position: AppListTilePosition.single,
+          onTap: enabled ? () => _pickPresetDrugName(context) : null,
         ),
         const Divider(height: 1, thickness: 0.2, indent: 16, endIndent: 16),
         const _FieldLabel(text: '每次剂量'),
@@ -148,6 +160,51 @@ class MedicationFormFields extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _selectedPresetNameText(String drugName) {
+    final value = drugName.trim();
+    if (medicationPresetDrugNames.contains(value)) {
+      return '已选择：$value';
+    }
+    return '共 ${medicationPresetDrugNames.length} 种可选药品';
+  }
+
+  Future<void> _pickPresetDrugName(BuildContext context) async {
+    final selected = await showAppDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        final screenHeight = MediaQuery.sizeOf(dialogContext).height;
+        final maxListHeight = screenHeight * 0.55;
+        final listHeight = maxListHeight > 480 ? 480.0 : maxListHeight;
+        return buildAppAlertDialog(
+          title: const Text('选择药品（滚动可查看药品列表）'),
+          content: SizedBox(
+            height: listHeight,
+            child: ListView.builder(
+              itemCount: medicationPresetDrugNames.length,
+              itemBuilder: (_, index) {
+                final name = medicationPresetDrugNames[index];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(name),
+                  onTap: () => Navigator.of(dialogContext).pop(name),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('取消'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!context.mounted || selected == null) return;
+    onDrugNameChanged(selected);
   }
 }
 
