@@ -68,6 +68,7 @@ AppError mapServerCodeToAppError({
   required String message,
   int? statusCode,
 }) {
+  final serverMessage = message.trim();
   final type = switch (code) {
     40000 ||
     40001 ||
@@ -77,6 +78,7 @@ AppError mapServerCodeToAppError({
     40010 ||
     40011 => AppErrorType.validation,
     40020 || 40021 || 42220 => AppErrorType.validation,
+    40030 => AppErrorType.validation,
     40100 || 40310 => AppErrorType.unauthorized,
     40320 => AppErrorType.unauthorized,
     40101 => AppErrorType.invalidCredentials,
@@ -87,7 +89,8 @@ AppError mapServerCodeToAppError({
     40411 ||
     40420 ||
     40421 ||
-    40422 => AppErrorType.notFound,
+    40422 ||
+    40430 => AppErrorType.notFound,
     40901 || 40910 || 40911 || 40920 || 40921 => AppErrorType.conflict,
     42901 || 42902 || 42903 || 42910 || 42920 => AppErrorType.rateLimited,
     50000 ||
@@ -100,15 +103,38 @@ AppError mapServerCodeToAppError({
     _ => AppErrorType.unknown,
   };
 
-  final localizedMessage =
-      _localizedMessageForCode(code, message) ?? _fallbackMessageForType(type);
+  final localizedMessage = _localizedMessageForCode(code, serverMessage);
+  final resolvedMessage = _resolveAppErrorMessage(
+    code: code,
+    type: type,
+    serverMessage: serverMessage,
+    localizedMessage: localizedMessage,
+  );
 
   return AppError(
     type: type,
-    message: localizedMessage,
+    message: resolvedMessage,
     code: code,
     statusCode: statusCode,
   );
+}
+
+String _resolveAppErrorMessage({
+  required int code,
+  required AppErrorType type,
+  required String serverMessage,
+  required String? localizedMessage,
+}) {
+  if (_shouldPreferServerMessageForCode(code) && serverMessage.isNotEmpty) {
+    return serverMessage;
+  }
+  if (localizedMessage != null) return localizedMessage;
+  if (serverMessage.isNotEmpty) return serverMessage;
+  return _fallbackMessageForType(type);
+}
+
+bool _shouldPreferServerMessageForCode(int code) {
+  return code == 40030 || code == 40430;
 }
 
 String? _localizedMessageForCode(int code, String serverMessage) {
@@ -123,6 +149,7 @@ String? _localizedMessageForCode(int code, String serverMessage) {
     40011 => '选项结构非法',
     40020 => '量表参数不合法',
     40021 => '答案格式不合法',
+    40030 => '用药参数不合法',
     40100 => '登录状态已失效，请重新登录',
     40101 => '账号或密码错误',
     40310 => '无权访问该会话或生成任务',
@@ -135,6 +162,7 @@ String? _localizedMessageForCode(int code, String serverMessage) {
     40420 => '量表不存在',
     40421 => '量表版本不存在',
     40422 => '量表会话不存在',
+    40430 => '用药记录不存在',
     40901 => '该手机号已被注册',
     40910 => '请求冲突，请稍后重试',
     40911 => '重连窗口已过期，请重新发起提问',

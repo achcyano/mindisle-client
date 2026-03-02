@@ -35,9 +35,7 @@ class InfoDiseaseHistoryGroup extends StatelessWidget {
         tiles.add(
           AppListTile(
             title: Text(entries[i]),
-            position: i == 0
-                ? AppListTilePosition.first
-                : AppListTilePosition.middle,
+            position: AppListTilePosition.middle,
             paddingBottom: 0,
             paddingTop: 0,
             trailing: IconButton(
