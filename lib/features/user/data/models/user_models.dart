@@ -127,6 +127,7 @@ final class UpsertUserBasicProfileRequestDto {
     this.heightCm,
     this.weightKg,
     this.waistCm,
+    this.usesTcm,
     this.diseaseHistory,
   });
 
@@ -140,6 +141,7 @@ final class UpsertUserBasicProfileRequestDto {
       heightCm: payload.heightCm,
       weightKg: payload.weightKg,
       waistCm: payload.waistCm,
+      usesTcm: payload.usesTcm,
       diseaseHistory: payload.diseaseHistory,
     );
   }
@@ -150,6 +152,7 @@ final class UpsertUserBasicProfileRequestDto {
   final double? heightCm;
   final double? weightKg;
   final double? waistCm;
+  final bool? usesTcm;
   final List<String>? diseaseHistory;
 
   Map<String, dynamic> toJson() {
@@ -160,6 +163,7 @@ final class UpsertUserBasicProfileRequestDto {
       'heightCm': heightCm,
       'weightKg': weightKg,
       'waistCm': waistCm,
+      'usesTcm': usesTcm,
       'diseaseHistory': diseaseHistory,
     };
   }
@@ -174,6 +178,7 @@ final class UserBasicProfileResponseDto {
     required this.heightCm,
     required this.weightKg,
     required this.waistCm,
+    required this.usesTcm,
     required this.diseaseHistory,
   });
 
@@ -186,6 +191,7 @@ final class UserBasicProfileResponseDto {
       heightCm: (json['heightCm'] as num?)?.toDouble(),
       weightKg: (json['weightKg'] as num?)?.toDouble(),
       waistCm: (json['waistCm'] as num?)?.toDouble(),
+      usesTcm: _toBool(json['usesTcm'], fallback: false),
       diseaseHistory: _toStringList(json['diseaseHistory']),
     );
   }
@@ -197,6 +203,7 @@ final class UserBasicProfileResponseDto {
   final double? heightCm;
   final double? weightKg;
   final double? waistCm;
+  final bool usesTcm;
   final List<String> diseaseHistory;
 
   UserBasicProfile toDomain() {
@@ -208,6 +215,7 @@ final class UserBasicProfileResponseDto {
       heightCm: heightCm,
       weightKg: weightKg,
       waistCm: waistCm,
+      usesTcm: usesTcm,
       diseaseHistory: diseaseHistory,
     );
   }
@@ -301,4 +309,15 @@ int _toInt(Object? value) {
 DateTime? _parseDateTime(Object? value) {
   if (value is! String) return null;
   return DateTime.tryParse(value);
+}
+
+bool _toBool(Object? value, {required bool fallback}) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized == 'true' || normalized == '1') return true;
+    if (normalized == 'false' || normalized == '0') return false;
+  }
+  return fallback;
 }

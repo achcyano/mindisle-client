@@ -9,6 +9,7 @@ final class UserBasicProfile {
     required this.heightCm,
     required this.weightKg,
     required this.waistCm,
+    required this.usesTcm,
     required this.diseaseHistory,
   });
 
@@ -19,6 +20,7 @@ final class UserBasicProfile {
   final double? heightCm;
   final double? weightKg;
   final double? waistCm;
+  final bool usesTcm;
   final List<String> diseaseHistory;
 }
 
@@ -30,6 +32,7 @@ final class UpsertUserBasicProfilePayload {
     this.heightCm,
     this.weightKg,
     this.waistCm,
+    this.usesTcm,
     this.diseaseHistory,
   });
 
@@ -39,5 +42,6 @@ final class UpsertUserBasicProfilePayload {
   final double? heightCm;
   final double? weightKg;
   final double? waistCm;
+  final bool? usesTcm;
   final List<String>? diseaseHistory;
 }

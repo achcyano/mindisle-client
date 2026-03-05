@@ -157,6 +157,19 @@ class _InfoPageState extends ConsumerState<InfoPage> {
               : () => _pickGender(state: state, controller: controller),
         ),
         AppListTile(
+          title: Text(InfoPageUtils.displayUsesTcm(state.usesTcm)),
+          subtitle: const Text('是否使用中药'),
+          leading: const Icon(Icons.local_florist_outlined),
+          trailing: Switch(
+            value: state.usesTcm,
+            onChanged: state.isSaving ? null : controller.setUsesTcm,
+          ),
+          position: AppListTilePosition.middle,
+          onTap: state.isSaving
+              ? null
+              : () => controller.setUsesTcm(!state.usesTcm),
+        ),
+        AppListTile(
           title: Text(InfoPageUtils.displayBirthDate(state)),
           subtitle: const Text('出生日期'),
           leading: const Icon(Icons.cake_outlined),

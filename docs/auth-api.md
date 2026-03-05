@@ -182,6 +182,7 @@
 - `heightCm: Double?`（可选，范围 `50.0 ~ 260.0`）
 - `weightKg: Double?`（可选，范围 `10.0 ~ 500.0`）
 - `waistCm: Double?`（可选，范围 `30.0 ~ 220.0`）
+- `usesTcm: Boolean?`（可选；`null` 表示不修改，`true/false` 表示显式更新）
 - `diseaseHistory: List<String>?`（可选，最多 50 项；每项最多 200 字符，且不能包含控制字符；内容不做固定枚举限制）
 
 更新语义（`PUT /users/me/basic-profile`）：
@@ -230,6 +231,7 @@
 - `heightCm: Double?`
 - `weightKg: Double?`
 - `waistCm: Double?`
+- `usesTcm: Boolean`（是否使用中药，默认 `false`）
 - `diseaseHistory: List<String>`
 
 `UserAvatarMetaResponse`
@@ -715,7 +717,7 @@ This is a test endpoint.
 
 ### 6.4 资料存储机制
 
-- 用户基础信息在 `user_profiles`（一行）
+- 用户基础信息在 `user_profiles`（一行，包含姓名/性别/生日/身高/体重/腰围/`uses_tcm`）
 - 家族史/病史/用药史在独立子表（一对多），由 `/users/me/profile` 维护
 - 疾病史在 `user_disease_histories`（一对多），由 `/users/me/basic-profile` 维护
 - 头像元信息在 `user_avatars`（一行），头像文件落盘在 `data/avatars/`，由 `/api/v1/users/me/avatar` 维护

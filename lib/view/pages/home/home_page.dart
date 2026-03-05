@@ -3,16 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/app_error.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/static.dart';
+import 'package:mindisle_client/features/event/domain/entities/event_entities.dart';
+import 'package:mindisle_client/features/event/presentation/home/event_home_controller.dart';
+import 'package:mindisle_client/features/event/presentation/home/event_home_state.dart';
+import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
+import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_args.dart';
+import 'package:mindisle_client/features/scale/presentation/providers/scale_providers.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/shared/session/startup_network_issue_signal.dart';
 import 'package:mindisle_client/view/pages/chat/chat_page.dart';
 import 'package:mindisle_client/view/pages/home/card_home.dart';
+import 'package:mindisle_client/view/pages/home/home_event_card.dart';
 import 'package:mindisle_client/view/pages/home/startup_network_error_card.dart';
 import 'package:mindisle_client/view/pages/home/today_mood_card.dart';
+import 'package:mindisle_client/view/pages/info/info_page.dart';
+import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/pages/medicine/medicine_page.dart';
 import 'package:mindisle_client/view/pages/profile/profile_page.dart';
+import 'package:mindisle_client/view/pages/scale/scale_assessment_page.dart';
 import 'package:mindisle_client/view/pages/scale/scale_list_page.dart';
-import 'package:mindisle_client/view/pages/login/login_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -27,6 +36,15 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   bool _isRetryingStartupIssue = false;
   int? _lastSnackIssueId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(eventHomeControllerProvider.notifier).initialize();
+    });
+  }
 
   Future<void> _retryStartupIssue() async {
     if (_isRetryingStartupIssue) return;
@@ -97,6 +115,15 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
 
     final startupIssue = ref.watch(startupNetworkIssueProvider);
+    ref.listen<EventHomeState>(eventHomeControllerProvider, (previous, next) {
+      final message = next.errorMessage;
+      if (message == null || message.isEmpty) return;
+      if (message == previous?.errorMessage) return;
+
+      _showSnack(message);
+      ref.read(eventHomeControllerProvider.notifier).clearError();
+    });
+    final eventState = ref.watch(eventHomeControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -112,58 +139,175 @@ class _HomePageState extends ConsumerState<HomePage> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            spacing: 8,
-            children: [
-              if (startupIssue != null)
-                StartupNetworkErrorCard(
-                  title: startupIssue.isNetwork ? '网络连接异常' : '请求失败',
-                  message: startupIssue.message,
-                  isRetrying: _isRetryingStartupIssue,
-                  onRetry: _retryStartupIssue,
+        child: RefreshIndicator(
+          onRefresh: _onPullToRefresh,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              spacing: 8,
+              children: [
+                if (startupIssue != null)
+                  StartupNetworkErrorCard(
+                    title: startupIssue.isNetwork ? '网络连接异常' : '请求失败',
+                    message: startupIssue.message,
+                    isRetrying: _isRetryingStartupIssue,
+                    onRetry: _retryStartupIssue,
+                  ),
+                ..._buildEventCards(eventState),
+                Row(
+                  children: [
+                    Expanded(
+                      child: HomeActionCard(
+                        icon: Icons.assessment_outlined,
+                        title: '量表评估',
+                        onTap: () {
+                          ScaleListPage.route.goRoot(context);
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: HomeActionCard(
+                        icon: Icons.messenger_outline,
+                        title: '聊天',
+                        onTap: () {
+                          ChatPage.route.goRoot(context);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              const HomeActionCard(
-                icon: Icons.link,
-                title: '绑定医生',
-                subtitle: '绑定医生后可使用完整服务',
-              ),
-              HomeActionCard(
-                icon: Icons.medical_services_outlined,
-                title: '导入用药计划',
-                subtitle: '可使用用药提醒等功能',
-                onTap: () {
-                  widget.onRouteRequested(MedicinePage.route);
-                },
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: HomeActionCard(
-                      icon: Icons.assessment_outlined,
-                      title: '量表评估',
-                      onTap: () {
-                        ScaleListPage.route.goRoot(context);
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: HomeActionCard(
-                      icon: Icons.messenger_outline,
-                      title: '聊天',
-                      onTap: () {
-                        ChatPage.route.goRoot(context);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const TodayMoodCard(),
-            ],
+                const TodayMoodCard(),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildEventCards(EventHomeState state) {
+    if (state.isLoading && state.items.isEmpty) {
+      return const [
+        Card(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 18),
+            child: Center(
+              child: SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    if (state.items.isEmpty) return const <Widget>[];
+
+    return <Widget>[
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Text('待办事项', style: Theme.of(context).textTheme.titleSmall),
+        ),
+      ),
+      for (final item in state.items)
+        HomeEventCard(
+          item: item,
+          onTap: () {
+            _handleEventTap(item);
+          },
+        ),
+    ];
+  }
+
+  Future<void> _handleEventTap(UserEventItem item) async {
+    switch (item.eventType) {
+      case UserEventType.openScale:
+        await _openScaleEvent(item);
+        return;
+      case UserEventType.continueScaleSession:
+        await _continueScaleEvent(item);
+        return;
+      case UserEventType.importMedicationPlan:
+        widget.onRouteRequested(MedicinePage.route);
+        return;
+      case UserEventType.updateBasicProfile:
+        await InfoPage.route.goRoot(context);
+        if (!mounted) return;
+        await ref.read(eventHomeControllerProvider.notifier).refresh();
+        return;
+      case UserEventType.bindDoctor:
+        // TODO(hztcm): wire up doctor binding flow and update status.
+        return;
+      case UserEventType.unknown:
+        return;
+    }
+  }
+
+  Future<void> _openScaleEvent(UserEventItem item) async {
+    final scaleId = item.scaleId;
+    if (scaleId == null || scaleId <= 0) {
+      await ScaleListPage.route.goRoot(context);
+      if (!mounted) return;
+      await ref.read(eventHomeControllerProvider.notifier).refresh();
+      return;
+    }
+
+    final result = await ref
+        .read(createOrResumeScaleSessionUseCaseProvider)
+        .execute(scaleId: scaleId);
+
+    switch (result) {
+      case Failure<ScaleCreateSessionResult>(error: final error):
+        _showSnack(error.message);
+        return;
+      case Success<ScaleCreateSessionResult>(data: final data):
+        if (!mounted) return;
+        await ScaleAssessmentPage.route.goRoot(
+          context,
+          ScaleAssessmentArgs(scaleId: scaleId, sessionId: data.session.sessionId),
+        );
+        if (!mounted) return;
+        await ref.read(eventHomeControllerProvider.notifier).refresh();
+        return;
+    }
+  }
+
+  Future<void> _continueScaleEvent(UserEventItem item) async {
+    final scaleId = item.scaleId;
+    final sessionId = item.sessionId;
+
+    if (scaleId == null || scaleId <= 0 || sessionId == null || sessionId <= 0) {
+      await ScaleListPage.route.goRoot(context);
+      if (!mounted) return;
+      await ref.read(eventHomeControllerProvider.notifier).refresh();
+      return;
+    }
+
+    await ScaleAssessmentPage.route.goRoot(
+      context,
+      ScaleAssessmentArgs(scaleId: scaleId, sessionId: sessionId),
+    );
+    if (!mounted) return;
+    await ref.read(eventHomeControllerProvider.notifier).refresh();
+  }
+
+  Future<void> _onPullToRefresh() async {
+    final startupIssue = ref.read(startupNetworkIssueProvider);
+    if (startupIssue != null) {
+      await _retryStartupIssue();
+    }
+
+    if (!mounted) return;
+    await ref.read(eventHomeControllerProvider.notifier).refresh();
+  }
+
+  void _showSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(message)));
   }
 }

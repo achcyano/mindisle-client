@@ -8,6 +8,7 @@ class HomeActionCard extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.borderRadius = 22,
+    this.showChevron = true,
   });
 
   final IconData icon;
@@ -15,6 +16,7 @@ class HomeActionCard extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onTap;
   final double borderRadius;
+  final bool showChevron;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,7 @@ class HomeActionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              if (showChevron) const Icon(Icons.chevron_right),
             ],
           ),
         ),

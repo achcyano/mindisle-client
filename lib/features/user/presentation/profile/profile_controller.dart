@@ -174,6 +174,10 @@ final class ProfileController extends StateNotifier<ProfileState> {
     state = state.copyWith(gender: gender, errorMessage: null);
   }
 
+  void setUsesTcm(bool value) {
+    state = state.copyWith(usesTcm: value, errorMessage: null);
+  }
+
   Future<String?> saveProfile() async {
     if (state.isSaving) return null;
 
@@ -206,6 +210,7 @@ final class ProfileController extends StateNotifier<ProfileState> {
       heightCm: heightCm.$1,
       weightKg: weightKg.$1,
       waistCm: waistCm.$1,
+      usesTcm: state.usesTcm,
       diseaseHistory: diseaseHistory,
     );
 
@@ -349,6 +354,7 @@ final class ProfileController extends StateNotifier<ProfileState> {
       waistCm: _formatDouble(profile.waistCm),
       diseaseHistoryInput: profile.diseaseHistory.join('\n'),
       gender: profile.gender,
+      usesTcm: profile.usesTcm,
     );
   }
 
@@ -362,6 +368,7 @@ final class ProfileController extends StateNotifier<ProfileState> {
       waistCm: _formatDouble(profile.waistCm),
       diseaseHistoryInput: profile.diseaseHistory.join('\n'),
       gender: profile.gender,
+      usesTcm: profile.usesTcm,
       isLoading: false,
       isRefreshing: false,
       isSaving: isSaving ?? state.isSaving,

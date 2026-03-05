@@ -48,6 +48,7 @@ final class BasicProfileCacheStore {
       'heightCm': profile.heightCm,
       'weightKg': profile.weightKg,
       'waistCm': profile.waistCm,
+      'usesTcm': profile.usesTcm,
       'diseaseHistory': profile.diseaseHistory,
     };
   }
@@ -76,6 +77,7 @@ final class BasicProfileCacheStore {
       heightCm: _toDouble(map['heightCm']),
       weightKg: _toDouble(map['weightKg']),
       waistCm: _toDouble(map['waistCm']),
+      usesTcm: _toBool(map['usesTcm'], fallback: false),
       diseaseHistory: diseaseHistory,
     );
   }
@@ -91,6 +93,17 @@ final class BasicProfileCacheStore {
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value);
     return null;
+  }
+
+  bool _toBool(Object? value, {required bool fallback}) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      if (normalized == 'true' || normalized == '1') return true;
+      if (normalized == 'false' || normalized == '0') return false;
+    }
+    return fallback;
   }
 }
 

@@ -53,6 +53,10 @@ abstract final class InfoPageUtils {
     };
   }
 
+  static String displayUsesTcm(bool usesTcm) {
+    return usesTcm ? '是' : '否';
+  }
+
   static String effectiveBirthDateText(ProfileState state) {
     return (state.birthDate.isNotEmpty
             ? state.birthDate

@@ -22,6 +22,7 @@ final class ProfileState {
     this.waistCm = '',
     this.diseaseHistoryInput = '',
     this.gender = UserGender.unknown,
+    this.usesTcm = false,
   });
 
   final bool initialized;
@@ -42,6 +43,7 @@ final class ProfileState {
   final String waistCm;
   final String diseaseHistoryInput;
   final UserGender gender;
+  final bool usesTcm;
 
   ProfileState copyWith({
     bool? initialized,
@@ -61,6 +63,7 @@ final class ProfileState {
     String? waistCm,
     String? diseaseHistoryInput,
     UserGender? gender,
+    bool? usesTcm,
   }) {
     return ProfileState(
       initialized: initialized ?? this.initialized,
@@ -88,6 +91,7 @@ final class ProfileState {
       waistCm: waistCm ?? this.waistCm,
       diseaseHistoryInput: diseaseHistoryInput ?? this.diseaseHistoryInput,
       gender: gender ?? this.gender,
+      usesTcm: usesTcm ?? this.usesTcm,
     );
   }
 }
