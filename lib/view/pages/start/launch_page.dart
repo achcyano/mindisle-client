@@ -6,6 +6,7 @@ import 'package:mindisle_client/core/result/app_error.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/core/providers/app_providers.dart';
 import 'package:mindisle_client/data/preference/const.dart';
+import 'package:mindisle_client/features/medication/presentation/list/medication_list_controller.dart';
 import 'package:mindisle_client/features/user/presentation/profile/profile_completion_guard.dart';
 import 'package:mindisle_client/features/user/presentation/providers/user_providers.dart';
 import 'package:mindisle_client/shared/session/startup_network_issue_signal.dart';
@@ -49,6 +50,7 @@ class _LaunchPageState extends ConsumerState<LaunchPage> {
 
     unawaited(ref.read(basicProfileWarmupServiceProvider).warmUp());
     unawaited(ref.read(avatarWarmupServiceProvider).warmUp());
+    unawaited(ref.read(medicationListControllerProvider.notifier).initialize());
 
     final result = await ref.read(getMeUseCaseProvider).execute();
     if (!mounted) return;

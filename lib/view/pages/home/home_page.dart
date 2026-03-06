@@ -6,6 +6,8 @@ import 'package:mindisle_client/core/static.dart';
 import 'package:mindisle_client/features/event/domain/entities/event_entities.dart';
 import 'package:mindisle_client/features/event/presentation/home/event_home_controller.dart';
 import 'package:mindisle_client/features/event/presentation/home/event_home_state.dart';
+import 'package:mindisle_client/features/medication/presentation/list/medication_list_controller.dart';
+import 'package:mindisle_client/features/medication/presentation/list/medication_list_state.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_args.dart';
 import 'package:mindisle_client/features/scale/presentation/providers/scale_providers.dart';
@@ -15,6 +17,7 @@ import 'package:mindisle_client/view/pages/chat/chat_page.dart';
 import 'package:mindisle_client/view/pages/home/card_home.dart';
 import 'package:mindisle_client/view/pages/home/home_event_card.dart';
 import 'package:mindisle_client/view/pages/home/startup_network_error_card.dart';
+import 'package:mindisle_client/view/pages/home/today_medication_card.dart';
 import 'package:mindisle_client/view/pages/home/today_mood_card.dart';
 import 'package:mindisle_client/view/pages/info/info_page.dart';
 import 'package:mindisle_client/view/pages/login/login_page.dart';
@@ -43,6 +46,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(eventHomeControllerProvider.notifier).initialize();
+      ref.read(medicationListControllerProvider.notifier).initialize();
     });
   }
 
@@ -124,6 +128,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       ref.read(eventHomeControllerProvider.notifier).clearError();
     });
     final eventState = ref.watch(eventHomeControllerProvider);
+    final medicationState = ref.watch(medicationListControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -138,6 +143,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
+
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _onPullToRefresh,
@@ -155,6 +161,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     onRetry: _retryStartupIssue,
                   ),
                 ..._buildEventCards(eventState),
+                _buildTodayMedicationCard(medicationState),
                 Row(
                   children: [
                     Expanded(
@@ -221,6 +228,20 @@ class _HomePageState extends ConsumerState<HomePage> {
           },
         ),
     ];
+  }
+
+  Widget _buildTodayMedicationCard(MedicationListState state) {
+    return TodayMedicationCard(
+      items: state.activeItems,
+      isLoading: state.isLoading || !state.initialized,
+      errorMessage: state.errorMessage,
+      onTapManage: () {
+        widget.onRouteRequested(MedicinePage.route);
+      },
+      onRetry: () {
+        ref.read(medicationListControllerProvider.notifier).refresh();
+      },
+    );
   }
 
   Future<void> _handleEventTap(UserEventItem item) async {
@@ -302,7 +323,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
 
     if (!mounted) return;
-    await ref.read(eventHomeControllerProvider.notifier).refresh();
+    await Future.wait([
+      ref.read(eventHomeControllerProvider.notifier).refresh(),
+      ref.read(medicationListControllerProvider.notifier).refresh(),
+    ]);
   }
 
   void _showSnack(String message) {
