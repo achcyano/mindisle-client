@@ -2,20 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/core/result/result.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
+import 'package:mindisle_client/features/scale/presentation/result/scale_result_args.dart';
 import 'package:mindisle_client/features/scale/presentation/providers/scale_providers.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_dimension_radar_chart_card.dart';
 import 'package:mindisle_client/view/pages/scale/widgets/scale_dimension_result_list.dart';
 import 'package:mindisle_client/view/pages/scale/widgets/scale_result_summary_card.dart';
+import 'package:mindisle_client/view/pages/scale/widgets/scale_score_trend_chart_card.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class ScaleResultPage extends ConsumerStatefulWidget {
-  const ScaleResultPage({super.key, required this.sessionId});
+  const ScaleResultPage({super.key, required this.args});
 
-  final int sessionId;
+  final ScaleResultArgs args;
 
-  static final route = AppRouteArg<void, int>(
+  static final route = AppRouteArg<void, ScaleResultArgs>(
     path: '/home/scale/result',
-    builder: (sessionId) => ScaleResultPage(sessionId: sessionId),
+    builder: (args) => ScaleResultPage(args: args),
   );
 
   @override
@@ -26,6 +29,10 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
   bool _isLoading = false;
   ScaleResult? _result;
   String? _errorMessage;
+  String? _historyErrorMessage;
+  List<ScaleTrendPoint> _trendPoints = const <ScaleTrendPoint>[];
+  List<ScaleRadarDimensionEntry> _radarEntries =
+      const <ScaleRadarDimensionEntry>[];
 
   @override
   void initState() {
@@ -40,11 +47,18 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _historyErrorMessage = null;
     });
 
-    final result = await ref
+    final sessionResultFuture = ref
         .read(fetchScaleSessionResultUseCaseProvider)
-        .execute(sessionId: widget.sessionId);
+        .execute(sessionId: widget.args.sessionId);
+    final historyResultFuture = ref
+        .read(fetchScaleHistoryUseCaseProvider)
+        .execute(limit: 200);
+
+    final result = await sessionResultFuture;
+    final historyResult = await historyResultFuture;
 
     if (!mounted) return;
     switch (result) {
@@ -57,13 +71,34 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
           _isLoading = false;
           _errorMessage = message;
           _result = null;
+          _historyErrorMessage = null;
+          _trendPoints = const <ScaleTrendPoint>[];
+          _radarEntries = const <ScaleRadarDimensionEntry>[];
         });
         return;
       case Success<ScaleResult>(data: final data):
+        final radarEntries = _buildRadarEntries(data);
+        String? historyError;
+        List<ScaleTrendPoint> trendPoints = const <ScaleTrendPoint>[];
+        switch (historyResult) {
+          case Success<List<ScaleHistoryItem>>(data: final historyItems):
+            trendPoints = _buildTrendPoints(
+              scaleId: widget.args.scaleId,
+              currentSessionId: widget.args.sessionId,
+              result: data,
+              historyItems: historyItems,
+            );
+          case Failure<List<ScaleHistoryItem>>(error: final error):
+            historyError = error.message;
+        }
+
         setState(() {
           _isLoading = false;
           _errorMessage = null;
           _result = data;
+          _historyErrorMessage = historyError;
+          _trendPoints = trendPoints;
+          _radarEntries = radarEntries;
         });
         return;
     }
@@ -72,10 +107,15 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final showTrendChart =
+        _historyErrorMessage != null || _trendPoints.length >= 3;
+    final showRadarChart = _radarEntries.length >= 3;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('量表结果'),
+        title: Text(widget.args.scaleName?.trim().isNotEmpty == true
+            ? '${widget.args.scaleName} 结果'
+            : '量表结果'),
         actions: [
           IconButton(
             tooltip: '刷新',
@@ -147,6 +187,18 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
                     ),
                   ],
                   const SizedBox(height: 8),
+                  if (showTrendChart) ...[
+                    ScaleScoreTrendChartCard(
+                      points: _trendPoints,
+                      errorMessage: _historyErrorMessage,
+                      onRetry: _loadResult,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (showRadarChart) ...[
+                    ScaleDimensionRadarChartCard(entries: _radarEntries),
+                    const SizedBox(height: 8),
+                  ],
                   ScaleDimensionResultList(result: _result!),
                   const SizedBox(height: 16),
                   OutlinedButton(
@@ -157,5 +209,81 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
               ),
       ),
     );
+  }
+
+  List<ScaleTrendPoint> _buildTrendPoints({
+    required int scaleId,
+    required int currentSessionId,
+    required ScaleResult result,
+    required List<ScaleHistoryItem> historyItems,
+  }) {
+    final points = historyItems
+        .where((item) => item.scaleId == scaleId)
+        .where((item) => item.totalScore != null)
+        .map((item) {
+          final time = item.submittedAt ?? item.updatedAt;
+          if (time == null) return null;
+          return ScaleTrendPoint(
+            sessionId: item.sessionId,
+            time: time,
+            score: item.totalScore!,
+          );
+        })
+        .whereType<ScaleTrendPoint>()
+        .toList(growable: true);
+
+    final hasCurrent = points.any((it) => it.sessionId == currentSessionId);
+    if (!hasCurrent && result.totalScore != null) {
+      points.add(
+        ScaleTrendPoint(
+          sessionId: currentSessionId,
+          time: result.computedAt ?? DateTime.now().toUtc(),
+          score: result.totalScore!,
+        ),
+      );
+    }
+
+    points.sort((a, b) {
+      final compareTime = a.time.compareTo(b.time);
+      if (compareTime != 0) return compareTime;
+      return a.sessionId.compareTo(b.sessionId);
+    });
+    return points;
+  }
+
+  List<ScaleRadarDimensionEntry> _buildRadarEntries(ScaleResult result) {
+    final dimensionResults = result.dimensionResults;
+    if (dimensionResults.isNotEmpty) {
+      return dimensionResults
+          .map((item) {
+            final value = _resolveDimensionValue(item);
+            if (value == null) return null;
+            final label = item.dimensionName.trim().isNotEmpty
+                ? item.dimensionName.trim()
+                : item.dimensionKey;
+            return ScaleRadarDimensionEntry(label: label, value: value);
+          })
+          .whereType<ScaleRadarDimensionEntry>()
+          .toList(growable: false);
+    }
+
+    if (result.dimensionScores.isEmpty) {
+      return const <ScaleRadarDimensionEntry>[];
+    }
+
+    return result.dimensionScores.entries
+        .where((entry) => entry.value.isFinite)
+        .map(
+          (entry) =>
+              ScaleRadarDimensionEntry(label: entry.key, value: entry.value),
+        )
+        .toList(growable: false);
+  }
+
+  double? _resolveDimensionValue(ScaleDimensionResult item) {
+    if (item.rawScore != null) return item.rawScore!;
+    if (item.averageScore != null) return item.averageScore!;
+    if (item.standardScore != null) return item.standardScore!;
+    return null;
   }
 }

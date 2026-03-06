@@ -8,6 +8,7 @@ import 'package:mindisle_client/features/scale/presentation/assist/scale_assist_
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_args.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_controller.dart';
 import 'package:mindisle_client/features/scale/presentation/assessment/scale_assessment_state.dart';
+import 'package:mindisle_client/features/scale/presentation/result/scale_result_args.dart';
 import 'package:mindisle_client/view/pages/scale/scale_result_page.dart';
 import 'package:mindisle_client/view/pages/scale/widgets/question_step_card.dart';
 import 'package:mindisle_client/view/pages/scale/widgets/scale_assist_bottom_sheet.dart';
@@ -197,7 +198,15 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
 
     _clearAllAssistHistory(next);
     _controller.clearSubmitted();
-    unawaited(ScaleResultPage.route.replace(context, submittedSessionId));
+    unawaited(
+      ScaleResultPage.route.replace(
+        context,
+        ScaleResultArgs(
+          sessionId: submittedSessionId,
+          scaleId: _args.scaleId,
+        ),
+      ),
+    );
   }
 
   Widget? _buildFloatingActions({

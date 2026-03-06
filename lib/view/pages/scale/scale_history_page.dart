@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindisle_client/features/scale/domain/entities/scale_entities.dart';
 import 'package:mindisle_client/features/scale/presentation/history/scale_history_controller.dart';
 import 'package:mindisle_client/features/scale/presentation/history/scale_history_state.dart';
+import 'package:mindisle_client/features/scale/presentation/result/scale_result_args.dart';
 import 'package:mindisle_client/view/pages/scale/scale_result_page.dart';
 import 'package:mindisle_client/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
@@ -75,7 +76,14 @@ class _ScaleHistoryPageState extends ConsumerState<ScaleHistoryPage> {
                           return _HistoryTile(
                             item: item,
                             onTap: () {
-                              ScaleResultPage.route.go(context, item.sessionId);
+                              ScaleResultPage.route.go(
+                                context,
+                                ScaleResultArgs(
+                                  sessionId: item.sessionId,
+                                  scaleId: item.scaleId,
+                                  scaleName: item.scaleName,
+                                ),
+                              );
                             },
                           );
                         },
