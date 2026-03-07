@@ -1,0 +1,20 @@
+name: app_core
+description: Core networking, session and result utilities for MindIsle apps.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+  flutter: ">=3.38.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.8.0+1
+  pretty_dio_logger: ^1.4.0
+  hive_ce_flutter: ^2.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

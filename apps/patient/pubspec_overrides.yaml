@@ -1,0 +1,9 @@
+# melos_managed_dependency_overrides: app_core,app_ui,models,image_picker_android
+dependency_overrides:
+  app_core:
+    path: ..\\..\\packages\\app_core
+  app_ui:
+    path: ..\\..\\packages\\app_ui
+  models:
+    path: ..\\..\\packages\\models
+  image_picker_android: 0.8.13+5

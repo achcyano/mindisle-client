@@ -1,0 +1,10 @@
+name: mindisle_workspace
+
+ide:
+  intellij:
+    moduleNamePrefix: ""
+
+packages:
+  - apps/**
+  - packages/**
+

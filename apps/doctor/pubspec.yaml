@@ -1,0 +1,62 @@
+name: doctor
+description: MindIsle doctor app.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_launcher_icons: ^0.13.1
+  launcher_name: ^1.0.2
+  flutter_native_splash: ^2.4.7
+  flutter_riverpod: ^2.6.1
+  dio: ^5.8.0+1
+  flutter_secure_storage: ^9.2.2
+  uuid: ^4.5.1
+  app_core:
+    path: ../../packages/app_core
+  app_ui:
+    path: ../../packages/app_ui
+  models:
+    path: ../../packages/models
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/app_icon.png
+    - assets/icon/app_icon_foreground.png
+    - assets/icon/app_icon_background.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icon/app_icon.png
+  adaptive_icon_foreground: assets/icon/app_icon_foreground.png
+  adaptive_icon_background: assets/icon/app_icon_background.png
+  remove_alpha_ios: true
+
+launcher_name:
+  default: "Mind Isle Doctor"
+  zh-rCN: "心岛医生端"
+  zh-rTW: "心島醫生端"
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/icon/app_icon_foreground.png
+  android: true
+  ios: true
+  android_12:
+    color: "#ffffff"
+    image: assets/icon/app_icon_foreground.png
+
