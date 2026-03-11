@@ -1,13 +1,17 @@
 import 'package:app_core/app_core.dart';
 import 'package:dio/dio.dart';
-import 'package:doctor/core/static.dart';
+import 'package:doctor/core/auth_scope.dart';
 import 'package:doctor/shared/session/session_expired_signal.dart';
 import 'package:doctor/shared/session/session_store_impl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-final appConfigProvider = Provider<AppConfig>((_) {
-  return AppConfig(baseUrl: '$apiScheme://$apiHost:$apiPort');
+final sharedServerConfigProvider = Provider<SharedServerConfig>(
+  (_) => defaultSharedServerConfig,
+);
+
+final appConfigProvider = Provider<AppConfig>((ref) {
+  return ref.watch(sharedServerConfigProvider).toAppConfig();
 });
 
 final secureStorageProvider = Provider<FlutterSecureStorage>(
@@ -18,20 +22,12 @@ final sessionStoreProvider = Provider<SessionStore>((ref) {
   return SessionStoreImpl(ref.watch(secureStorageProvider));
 });
 
-final authStrategyProvider = Provider<NetworkAuthStrategy>((_) {
-  return NetworkAuthStrategy(
-    authPathPrefix: '$apiPrefix/doctor/auth/',
-    refreshPath: '$apiPrefix/doctor/auth/token/refresh',
-    publicPaths: <String>{
-      '$apiPrefix/doctor/auth/sms-codes',
-      '$apiPrefix/doctor/auth/register',
-      '$apiPrefix/doctor/auth/login/password',
-      '$apiPrefix/doctor/auth/token/refresh',
-      '$apiPrefix/doctor/auth/password/reset',
-    },
-    principalIdKeys: const <String>['doctorId'],
-    unauthorizedBusinessCode: 40100,
-  );
+final authScopeConfigProvider = Provider<AuthScopeConfig>((_) {
+  return doctorAuthScopeConfig;
+});
+
+final authStrategyProvider = Provider<NetworkAuthStrategy>((ref) {
+  return ref.watch(authScopeConfigProvider).toNetworkAuthStrategy();
 });
 
 final refreshDioProvider = Provider<Dio>((ref) {

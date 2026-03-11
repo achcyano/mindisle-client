@@ -1,33 +1,26 @@
+import 'package:doctor/core/presentation/async_state.dart';
 import 'package:doctor/features/doctor_scale/domain/entities/doctor_scale_entities.dart';
 
-final class DoctorScaleState {
-  const DoctorScaleState({
-    this.isLoading = false,
+typedef DoctorScaleState = AsyncState<DoctorScaleData>;
+
+final class DoctorScaleData {
+  const DoctorScaleData({
     this.trends = const <DoctorScaleTrendPoint>[],
     this.report,
-    this.errorMessage,
   });
 
-  final bool isLoading;
   final List<DoctorScaleTrendPoint> trends;
   final DoctorAssessmentReport? report;
-  final String? errorMessage;
 
-  DoctorScaleState copyWith({
-    bool? isLoading,
+  DoctorScaleData copyWith({
     List<DoctorScaleTrendPoint>? trends,
-    Object? report = _sentinel,
-    Object? errorMessage = _sentinel,
+    Object? report = asyncStateNoChange,
   }) {
-    return DoctorScaleState(
-      isLoading: isLoading ?? this.isLoading,
+    return DoctorScaleData(
       trends: trends ?? this.trends,
-      report: identical(report, _sentinel) ? this.report : report as DoctorAssessmentReport?,
-      errorMessage: identical(errorMessage, _sentinel)
-          ? this.errorMessage
-          : errorMessage as String?,
+      report: identical(report, asyncStateNoChange)
+          ? this.report
+          : report as DoctorAssessmentReport?,
     );
   }
 }
-
-const Object _sentinel = Object();

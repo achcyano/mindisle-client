@@ -79,7 +79,6 @@ class TodayMedicationCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '今日用药',
-                      style: theme.textTheme.titleMedium,
                     ),
                   ),
                   const Icon(Icons.chevron_right),
@@ -133,7 +132,7 @@ class _EmptyMedicationCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('今日用药', style: theme.textTheme.titleMedium),
+                    Text('今日用药'),
                     const SizedBox(height: 4),
                     Text(
                       '今日暂无用药计划，点击进入用药页管理',

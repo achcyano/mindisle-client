@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class AppTextTheme {
   const AppTextTheme._();
@@ -14,16 +14,12 @@ class AppTextTheme {
         fontSize: 19,
         fontWeight: FontWeight.w600,
       ),
-      bodySmall: (base.bodySmall ?? const TextStyle()).copyWith(
-        fontSize: 13,
-      ),
+      bodySmall: (base.bodySmall ?? const TextStyle()).copyWith(fontSize: 13),
       bodyMedium: (base.bodyMedium ?? const TextStyle()).copyWith(
         fontSize: 15,
         height: 1.5,
       ),
-      titleSmall: (base.titleSmall ?? const TextStyle()).copyWith(
-        fontSize: 17,
-      ),
+      titleSmall: (base.titleSmall ?? const TextStyle()).copyWith(fontSize: 17),
       labelSmall: (base.labelSmall ?? const TextStyle()).copyWith(
         fontSize: 12,
         fontWeight: FontWeight.w600,
@@ -32,9 +28,7 @@ class AppTextTheme {
         fontSize: 16,
         fontWeight: FontWeight.w600,
       ),
-      titleLarge: (base.titleLarge ?? const TextStyle()).copyWith(
-        fontSize: 23,
-      ),
+      titleLarge: (base.titleLarge ?? const TextStyle()).copyWith(fontSize: 23),
       titleMedium: (base.titleMedium ?? const TextStyle()).copyWith(
         fontSize: 16,
         letterSpacing: 0.6,
@@ -42,4 +36,3 @@ class AppTextTheme {
     );
   }
 }
-

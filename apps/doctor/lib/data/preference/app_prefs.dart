@@ -2,6 +2,10 @@ import 'package:app_core/app_core.dart';
 
 abstract final class AppPrefs {
   static const deviceId = PrefVar<String>('doctor_device_id', defaultValue: '');
+  static const hasSeenWelcome = PrefVar<bool>(
+    'doctor_has_seen_welcome',
+    defaultValue: false,
+  );
 
   static const sessionPrincipalId = PrefVar<int>(
     'doctor_session_principal_id',

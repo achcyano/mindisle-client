@@ -9,14 +9,22 @@ final doctorBindingApiProvider = Provider<DoctorBindingApi>((ref) {
   return DoctorBindingApi(ref.watch(appDioProvider));
 });
 
-final doctorBindingRepositoryProvider = Provider<DoctorBindingRepository>((ref) {
+final doctorBindingRepositoryProvider = Provider<DoctorBindingRepository>((
+  ref,
+) {
   return DoctorBindingRepositoryImpl(ref.watch(doctorBindingApiProvider));
 });
 
-final createDoctorBindingCodeUseCaseProvider = Provider<CreateDoctorBindingCodeUseCase>((ref) {
-  return CreateDoctorBindingCodeUseCase(ref.watch(doctorBindingRepositoryProvider));
-});
+final createDoctorBindingCodeUseCaseProvider =
+    Provider<CreateDoctorBindingCodeUseCase>((ref) {
+      return CreateDoctorBindingCodeUseCase(
+        ref.watch(doctorBindingRepositoryProvider),
+      );
+    });
 
-final fetchDoctorBindingHistoryUseCaseProvider = Provider<FetchDoctorBindingHistoryUseCase>((ref) {
-  return FetchDoctorBindingHistoryUseCase(ref.watch(doctorBindingRepositoryProvider));
-});
+final fetchDoctorBindingHistoryUseCaseProvider =
+    Provider<FetchDoctorBindingHistoryUseCase>((ref) {
+      return FetchDoctorBindingHistoryUseCase(
+        ref.watch(doctorBindingRepositoryProvider),
+      );
+    });

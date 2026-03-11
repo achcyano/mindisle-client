@@ -1,4 +1,4 @@
-﻿name: mindisle_workspace
+﻿name: mindisle_client
 publish_to: none
 environment:
   sdk: ^3.10.0

@@ -16,14 +16,20 @@ DoctorPatientListResult decodeDoctorPatientList(Object? rawData) {
 
 DoctorPatient _decodePatient(Map<String, dynamic> map) {
   final grouping = map['grouping'];
-  final groupingMap = grouping is Map ? Map<String, dynamic>.from(grouping) : null;
+  final groupingMap = grouping is Map
+      ? Map<String, dynamic>.from(grouping)
+      : null;
   return DoctorPatient(
     patientUserId: _toInt(map['patientUserId']) ?? _toInt(map['userId']) ?? 0,
     fullName: _toNonEmptyString(map['fullName']) ?? '',
     phone: _toNonEmptyString(map['phone']) ?? '',
     isAbnormal: _toBool(map['isAbnormal']),
-    severityGroup: _toNonEmptyString(map['severityGroup']) ?? _toNonEmptyString(groupingMap?['severityGroup']),
-    treatmentPhase: _toNonEmptyString(map['treatmentPhase']) ?? _toNonEmptyString(groupingMap?['treatmentPhase']),
+    severityGroup:
+        _toNonEmptyString(map['severityGroup']) ??
+        _toNonEmptyString(groupingMap?['severityGroup']),
+    treatmentPhase:
+        _toNonEmptyString(map['treatmentPhase']) ??
+        _toNonEmptyString(groupingMap?['treatmentPhase']),
   );
 }
 
@@ -35,7 +41,9 @@ DoctorPatientGrouping decodeDoctorPatientGrouping(Object? rawData) {
   );
 }
 
-List<DoctorPatientGroupingHistoryItem> decodeDoctorPatientGroupingHistory(Object? rawData) {
+List<DoctorPatientGroupingHistoryItem> decodeDoctorPatientGroupingHistory(
+  Object? rawData,
+) {
   final map = Map<String, dynamic>.from(rawData as Map);
   final rawItems = map['items'];
   return [

@@ -1,6 +1,8 @@
-﻿import 'package:models/models.dart';
+import 'package:models/models.dart';
 
-Map<String, dynamic> upsertMedicationPayloadToJson(UpsertMedicationPayload payload) {
+Map<String, dynamic> upsertMedicationPayloadToJson(
+  UpsertMedicationPayload payload,
+) {
   final doseUnitWire = medicationDoseUnitToWire(payload.doseUnit);
   return {
     'drugName': payload.drugName,
@@ -11,7 +13,8 @@ Map<String, dynamic> upsertMedicationPayloadToJson(UpsertMedicationPayload paylo
     'tabletStrengthAmount': payload.doseUnit == MedicationDoseUnit.tablet
         ? payload.tabletStrengthAmount
         : null,
-    'tabletStrengthUnit': payload.doseUnit == MedicationDoseUnit.tablet &&
+    'tabletStrengthUnit':
+        payload.doseUnit == MedicationDoseUnit.tablet &&
             payload.tabletStrengthUnit != null
         ? medicationStrengthUnitToWire(payload.tabletStrengthUnit!)
         : null,
@@ -100,4 +103,3 @@ List<String> _toStringList(Object? value) {
   }
   return out;
 }
-

@@ -7,16 +7,22 @@ final class DoctorProfileApi {
   final Dio _dio;
 
   Future<Map<String, dynamic>> fetchProfile() async {
-    final response = await _dio.get<Map<String, dynamic>>('/api/v1/doctors/me/profile');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/doctors/me/profile',
+    );
     return response.data ?? const <String, dynamic>{};
   }
 
   Future<Map<String, dynamic>> fetchThresholds() async {
-    final response = await _dio.get<Map<String, dynamic>>('/api/v1/doctors/me/thresholds');
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/doctors/me/thresholds',
+    );
     return response.data ?? const <String, dynamic>{};
   }
 
-  Future<Map<String, dynamic>> updateThresholds(DoctorThresholds payload) async {
+  Future<Map<String, dynamic>> updateThresholds(
+    DoctorThresholds payload,
+  ) async {
     final response = await _dio.put<Map<String, dynamic>>(
       '/api/v1/doctors/me/thresholds',
       data: payload.toJson(),

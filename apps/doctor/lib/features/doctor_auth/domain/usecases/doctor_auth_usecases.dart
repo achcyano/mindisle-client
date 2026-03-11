@@ -20,22 +20,39 @@ final class DoctorRegisterUseCase {
 
   final DoctorAuthRepository _repository;
 
-  Future<Result<DoctorAuthSession>> execute({
+  Future<Result<DoctorAuthSessionResult>> execute({
     required String phone,
     required String smsCode,
     required String password,
-    required String fullName,
-    String? title,
-    String? hospital,
   }) {
     return _repository.register(
       phone: phone,
       smsCode: smsCode,
       password: password,
-      fullName: fullName,
-      title: title,
-      hospital: hospital,
     );
+  }
+}
+
+final class DoctorLoginCheckUseCase {
+  const DoctorLoginCheckUseCase(this._repository);
+
+  final DoctorAuthRepository _repository;
+
+  Future<Result<DoctorLoginCheckResult>> execute(String phone) {
+    return _repository.loginCheck(phone: phone);
+  }
+}
+
+final class DoctorLoginDirectUseCase {
+  const DoctorLoginDirectUseCase(this._repository);
+
+  final DoctorAuthRepository _repository;
+
+  Future<Result<DoctorAuthSessionResult>> execute({
+    required String phone,
+    required String ticket,
+  }) {
+    return _repository.loginDirect(phone: phone, ticket: ticket);
   }
 }
 
@@ -44,7 +61,7 @@ final class DoctorLoginPasswordUseCase {
 
   final DoctorAuthRepository _repository;
 
-  Future<Result<DoctorAuthSession>> execute({
+  Future<Result<DoctorAuthSessionResult>> execute({
     required String phone,
     required String password,
   }) {
@@ -57,7 +74,7 @@ final class DoctorRefreshTokenUseCase {
 
   final DoctorAuthRepository _repository;
 
-  Future<Result<DoctorAuthSession>> execute() {
+  Future<Result<DoctorAuthSessionResult>> execute() {
     return _repository.refreshToken();
   }
 }

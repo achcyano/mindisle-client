@@ -1,9 +1,10 @@
+import 'package:app_ui/src/widget/auth/auth_utils.dart';
+import 'package:app_ui/src/widget/login_submit_button.dart';
+import 'package:app_ui/src/widget/number_keypad.dart';
 import 'package:flutter/material.dart';
-import 'package:patient/view/widget/login_submit_button.dart';
-import 'package:patient/view/widget/number_keypad.dart';
 
-class PhoneStepView extends StatefulWidget {
-  const PhoneStepView({
+class AuthPhoneStepView extends StatefulWidget {
+  const AuthPhoneStepView({
     required this.phoneDigits,
     required this.inlineError,
     required this.isSubmitting,
@@ -11,6 +12,9 @@ class PhoneStepView extends StatefulWidget {
     required this.onBackspacePressed,
     required this.onSubmit,
     super.key,
+    this.title = '输入手机号',
+    this.description = '请确认手机号输入正确。',
+    this.labelText = '手机号',
   });
 
   final String phoneDigits;
@@ -19,26 +23,31 @@ class PhoneStepView extends StatefulWidget {
   final ValueChanged<String> onDigitPressed;
   final VoidCallback onBackspacePressed;
   final VoidCallback onSubmit;
+  final String title;
+  final String description;
+  final String labelText;
 
   @override
-  State<PhoneStepView> createState() => _PhoneStepViewState();
+  State<AuthPhoneStepView> createState() => _AuthPhoneStepViewState();
 }
 
-class _PhoneStepViewState extends State<PhoneStepView> {
+class _AuthPhoneStepViewState extends State<AuthPhoneStepView> {
   late final TextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: _formatPhone(widget.phoneDigits));
+    _controller = TextEditingController(
+      text: formatAuthPhone(widget.phoneDigits),
+    );
   }
 
   @override
-  void didUpdateWidget(covariant PhoneStepView oldWidget) {
+  void didUpdateWidget(covariant AuthPhoneStepView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.phoneDigits == widget.phoneDigits) return;
 
-    final text = _formatPhone(widget.phoneDigits);
+    final text = formatAuthPhone(widget.phoneDigits);
     _controller.value = TextEditingValue(
       text: text,
       selection: TextSelection.collapsed(offset: text.length),
@@ -54,44 +63,32 @@ class _PhoneStepViewState extends State<PhoneStepView> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(
-        color: colorScheme.primary,
-        width: 1.2,
-      ),
-    );
-    final errorBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(
-        color: colorScheme.error,
-        width: 1.2,
-      ),
-    );
+    final border = buildAuthOutlineBorder(context);
+    final errorBorder = buildAuthOutlineBorder(context, isError: true);
 
     return Column(
-      children: [
+      children: <Widget>[
         const Spacer(flex: 4),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
-            children: [
+            children: <Widget>[
               Text(
-                '输入手机号码',
+                widget.title,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
               Text(
-                '请确认手机号码输入正确。',
+                widget.description,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+                  color: colorScheme.onSurface.withValues(alpha: 0.72),
                 ),
               ),
               const SizedBox(height: 14),
               SizedBox(
-                height: 46 ,
+                height: 46,
                 child: TextField(
                   controller: _controller,
                   readOnly: true,
@@ -100,9 +97,8 @@ class _PhoneStepViewState extends State<PhoneStepView> {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleSmall,
                   decoration: InputDecoration(
-                    labelText: '手机号码',
+                    labelText: widget.labelText,
                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                    filled: false,
                     border: border,
                     enabledBorder: border,
                     focusedBorder: border,
@@ -121,9 +117,9 @@ class _PhoneStepViewState extends State<PhoneStepView> {
                     widget.inlineError ?? '',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.error,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: colorScheme.error),
                   ),
                 ),
               ),
@@ -149,14 +145,5 @@ class _PhoneStepViewState extends State<PhoneStepView> {
         ),
       ],
     );
-  }
-
-  String _formatPhone(String value) {
-    if (value.isEmpty) return '';
-    if (value.length <= 3) return value;
-    if (value.length <= 7) {
-      return '${value.substring(0, 3)} ${value.substring(3)}';
-    }
-    return '${value.substring(0, 3)} ${value.substring(3, 7)} ${value.substring(7)}';
   }
 }

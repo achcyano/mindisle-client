@@ -31,7 +31,10 @@ final class CreateDoctorMedicationUseCase {
     required int patientUserId,
     required UpsertMedicationPayload payload,
   }) {
-    return _repository.createMedication(patientUserId: patientUserId, payload: payload);
+    return _repository.createMedication(
+      patientUserId: patientUserId,
+      payload: payload,
+    );
   }
 }
 
@@ -69,4 +72,3 @@ final class DeleteDoctorMedicationUseCase {
     return result;
   }
 }
-

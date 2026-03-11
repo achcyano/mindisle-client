@@ -25,6 +25,9 @@ final class DoctorProfileRepositoryImpl implements DoctorProfileRepository {
 
   @override
   Future<Result<DoctorThresholds>> updateThresholds(DoctorThresholds payload) {
-    return _executor.run(() => _api.updateThresholds(payload), decodeDoctorThresholds);
+    return _executor.run(
+      () => _api.updateThresholds(payload),
+      decodeDoctorThresholds,
+    );
   }
 }

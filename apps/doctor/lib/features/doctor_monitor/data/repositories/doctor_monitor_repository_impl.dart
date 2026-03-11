@@ -19,7 +19,8 @@ final class DoctorMonitorRepositoryImpl implements DoctorMonitorRepository {
     int days = 30,
   }) {
     return _executor.run(
-      () => _api.fetchSideEffectSummary(patientUserId: patientUserId, days: days),
+      () =>
+          _api.fetchSideEffectSummary(patientUserId: patientUserId, days: days),
       decodeSideEffectSummary,
     );
   }

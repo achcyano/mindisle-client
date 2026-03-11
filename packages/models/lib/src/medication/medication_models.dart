@@ -1,13 +1,6 @@
-enum MedicationDoseUnit {
-  mg,
-  g,
-  tablet,
-}
+enum MedicationDoseUnit { mg, g, tablet }
 
-enum MedicationStrengthUnit {
-  mg,
-  g,
-}
+enum MedicationStrengthUnit { mg, g }
 
 String medicationDoseUnitToWire(MedicationDoseUnit unit) {
   return switch (unit) {

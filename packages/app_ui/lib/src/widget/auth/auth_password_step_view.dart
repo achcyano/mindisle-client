@@ -1,67 +1,60 @@
+import 'package:app_ui/src/widget/auth/auth_utils.dart';
+import 'package:app_ui/src/widget/login_submit_button.dart';
 import 'package:flutter/material.dart';
-import 'package:patient/features/auth/presentation/login/login_flow_state.dart';
-import 'package:patient/view/widget/login_submit_button.dart';
 
-class PasswordStepView extends StatelessWidget {
-  const PasswordStepView({
-    required this.mode,
-    required this.phoneDigits,
+class AuthPasswordStepView extends StatelessWidget {
+  const AuthPasswordStepView({
+    required this.title,
+    required this.description,
+    required this.labelText,
+    required this.hintText,
     required this.inlineError,
     required this.isSubmitting,
     required this.onPasswordChanged,
     required this.onSubmit,
-    this.onForgotPassword,
     super.key,
+    this.onForgotPassword,
+    this.forgotPasswordLabel = '忘记密码？',
   });
 
-  final LoginFlowMode mode;
-  final String phoneDigits;
+  final String title;
+  final String description;
+  final String labelText;
+  final String hintText;
   final String? inlineError;
   final bool isSubmitting;
   final ValueChanged<String> onPasswordChanged;
   final VoidCallback onSubmit;
   final VoidCallback? onForgotPassword;
+  final String forgotPasswordLabel;
 
   @override
   Widget build(BuildContext context) {
-    final isRegister = mode == LoginFlowMode.register;
     final colorScheme = Theme.of(context).colorScheme;
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(
-        color: colorScheme.primary,
-        width: 1.2,
-      ),
-    );
-    final errorBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(6),
-      borderSide: BorderSide(
-        color: colorScheme.error,
-        width: 1.2,
-      ),
-    );
+    final border = buildAuthOutlineBorder(context);
+    final errorBorder = buildAuthOutlineBorder(context, isError: true);
 
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Column(
-        children: [
+        children: <Widget>[
           const Spacer(flex: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
-              children: [
+              children: <Widget>[
                 Text(
-                  isRegister ? '设置登录密码' : '输入登录密码',
+                  title,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  isRegister
-                      ? '为 ${_formatPhone(phoneDigits)} 设置密码（6 到 20 位）'
-                      : '请输入 ${_formatPhone(phoneDigits)} 的密码',
+                  description,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurface.withValues(alpha: 0.72),
@@ -75,15 +68,15 @@ class PasswordStepView extends StatelessWidget {
                     obscureText: true,
                     enabled: !isSubmitting,
                     onChanged: onPasswordChanged,
+                    onSubmitted: (_) => onSubmit(),
                     maxLength: 20,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleSmall,
                     decoration: InputDecoration(
-                      labelText: '密码',
+                      labelText: labelText,
                       floatingLabelBehavior: FloatingLabelBehavior.always,
-                      hintText: '请输入密码',
+                      hintText: hintText,
                       counterText: '',
-                      filled: false,
                       border: border,
                       enabledBorder: border,
                       focusedBorder: border,
@@ -102,13 +95,13 @@ class PasswordStepView extends StatelessWidget {
                       inlineError ?? '',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.error,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: colorScheme.error),
                     ),
                   ),
                 ),
-                if (!isRegister && onForgotPassword != null) ...[
+                if (onForgotPassword != null) ...<Widget>[
                   const SizedBox(height: 2),
                   Align(
                     alignment: Alignment.centerRight,
@@ -118,7 +111,7 @@ class PasswordStepView extends StatelessWidget {
                       ),
                       onPressed: isSubmitting ? null : onForgotPassword,
                       child: Text(
-                        '忘记密码？',
+                        forgotPasswordLabel,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -142,10 +135,5 @@ class PasswordStepView extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatPhone(String value) {
-    if (value.length != 11) return value;
-    return '${value.substring(0, 3)} ${value.substring(3, 7)} ${value.substring(7)}';
   }
 }

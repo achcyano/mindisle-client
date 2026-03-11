@@ -1,5 +1,5 @@
-import 'package:doctor/features/doctor_auth/domain/entities/doctor_auth_entities.dart';
 import 'package:app_core/app_core.dart';
+import 'package:doctor/features/doctor_auth/domain/entities/doctor_auth_entities.dart';
 
 abstract interface class DoctorAuthRepository {
   Future<Result<void>> sendSmsCode({
@@ -7,21 +7,25 @@ abstract interface class DoctorAuthRepository {
     required DoctorSmsPurpose purpose,
   });
 
-  Future<Result<DoctorAuthSession>> register({
+  Future<Result<DoctorAuthSessionResult>> register({
     required String phone,
     required String smsCode,
     required String password,
-    required String fullName,
-    String? title,
-    String? hospital,
   });
 
-  Future<Result<DoctorAuthSession>> loginPassword({
+  Future<Result<DoctorLoginCheckResult>> loginCheck({required String phone});
+
+  Future<Result<DoctorAuthSessionResult>> loginDirect({
+    required String phone,
+    required String ticket,
+  });
+
+  Future<Result<DoctorAuthSessionResult>> loginPassword({
     required String phone,
     required String password,
   });
 
-  Future<Result<DoctorAuthSession>> refreshToken();
+  Future<Result<DoctorAuthSessionResult>> refreshToken();
 
   Future<Result<void>> resetPassword({
     required String phone,

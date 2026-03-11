@@ -9,15 +9,22 @@ final doctorMonitorApiProvider = Provider<DoctorMonitorApi>((ref) {
   return DoctorMonitorApi(ref.watch(appDioProvider));
 });
 
-final doctorMonitorRepositoryProvider = Provider<DoctorMonitorRepository>((ref) {
+final doctorMonitorRepositoryProvider = Provider<DoctorMonitorRepository>((
+  ref,
+) {
   return DoctorMonitorRepositoryImpl(ref.watch(doctorMonitorApiProvider));
 });
 
 final fetchDoctorSideEffectSummaryUseCaseProvider =
     Provider<FetchDoctorSideEffectSummaryUseCase>((ref) {
-  return FetchDoctorSideEffectSummaryUseCase(ref.watch(doctorMonitorRepositoryProvider));
-});
+      return FetchDoctorSideEffectSummaryUseCase(
+        ref.watch(doctorMonitorRepositoryProvider),
+      );
+    });
 
-final fetchDoctorWeightTrendUseCaseProvider = Provider<FetchDoctorWeightTrendUseCase>((ref) {
-  return FetchDoctorWeightTrendUseCase(ref.watch(doctorMonitorRepositoryProvider));
-});
+final fetchDoctorWeightTrendUseCaseProvider =
+    Provider<FetchDoctorWeightTrendUseCase>((ref) {
+      return FetchDoctorWeightTrendUseCase(
+        ref.watch(doctorMonitorRepositoryProvider),
+      );
+    });

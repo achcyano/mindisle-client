@@ -6,7 +6,10 @@ import 'package:patient/features/auth/domain/repositories/auth_repository.dart';
 import 'package:patient/features/auth/domain/usecases/auth_usecases.dart';
 
 final authApiProvider = Provider<AuthApi>((ref) {
-  return AuthApi(ref.watch(appDioProvider));
+  return AuthApi(
+    ref.watch(appDioProvider),
+    scope: ref.watch(authScopeConfigProvider),
+  );
 });
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

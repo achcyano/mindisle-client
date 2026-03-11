@@ -1,4 +1,4 @@
-﻿import 'package:app_core/app_core.dart';
+import 'package:app_core/app_core.dart';
 import 'package:models/models.dart';
 
 abstract interface class DoctorMedicationRepository {
@@ -25,4 +25,3 @@ abstract interface class DoctorMedicationRepository {
     required int medicationId,
   });
 }
-

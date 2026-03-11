@@ -6,8 +6,8 @@ final class AuthInterceptor extends Interceptor {
   AuthInterceptor({
     required SessionStore sessionStore,
     required NetworkAuthStrategy authStrategy,
-  })  : _sessionStore = sessionStore,
-        _authStrategy = authStrategy;
+  }) : _sessionStore = sessionStore,
+       _authStrategy = authStrategy;
 
   final SessionStore _sessionStore;
   final NetworkAuthStrategy _authStrategy;

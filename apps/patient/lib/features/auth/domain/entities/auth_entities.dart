@@ -1,32 +1,6 @@
-import 'package:patient/shared/session/session_models.dart';
+import 'package:models/models.dart' as shared;
 
-enum AuthLoginDecision {
-  registerRequired,
-  directLoginAllowed,
-  passwordRequired,
-}
-
-final class LoginCheckResult {
-  const LoginCheckResult({
-    required this.decision,
-    this.ticket,
-  });
-
-  final AuthLoginDecision decision;
-  final String? ticket;
-}
-
-final class AuthSessionResult {
-  const AuthSessionResult({
-    required this.userId,
-    required this.tokenPair,
-  });
-
-  final int userId;
-  final TokenPair tokenPair;
-}
-
-enum SmsPurpose {
-  register,
-  resetPassword,
-}
+typedef SmsPurpose = shared.AuthSmsPurpose;
+typedef AuthLoginDecision = shared.AuthLoginDecision;
+typedef LoginCheckResult = shared.AuthLoginCheckResult;
+typedef AuthSessionResult = shared.PrincipalAuthSessionResult;

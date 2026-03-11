@@ -7,14 +7,14 @@ sealed class Result<T> {
   bool get isFailure => this is Failure<T>;
 
   T? get dataOrNull => switch (this) {
-        Success<T>(data: final data) => data,
-        Failure<T>() => null,
-      };
+    Success<T>(data: final data) => data,
+    Failure<T>() => null,
+  };
 
   AppError? get errorOrNull => switch (this) {
-        Success<T>() => null,
-        Failure<T>(error: final error) => error,
-      };
+    Success<T>() => null,
+    Failure<T>(error: final error) => error,
+  };
 
   R when<R>({
     required R Function(T data) success,

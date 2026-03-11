@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class LoginSubmitButton extends StatelessWidget {
@@ -42,4 +42,3 @@ class LoginSubmitButton extends StatelessWidget {
     );
   }
 }
-

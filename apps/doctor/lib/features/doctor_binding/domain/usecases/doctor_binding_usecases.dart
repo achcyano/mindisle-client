@@ -7,7 +7,8 @@ final class CreateDoctorBindingCodeUseCase {
 
   final DoctorBindingRepository _repository;
 
-  Future<Result<DoctorBindingCode>> execute() => _repository.createBindingCode();
+  Future<Result<DoctorBindingCode>> execute() =>
+      _repository.createBindingCode();
 }
 
 final class FetchDoctorBindingHistoryUseCase {

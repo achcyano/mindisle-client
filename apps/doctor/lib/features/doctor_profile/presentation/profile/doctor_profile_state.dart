@@ -1,35 +1,25 @@
+import 'package:doctor/core/presentation/async_state.dart';
 import 'package:doctor/features/doctor_profile/domain/entities/doctor_profile_entities.dart';
 
-final class DoctorProfileState {
-  const DoctorProfileState({
-    this.isLoading = false,
-    this.profile,
-    this.thresholds,
-    this.errorMessage,
-  });
+typedef DoctorProfileState = AsyncState<DoctorProfileData>;
 
-  final bool isLoading;
+final class DoctorProfileData {
+  const DoctorProfileData({this.profile, this.thresholds});
+
   final DoctorProfile? profile;
   final DoctorThresholds? thresholds;
-  final String? errorMessage;
 
-  DoctorProfileState copyWith({
-    bool? isLoading,
-    Object? profile = _sentinel,
-    Object? thresholds = _sentinel,
-    Object? errorMessage = _sentinel,
+  DoctorProfileData copyWith({
+    Object? profile = asyncStateNoChange,
+    Object? thresholds = asyncStateNoChange,
   }) {
-    return DoctorProfileState(
-      isLoading: isLoading ?? this.isLoading,
-      profile: identical(profile, _sentinel) ? this.profile : profile as DoctorProfile?,
-      thresholds: identical(thresholds, _sentinel)
+    return DoctorProfileData(
+      profile: identical(profile, asyncStateNoChange)
+          ? this.profile
+          : profile as DoctorProfile?,
+      thresholds: identical(thresholds, asyncStateNoChange)
           ? this.thresholds
           : thresholds as DoctorThresholds?,
-      errorMessage: identical(errorMessage, _sentinel)
-          ? this.errorMessage
-          : errorMessage as String?,
     );
   }
 }
-
-const Object _sentinel = Object();

@@ -5,19 +5,19 @@ import 'package:patient/core/providers/app_providers.dart';
 import 'package:patient/core/result/result.dart';
 import 'package:patient/core/static.dart';
 import 'package:patient/features/auth/presentation/providers/auth_providers.dart';
-import 'package:patient/features/user/presentation/providers/user_providers.dart';
 import 'package:patient/features/user/presentation/profile/profile_controller.dart';
 import 'package:patient/features/user/presentation/profile/profile_state.dart';
+import 'package:patient/features/user/presentation/providers/user_providers.dart';
 import 'package:patient/view/pages/info/info_page.dart';
 import 'package:patient/view/pages/login/login_page.dart';
 import 'package:patient/view/pages/login/reset_password_page.dart';
 import 'package:patient/view/pages/profile/widgets/profile_avatar_picker_sheet.dart';
 import 'package:patient/view/pages/profile/widgets/profile_avatar_selector.dart';
-import 'package:patient/view/pages/profile/widgets/profile_card.dart';
 import 'package:patient/view/route/app_route.dart';
 import 'package:patient/view/widget/app_dialog.dart';
 import 'package:patient/view/widget/app_list_tile.dart';
 import 'package:patient/view/widget/settings_card.dart';
+import 'package:app_ui/app_ui.dart' show ProfileActionCard, ProfileHeroSection;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -95,64 +95,49 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
-      spacing: 5,
       children: [
-        const SizedBox(height: 20),
-        ProfileAvatarSelector(state: state, onTapChangeAvatar: null),
-        const SizedBox(height: 3),
-        Text(
-          _displayName(state),
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: ProfileCard(
-                icon: Icons.add_a_photo_outlined,
-                title: '设置头像',
-                onTap: state.isUploadingAvatar ? null : _showAvatarPickerSheet,
-              ),
+        ProfileHeroSection(
+          avatar: ProfileAvatarSelector(state: state, onTapChangeAvatar: null),
+          title: _displayName(state),
+          actions: [
+            ProfileActionCard(
+              icon: Icons.add_a_photo_outlined,
+              title: '设置头像',
+              onTap: state.isUploadingAvatar ? null : _showAvatarPickerSheet,
             ),
-            Expanded(
-              child: ProfileCard(
-                icon: Icons.edit_outlined,
-                title: '编辑信息',
-                onTap: () => InfoPage.route.goRoot(context),
-              ),
+            ProfileActionCard(
+              icon: Icons.edit_outlined,
+              title: '编辑信息',
+              onTap: () => InfoPage.route.goRoot(context),
             ),
-            Expanded(
-              child: ProfileCard(
-                icon: Icons.person_add_alt,
-                title: '我的医生',
-                onTap: null,
-              ),
+            const ProfileActionCard(
+              icon: Icons.person_add_alt,
+              title: '我的医生',
             ),
           ],
         ),
+        const SizedBox(height: 8),
         SettingsGroup(
           children: [
             AppListTile(
               title: Text(_displayPhone(state)),
               subtitle: const Text('手机'),
               position: AppListTilePosition.first,
-              onTap: () {},
             ),
             AppListTile(
               title: Text(_displayUserId(state)),
               subtitle: const Text('ID'),
               position: AppListTilePosition.middle,
-              onTap: () {},
             ),
             AppListTile(
               title: Text(_displayBirthDate(state)),
               subtitle: const Text('生日'),
               position: AppListTilePosition.last,
-              onTap: () {
-                InfoPage.route.goRoot(context);
-              },
+              onTap: () => InfoPage.route.goRoot(context),
             ),
           ],
         ),
+        const SizedBox(height: 8),
         SettingsGroup(
           children: [
             AppListTile(
@@ -175,6 +160,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ),
           ],
         ),
+        const SizedBox(height: 8),
         SettingsGroup(
           children: [
             AppListTile(
@@ -199,7 +185,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     showAboutDialog(
       context: context,
-      applicationName: '心岛',
+      applicationName: appDisplayName,
       applicationVersion: versionText,
       applicationIcon: Image.asset(
         'assets/icon/app_icon_foreground.png',
@@ -273,11 +259,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   String _displayBirthDate(ProfileState state) {
-    final text =
-        (state.birthDate.isNotEmpty
-                ? state.birthDate
-                : (state.profile?.birthDate ?? ''))
-            .trim();
+    final text = (
+      state.birthDate.isNotEmpty ? state.birthDate : (state.profile?.birthDate ?? '')
+    ).trim();
     if (text.isEmpty) return '未设置生日';
     return text;
   }

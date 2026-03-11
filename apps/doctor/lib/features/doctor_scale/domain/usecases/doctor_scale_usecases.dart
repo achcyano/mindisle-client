@@ -11,7 +11,10 @@ final class FetchDoctorScaleTrendsUseCase {
     required int patientUserId,
     int days = 180,
   }) {
-    return _repository.fetchScaleTrends(patientUserId: patientUserId, days: days);
+    return _repository.fetchScaleTrends(
+      patientUserId: patientUserId,
+      days: days,
+    );
   }
 }
 
@@ -24,6 +27,9 @@ final class GenerateDoctorAssessmentReportUseCase {
     required int patientUserId,
     int? days,
   }) {
-    return _repository.generateAssessmentReport(patientUserId: patientUserId, days: days);
+    return _repository.generateAssessmentReport(
+      patientUserId: patientUserId,
+      days: days,
+    );
   }
 }

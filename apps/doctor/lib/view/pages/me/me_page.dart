@@ -1,0 +1,360 @@
+import 'package:app_core/app_core.dart';
+import 'package:app_ui/app_ui.dart';
+import 'package:doctor/core/providers/app_providers.dart';
+import 'package:doctor/core/static.dart';
+import 'package:doctor/features/doctor_auth/presentation/auth/doctor_auth_controller.dart';
+import 'package:doctor/features/doctor_auth/presentation/providers/doctor_auth_providers.dart';
+import 'package:doctor/features/doctor_profile/domain/entities/doctor_profile_entities.dart';
+import 'package:doctor/features/doctor_profile/presentation/profile/doctor_profile_controller.dart';
+import 'package:doctor/features/doctor_profile/presentation/profile/doctor_profile_state.dart';
+import 'package:doctor/view/pages/auth/change_password_page.dart';
+import 'package:doctor/view/pages/auth/login_page.dart';
+import 'package:doctor/view/pages/me/thresholds_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class DoctorMePage extends ConsumerStatefulWidget {
+  const DoctorMePage({super.key});
+
+  static final route = AppRoute<void>(
+    path: '/me',
+    builder: (_) => const DoctorMePage(),
+  );
+
+  @override
+  ConsumerState<DoctorMePage> createState() => _DoctorMePageState();
+}
+
+class _DoctorMePageState extends ConsumerState<DoctorMePage> {
+  String? _lastErrorMessage;
+  bool _isLoggingOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(doctorProfileControllerProvider.notifier).refresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<DoctorProfileState>(doctorProfileControllerProvider, (previous, next) {
+      final message = next.errorMessage?.trim() ?? '';
+      if (message.isEmpty || message == _lastErrorMessage) return;
+      _lastErrorMessage = message;
+      _showSnack(message);
+    });
+
+    final state = ref.watch(doctorProfileControllerProvider);
+    final controller = ref.read(doctorProfileControllerProvider.notifier);
+
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: _buildContent(state: state, controller: controller),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent({
+    required DoctorProfileState state,
+    required DoctorProfileController controller,
+  }) {
+    if (state.isLoading && state.data.profile == null) {
+      return const SizedBox(
+        height: 320,
+        child: Center(child: CircularProgressIndicatorM3E()),
+      );
+    }
+
+    final profile = state.data.profile;
+    if (profile == null) {
+      return SizedBox(
+        height: 320,
+        child: Center(
+          child: FilledButton(
+            onPressed: controller.refresh,
+            child: const Text('重试'),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ProfileHeroSection(
+          avatar: _DoctorAvatar(isLoading: state.isLoading),
+          title: _displayName(profile),
+          subtitle: _displaySubtitle(profile),
+          actions: [
+            ProfileActionCard(
+              icon: Icons.tune,
+              title: '阈值设置',
+              onTap: () => DoctorThresholdsPage.route.go(context),
+            ),
+            ProfileActionCard(
+              icon: Icons.lock_reset,
+              title: '修改密码',
+              onTap: _confirmOpenChangePassword,
+            ),
+            ProfileActionCard(
+              icon: Icons.info_outline,
+              title: '关于心岛',
+              onTap: _showAboutAppDialog,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SettingsGroup(
+          children: [
+            AppListTile(
+              title: Text(_displayPhone(profile)),
+              subtitle: const Text('手机'),
+              position: AppListTilePosition.first,
+            ),
+            AppListTile(
+              title: Text(_displayDoctorId(profile)),
+              subtitle: const Text('医生 ID'),
+              position: AppListTilePosition.middle,
+            ),
+            AppListTile(
+              title: Text(_displayTitle(profile)),
+              subtitle: const Text('职称'),
+              position: AppListTilePosition.middle,
+            ),
+            AppListTile(
+              title: Text(_displayHospital(profile)),
+              subtitle: const Text('医院'),
+              position: AppListTilePosition.last,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SettingsGroup(
+          children: [
+            AppListTile(
+              title: const Text('退出登录'),
+              position: AppListTilePosition.first,
+              leading: Icon(
+                Icons.logout_outlined,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              onTap: _isLoggingOut ? null : _confirmLogout,
+            ),
+            AppListTile(
+              title: const Text('修改密码'),
+              position: AppListTilePosition.last,
+              leading: Icon(
+                Icons.edit_note,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              onTap: _confirmOpenChangePassword,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SettingsGroup(
+          children: [
+            AppListTile(
+              title: const Text('关于心岛'),
+              position: AppListTilePosition.single,
+              leading: const Icon(Icons.info_outlined),
+              onTap: _showAboutAppDialog,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _displayName(DoctorProfile profile) {
+    final value = profile.fullName.trim();
+    return value.isEmpty ? '未设置姓名' : value;
+  }
+
+  String _displaySubtitle(DoctorProfile profile) {
+    return '${_displayTitle(profile)} · ${_displayHospital(profile)}';
+  }
+
+  String _displayPhone(DoctorProfile profile) {
+    final value = profile.phone.trim();
+    return value.isEmpty ? '未绑定手机号' : value;
+  }
+
+  String _displayDoctorId(DoctorProfile profile) {
+    if (profile.doctorId <= 0) return '未获取';
+    return profile.doctorId.toString();
+  }
+
+  String _displayTitle(DoctorProfile profile) {
+    final value = profile.title?.trim() ?? '';
+    return value.isEmpty ? '未设置职称' : value;
+  }
+
+  String _displayHospital(DoctorProfile profile) {
+    final value = profile.hospital?.trim() ?? '';
+    return value.isEmpty ? '未设置医院' : value;
+  }
+
+  Future<void> _confirmOpenChangePassword() async {
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final errorColor = Theme.of(dialogContext).colorScheme.error;
+        return buildAppAlertDialog(
+          title: const Text('修改密码'),
+          content: const Text('将进入密码修改页面，是否继续？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: errorColor),
+              child: const Text('继续'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+    await DoctorChangePasswordPage.route.go(context);
+  }
+
+  Future<void> _showAboutAppDialog() async {
+    if (!mounted) return;
+
+    showAboutDialog(
+      context: context,
+      applicationName: appDisplayName,
+      applicationIcon: Image.asset(
+        'assets/icon/app_icon_foreground.png',
+        width: 64,
+        height: 64,
+      ),
+    );
+  }
+
+  Future<void> _confirmLogout() async {
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final errorColor = Theme.of(dialogContext).colorScheme.error;
+        return buildAppAlertDialog(
+          title: const Text('退出登录'),
+          content: const Text('确定退出登录吗？'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: errorColor),
+              child: const Text('退出登录'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+    await _logout();
+  }
+
+  Future<void> _logout() async {
+    if (_isLoggingOut) return;
+    setState(() {
+      _isLoggingOut = true;
+    });
+
+    try {
+      final refreshToken = await ref.read(sessionStoreProvider).readRefreshToken();
+      final result = await ref
+          .read(doctorLogoutUseCaseProvider)
+          .execute(refreshToken: refreshToken);
+      if (!mounted) return;
+
+      switch (result) {
+        case Success<void>():
+          await ref.read(sessionStoreProvider).clearSession();
+          if (!mounted) return;
+          ref.read(doctorAuthControllerProvider.notifier).clearSession();
+          await DoctorLoginPage.route.replaceRoot(context);
+          return;
+        case Failure<void>(error: final error):
+          if (error.type == AppErrorType.unauthorized) {
+            await ref.read(sessionStoreProvider).clearSession();
+            if (!mounted) return;
+            ref.read(doctorAuthControllerProvider.notifier).clearSession();
+            await DoctorLoginPage.route.replaceRoot(context);
+            return;
+          }
+          _showSnack(error.message);
+          return;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoggingOut = false;
+        });
+      }
+    }
+  }
+
+  void _showSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _DoctorAvatar extends StatelessWidget {
+  const _DoctorAvatar({required this.isLoading});
+
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      width: 100,
+      height: 100,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: colorScheme.primaryContainer,
+            child: Icon(
+              Icons.medical_services_outlined,
+              size: 42,
+              color: colorScheme.onPrimaryContainer,
+            ),
+          ),
+          if (isLoading)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withValues(alpha: 0.35),
+              ),
+              child: const Center(
+                child: SizedBox.square(
+                  dimension: 22,
+                  child: CircularProgressIndicatorM3E(),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

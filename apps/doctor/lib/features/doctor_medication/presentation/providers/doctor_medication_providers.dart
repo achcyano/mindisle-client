@@ -9,22 +9,38 @@ final doctorMedicationApiProvider = Provider<DoctorMedicationApi>((ref) {
   return DoctorMedicationApi(ref.watch(appDioProvider));
 });
 
-final doctorMedicationRepositoryProvider = Provider<DoctorMedicationRepository>((ref) {
-  return DoctorMedicationRepositoryImpl(ref.watch(doctorMedicationApiProvider));
-});
+final doctorMedicationRepositoryProvider = Provider<DoctorMedicationRepository>(
+  (ref) {
+    return DoctorMedicationRepositoryImpl(
+      ref.watch(doctorMedicationApiProvider),
+    );
+  },
+);
 
-final fetchDoctorMedicationsUseCaseProvider = Provider<FetchDoctorMedicationsUseCase>((ref) {
-  return FetchDoctorMedicationsUseCase(ref.watch(doctorMedicationRepositoryProvider));
-});
+final fetchDoctorMedicationsUseCaseProvider =
+    Provider<FetchDoctorMedicationsUseCase>((ref) {
+      return FetchDoctorMedicationsUseCase(
+        ref.watch(doctorMedicationRepositoryProvider),
+      );
+    });
 
-final createDoctorMedicationUseCaseProvider = Provider<CreateDoctorMedicationUseCase>((ref) {
-  return CreateDoctorMedicationUseCase(ref.watch(doctorMedicationRepositoryProvider));
-});
+final createDoctorMedicationUseCaseProvider =
+    Provider<CreateDoctorMedicationUseCase>((ref) {
+      return CreateDoctorMedicationUseCase(
+        ref.watch(doctorMedicationRepositoryProvider),
+      );
+    });
 
-final updateDoctorMedicationUseCaseProvider = Provider<UpdateDoctorMedicationUseCase>((ref) {
-  return UpdateDoctorMedicationUseCase(ref.watch(doctorMedicationRepositoryProvider));
-});
+final updateDoctorMedicationUseCaseProvider =
+    Provider<UpdateDoctorMedicationUseCase>((ref) {
+      return UpdateDoctorMedicationUseCase(
+        ref.watch(doctorMedicationRepositoryProvider),
+      );
+    });
 
-final deleteDoctorMedicationUseCaseProvider = Provider<DeleteDoctorMedicationUseCase>((ref) {
-  return DeleteDoctorMedicationUseCase(ref.watch(doctorMedicationRepositoryProvider));
-});
+final deleteDoctorMedicationUseCaseProvider =
+    Provider<DeleteDoctorMedicationUseCase>((ref) {
+      return DeleteDoctorMedicationUseCase(
+        ref.watch(doctorMedicationRepositoryProvider),
+      );
+    });

@@ -11,7 +11,9 @@ List<DoctorScaleTrendPoint> decodeDoctorScaleTrends(Object? rawData) {
             scaleCode: (raw['scaleCode'] as String?) ?? '',
             scaleName: (raw['scaleName'] as String?) ?? '',
             totalScore: _toDouble(raw['totalScore']),
-            submittedAt: _toDateTime(raw['submittedAt']) ?? _toDateTime(raw['updatedAt']),
+            submittedAt:
+                _toDateTime(raw['submittedAt']) ??
+                _toDateTime(raw['updatedAt']),
           ),
   ];
 }

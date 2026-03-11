@@ -1,1 +1,2 @@
-export 'package:app_core/app_core.dart' show mapDioExceptionToAppError, mapServerCodeToAppError;
+export 'package:app_core/app_core.dart'
+    show mapDioExceptionToAppError, mapServerCodeToAppError;

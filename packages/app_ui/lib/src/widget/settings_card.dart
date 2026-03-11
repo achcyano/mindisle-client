@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class SettingsGroup extends StatelessWidget {
   final String? title;
@@ -20,7 +20,7 @@ class SettingsGroup extends StatelessWidget {
               child: Text(
                 title!,
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  color: Theme.of(context).colorScheme.primary
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -30,4 +30,3 @@ class SettingsGroup extends StatelessWidget {
     );
   }
 }
-

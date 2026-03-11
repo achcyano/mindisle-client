@@ -9,20 +9,30 @@ final doctorPatientApiProvider = Provider<DoctorPatientApi>((ref) {
   return DoctorPatientApi(ref.watch(appDioProvider));
 });
 
-final doctorPatientRepositoryProvider = Provider<DoctorPatientRepository>((ref) {
+final doctorPatientRepositoryProvider = Provider<DoctorPatientRepository>((
+  ref,
+) {
   return DoctorPatientRepositoryImpl(ref.watch(doctorPatientApiProvider));
 });
 
-final fetchDoctorPatientsUseCaseProvider = Provider<FetchDoctorPatientsUseCase>((ref) {
-  return FetchDoctorPatientsUseCase(ref.watch(doctorPatientRepositoryProvider));
-});
+final fetchDoctorPatientsUseCaseProvider = Provider<FetchDoctorPatientsUseCase>(
+  (ref) {
+    return FetchDoctorPatientsUseCase(
+      ref.watch(doctorPatientRepositoryProvider),
+    );
+  },
+);
 
 final updateDoctorPatientGroupingUseCaseProvider =
     Provider<UpdateDoctorPatientGroupingUseCase>((ref) {
-  return UpdateDoctorPatientGroupingUseCase(ref.watch(doctorPatientRepositoryProvider));
-});
+      return UpdateDoctorPatientGroupingUseCase(
+        ref.watch(doctorPatientRepositoryProvider),
+      );
+    });
 
 final fetchDoctorPatientGroupingHistoryUseCaseProvider =
     Provider<FetchDoctorPatientGroupingHistoryUseCase>((ref) {
-  return FetchDoctorPatientGroupingHistoryUseCase(ref.watch(doctorPatientRepositoryProvider));
-});
+      return FetchDoctorPatientGroupingHistoryUseCase(
+        ref.watch(doctorPatientRepositoryProvider),
+      );
+    });

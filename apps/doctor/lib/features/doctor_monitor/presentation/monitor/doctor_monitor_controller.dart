@@ -1,4 +1,6 @@
 import 'package:app_core/app_core.dart';
+import 'package:doctor/core/presentation/async_controller.dart';
+import 'package:doctor/core/presentation/async_state.dart';
 import 'package:doctor/features/doctor_monitor/domain/entities/doctor_monitor_entities.dart';
 import 'package:doctor/features/doctor_monitor/presentation/monitor/doctor_monitor_state.dart';
 import 'package:doctor/features/doctor_monitor/presentation/providers/doctor_monitor_providers.dart';
@@ -6,11 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final doctorMonitorControllerProvider =
     StateNotifierProvider<DoctorMonitorController, DoctorMonitorState>((ref) {
-  return DoctorMonitorController(ref);
-});
+      return DoctorMonitorController(ref);
+    });
 
-final class DoctorMonitorController extends StateNotifier<DoctorMonitorState> {
-  DoctorMonitorController(this._ref) : super(const DoctorMonitorState());
+final class DoctorMonitorController extends AsyncController<DoctorMonitorData> {
+  DoctorMonitorController(this._ref)
+    : super(const AsyncState<DoctorMonitorData>(data: DoctorMonitorData()));
 
   final Ref _ref;
 
@@ -24,7 +27,9 @@ final class DoctorMonitorController extends StateNotifier<DoctorMonitorState> {
         .read(fetchDoctorWeightTrendUseCaseProvider)
         .execute(patientUserId: patientUserId);
 
-    if (summaryResult case Failure<List<SideEffectSummaryItem>>(error: final error)) {
+    if (summaryResult case Failure<List<SideEffectSummaryItem>>(
+      error: final error,
+    )) {
       state = state.copyWith(isLoading: false, errorMessage: error.message);
       return;
     }
@@ -35,8 +40,10 @@ final class DoctorMonitorController extends StateNotifier<DoctorMonitorState> {
 
     state = state.copyWith(
       isLoading: false,
-      summary: (summaryResult as Success<List<SideEffectSummaryItem>>).data,
-      weightTrend: (weightResult as Success<List<WeightTrendPoint>>).data,
+      data: state.data.copyWith(
+        summary: (summaryResult as Success<List<SideEffectSummaryItem>>).data,
+        weightTrend: (weightResult as Success<List<WeightTrendPoint>>).data,
+      ),
       errorMessage: null,
     );
   }

@@ -1,9 +1,24 @@
-﻿export 'src/theme/app_theme.dart';
+export 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
+
+export 'src/navigation/app_navigator.dart';
+export 'src/navigation/app_route.dart';
+export 'src/navigation/app_route_observer.dart';
+export 'src/theme/app_theme.dart';
 export 'src/theme/app_text_theme.dart';
 export 'src/widget/app_dialog.dart';
 export 'src/widget/app_list_tile.dart';
+export 'src/widget/auth/auth_login_flow_page.dart';
+export 'src/widget/auth/auth_otp_step_view.dart';
+export 'src/widget/auth/auth_password_step_view.dart';
+export 'src/widget/auth/auth_phone_step_view.dart';
+export 'src/widget/auth/auth_reset_password_flow_page.dart';
+export 'src/widget/auth/auth_step_switcher.dart';
+export 'src/widget/auth/auth_utils.dart';
+export 'src/widget/auth/change_password_form_page.dart';
 export 'src/widget/guided_entry_button.dart';
 export 'src/widget/login_submit_button.dart';
 export 'src/widget/number_keypad.dart';
+export 'src/widget/profile/profile_action_card.dart';
+export 'src/widget/profile/profile_hero_section.dart';
 export 'src/widget/settings_card.dart';
 export 'src/widget/settings_input_field.dart';

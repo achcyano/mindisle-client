@@ -4,7 +4,8 @@ import 'package:doctor/features/doctor_medication/data/remote/doctor_medication_
 import 'package:doctor/features/doctor_medication/domain/repositories/doctor_medication_repository.dart';
 import 'package:models/models.dart';
 
-final class DoctorMedicationRepositoryImpl implements DoctorMedicationRepository {
+final class DoctorMedicationRepositoryImpl
+    implements DoctorMedicationRepository {
   DoctorMedicationRepositoryImpl(
     this._api, {
     ApiCallExecutor executor = const ApiCallExecutor(),
@@ -78,4 +79,3 @@ final class DoctorMedicationRepositoryImpl implements DoctorMedicationRepository
     };
   }
 }
-

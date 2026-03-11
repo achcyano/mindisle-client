@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 enum AppListTilePosition { single, first, middle, last }
 
@@ -63,21 +63,21 @@ class AppListTile extends StatelessWidget {
     final resolvedRadius = effectiveRadius.resolve(Directionality.of(context));
     final resolvedPadding =
         contentPadding ??
-        EdgeInsets.fromLTRB(
-          horizontalPadding,
-          paddingTop,
-          horizontalPadding,
-          paddingBottom,
-        );
+            EdgeInsets.fromLTRB(
+              horizontalPadding,
+              paddingTop,
+              horizontalPadding,
+              paddingBottom,
+            );
     final effectiveLeading = leading ?? _iconOrNull(leadingIcon);
     final effectiveTrailing = trailing ?? _iconOrNull(trailingIcon);
     final titleStyle =
         listTileTheme.titleTextStyle ?? theme.textTheme.bodyMedium;
     final subtitleStyle =
         listTileTheme.subtitleTextStyle ??
-        theme.textTheme.bodySmall?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        );
+            theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            );
 
     Widget content = Padding(
       padding: resolvedPadding,
@@ -117,7 +117,7 @@ class AppListTile extends StatelessWidget {
               ),
               child: DefaultTextStyle.merge(
                 style:
-                    listTileTheme.leadingAndTrailingTextStyle ??
+                listTileTheme.leadingAndTrailingTextStyle ??
                     theme.textTheme.bodySmall,
                 child: effectiveTrailing,
               ),
@@ -162,4 +162,3 @@ class AppListTile extends StatelessWidget {
     return Icon(iconData);
   }
 }
-

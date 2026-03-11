@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class NumberKeypad extends StatelessWidget {
@@ -137,7 +137,8 @@ class _DigitKey extends StatelessWidget {
     const keyRadius = 8.0;
     final keyFill = colorScheme.surfaceContainerHighest.withValues(alpha: 0.55);
     final baseDigitStyle =
-        textTheme.titleLarge ?? const TextStyle(fontSize: 23, fontWeight: FontWeight.w300);
+        textTheme.titleLarge ??
+        const TextStyle(fontSize: 23, fontWeight: FontWeight.w300);
     final baseLettersStyle = textTheme.bodyMedium!;
 
     return Material(
@@ -201,10 +202,7 @@ class _DigitKey extends StatelessWidget {
 }
 
 class _BackspaceKey extends StatelessWidget {
-  const _BackspaceKey({
-    required this.enabled,
-    required this.onTap,
-  });
+  const _BackspaceKey({required this.enabled, required this.onTap});
 
   final bool enabled;
   final VoidCallback onTap;
@@ -243,4 +241,3 @@ class _BackspaceKey extends StatelessWidget {
     );
   }
 }
-

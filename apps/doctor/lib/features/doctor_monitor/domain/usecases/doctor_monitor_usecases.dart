@@ -11,7 +11,10 @@ final class FetchDoctorSideEffectSummaryUseCase {
     required int patientUserId,
     int days = 30,
   }) {
-    return _repository.fetchSideEffectSummary(patientUserId: patientUserId, days: days);
+    return _repository.fetchSideEffectSummary(
+      patientUserId: patientUserId,
+      days: days,
+    );
   }
 }
 
@@ -24,6 +27,9 @@ final class FetchDoctorWeightTrendUseCase {
     required int patientUserId,
     int days = 180,
   }) {
-    return _repository.fetchWeightTrend(patientUserId: patientUserId, days: days);
+    return _repository.fetchWeightTrend(
+      patientUserId: patientUserId,
+      days: days,
+    );
   }
 }

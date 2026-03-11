@@ -1,16 +1,4 @@
-final class TokenPair {
-  const TokenPair({
-    required this.accessToken,
-    required this.refreshToken,
-    required this.accessTokenExpiresInSeconds,
-    required this.refreshTokenExpiresInSeconds,
-  });
-
-  final String accessToken;
-  final String refreshToken;
-  final int accessTokenExpiresInSeconds;
-  final int refreshTokenExpiresInSeconds;
-}
+export 'package:models/models.dart' show TokenPair;
 
 final class Session {
   const Session({

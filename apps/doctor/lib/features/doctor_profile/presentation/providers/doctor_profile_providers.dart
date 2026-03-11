@@ -9,18 +9,28 @@ final doctorProfileApiProvider = Provider<DoctorProfileApi>((ref) {
   return DoctorProfileApi(ref.watch(appDioProvider));
 });
 
-final doctorProfileRepositoryProvider = Provider<DoctorProfileRepository>((ref) {
+final doctorProfileRepositoryProvider = Provider<DoctorProfileRepository>((
+  ref,
+) {
   return DoctorProfileRepositoryImpl(ref.watch(doctorProfileApiProvider));
 });
 
-final fetchDoctorProfileUseCaseProvider = Provider<FetchDoctorProfileUseCase>((ref) {
+final fetchDoctorProfileUseCaseProvider = Provider<FetchDoctorProfileUseCase>((
+  ref,
+) {
   return FetchDoctorProfileUseCase(ref.watch(doctorProfileRepositoryProvider));
 });
 
-final fetchDoctorThresholdsUseCaseProvider = Provider<FetchDoctorThresholdsUseCase>((ref) {
-  return FetchDoctorThresholdsUseCase(ref.watch(doctorProfileRepositoryProvider));
-});
+final fetchDoctorThresholdsUseCaseProvider =
+    Provider<FetchDoctorThresholdsUseCase>((ref) {
+      return FetchDoctorThresholdsUseCase(
+        ref.watch(doctorProfileRepositoryProvider),
+      );
+    });
 
-final updateDoctorThresholdsUseCaseProvider = Provider<UpdateDoctorThresholdsUseCase>((ref) {
-  return UpdateDoctorThresholdsUseCase(ref.watch(doctorProfileRepositoryProvider));
-});
+final updateDoctorThresholdsUseCaseProvider =
+    Provider<UpdateDoctorThresholdsUseCase>((ref) {
+      return UpdateDoctorThresholdsUseCase(
+        ref.watch(doctorProfileRepositoryProvider),
+      );
+    });

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class GuidedEntryButton extends StatefulWidget {
   const GuidedEntryButton({
@@ -49,9 +49,7 @@ class _GuidedEntryButtonState extends State<GuidedEntryButton>
               onPressed: widget.onPressed,
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: borderRadius,
-                ),
+                shape: const RoundedRectangleBorder(borderRadius: borderRadius),
               ),
               child: Text(
                 widget.label,
@@ -98,4 +96,3 @@ class _GuidedEntryButtonState extends State<GuidedEntryButton>
     );
   }
 }
-

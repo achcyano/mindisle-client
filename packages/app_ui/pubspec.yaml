@@ -1,4 +1,4 @@
-name: app_ui
+﻿name: app_ui
 description: Shared Material3 theme and common widgets for MindIsle apps.
 version: 0.1.0
 publish_to: none
@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  models:
+    path: ../models
   progress_indicator_m3e: ^0.1.1
 
 dev_dependencies:

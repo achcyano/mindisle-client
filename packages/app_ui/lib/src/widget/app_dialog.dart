@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 // Padding around title inside AlertDialog content area: left, top, right, bottom.
 const EdgeInsets _appDialogTitlePadding = EdgeInsets.fromLTRB(22, 16, 20, 10);
@@ -94,4 +94,3 @@ DialogThemeData _fixedWidthDialogTheme({
     constraints: BoxConstraints.tightFor(width: width),
   );
 }
-

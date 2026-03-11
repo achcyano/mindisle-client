@@ -1,31 +1,21 @@
-import 'package:app_core/app_core.dart';
 import 'package:doctor/features/doctor_auth/domain/entities/doctor_auth_entities.dart';
+import 'package:models/models.dart' as shared;
 
-final class DoctorAuthResponseDto {
-  const DoctorAuthResponseDto({
-    required this.doctorId,
-    required this.tokenPair,
-  });
+String doctorSmsPurposeToWire(DoctorSmsPurpose purpose) =>
+    shared.authSmsPurposeToWire(purpose);
 
-  factory DoctorAuthResponseDto.fromJson(Map<String, dynamic> json) {
-    final token = Map<String, dynamic>.from(json['token'] as Map? ?? const <String, dynamic>{});
-    return DoctorAuthResponseDto(
-      doctorId: (json['doctorId'] as num?)?.toInt() ?? 0,
-      tokenPair: TokenPair(
-        accessToken: token['accessToken'] as String? ?? '',
-        refreshToken: token['refreshToken'] as String? ?? '',
-        accessTokenExpiresInSeconds:
-            (token['accessTokenExpiresInSeconds'] as num?)?.toInt() ?? 0,
-        refreshTokenExpiresInSeconds:
-            (token['refreshTokenExpiresInSeconds'] as num?)?.toInt() ?? 0,
-      ),
-    );
-  }
+DoctorAuthLoginDecision doctorLoginDecisionFromWire(String raw) =>
+    shared.authLoginDecisionFromWire(raw);
 
-  final int doctorId;
-  final TokenPair tokenPair;
-
-  DoctorAuthSession toDomain() {
-    return DoctorAuthSession(doctorId: doctorId, tokenPair: tokenPair);
-  }
-}
+typedef DoctorSendSmsCodeRequest = shared.SendSmsCodePayload;
+typedef DoctorRegisterRequest = shared.RegisterPayload;
+typedef DoctorLoginCheckRequest = shared.LoginCheckPayload;
+typedef DoctorDirectLoginRequest = shared.DirectLoginPayload;
+typedef DoctorPasswordLoginRequest = shared.PasswordLoginPayload;
+typedef DoctorTokenRefreshRequest = shared.TokenRefreshPayload;
+typedef DoctorResetPasswordRequest = shared.ResetPasswordPayload;
+typedef DoctorChangePasswordRequest = shared.ChangePasswordPayload;
+typedef DoctorLogoutRequest = shared.LogoutPayload;
+typedef DoctorTokenPairDto = shared.TokenPairDto;
+typedef DoctorAuthResponseDto = shared.AuthSessionResponseDto;
+typedef DoctorLoginCheckResponseDto = shared.AuthLoginCheckResponseDto;

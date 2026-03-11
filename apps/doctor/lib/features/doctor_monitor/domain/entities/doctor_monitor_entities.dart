@@ -11,10 +11,7 @@ final class SideEffectSummaryItem {
 }
 
 final class WeightTrendPoint {
-  const WeightTrendPoint({
-    required this.date,
-    required this.weightKg,
-  });
+  const WeightTrendPoint({required this.date, required this.weightKg});
 
   final DateTime? date;
   final double? weightKg;

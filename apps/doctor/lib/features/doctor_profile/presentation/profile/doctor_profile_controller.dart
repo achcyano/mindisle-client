@@ -1,4 +1,6 @@
 import 'package:app_core/app_core.dart';
+import 'package:doctor/core/presentation/async_controller.dart';
+import 'package:doctor/core/presentation/async_state.dart';
 import 'package:doctor/features/doctor_profile/domain/entities/doctor_profile_entities.dart';
 import 'package:doctor/features/doctor_profile/presentation/profile/doctor_profile_state.dart';
 import 'package:doctor/features/doctor_profile/presentation/providers/doctor_profile_providers.dart';
@@ -6,49 +8,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final doctorProfileControllerProvider =
     StateNotifierProvider<DoctorProfileController, DoctorProfileState>((ref) {
-  return DoctorProfileController(ref);
-});
+      return DoctorProfileController(ref);
+    });
 
-final class DoctorProfileController extends StateNotifier<DoctorProfileState> {
-  DoctorProfileController(this._ref) : super(const DoctorProfileState());
+final class DoctorProfileController extends AsyncController<DoctorProfileData> {
+  DoctorProfileController(this._ref)
+    : super(const AsyncState<DoctorProfileData>(data: DoctorProfileData()));
 
   final Ref _ref;
 
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
-    final profileResult = await _ref.read(fetchDoctorProfileUseCaseProvider).execute();
-    final thresholdResult = await _ref.read(fetchDoctorThresholdsUseCaseProvider).execute();
+    final profileResult = await _ref
+        .read(fetchDoctorProfileUseCaseProvider)
+        .execute();
+    final thresholdResult = await _ref
+        .read(fetchDoctorThresholdsUseCaseProvider)
+        .execute();
 
-    if (profileResult case Failure<DoctorProfile>(error: final error)) {
-      state = state.copyWith(isLoading: false, errorMessage: error.message);
-      return;
-    }
-    if (thresholdResult case Failure<DoctorThresholds>(error: final error)) {
-      state = state.copyWith(isLoading: false, errorMessage: error.message);
-      return;
+    var nextData = state.data;
+    String? errorMessage;
+
+    switch (profileResult) {
+      case Success<DoctorProfile>(data: final profile):
+        nextData = nextData.copyWith(profile: profile);
+      case Failure<DoctorProfile>(error: final error):
+        errorMessage = error.message;
     }
 
-    final profile = (profileResult as Success<DoctorProfile>).data;
-    final thresholds = (thresholdResult as Success<DoctorThresholds>).data;
+    switch (thresholdResult) {
+      case Success<DoctorThresholds>(data: final thresholds):
+        nextData = nextData.copyWith(thresholds: thresholds);
+      case Failure<DoctorThresholds>(error: final error):
+        errorMessage ??= error.message;
+    }
+
     state = state.copyWith(
       isLoading: false,
-      profile: profile,
-      thresholds: thresholds,
-      errorMessage: null,
+      data: nextData,
+      errorMessage: errorMessage,
     );
   }
 
-  Future<String?> updateThresholds(DoctorThresholds payload) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    final result = await _ref.read(updateDoctorThresholdsUseCaseProvider).execute(payload);
-    switch (result) {
-      case Success<DoctorThresholds>(data: final data):
-        state = state.copyWith(isLoading: false, thresholds: data);
-        return null;
-      case Failure<DoctorThresholds>(error: final error):
-        state = state.copyWith(isLoading: false, errorMessage: error.message);
-        return error.message;
-    }
+  Future<String?> updateThresholds(DoctorThresholds payload) {
+    return runAction<DoctorThresholds>(
+      request: () =>
+          _ref.read(updateDoctorThresholdsUseCaseProvider).execute(payload),
+      onSuccess: (current, thresholds) =>
+          current.copyWith(thresholds: thresholds),
+    );
   }
 }

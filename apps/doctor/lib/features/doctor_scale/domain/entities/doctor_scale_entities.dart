@@ -13,10 +13,7 @@ final class DoctorScaleTrendPoint {
 }
 
 final class DoctorAssessmentReport {
-  const DoctorAssessmentReport({
-    required this.summary,
-    required this.polished,
-  });
+  const DoctorAssessmentReport({required this.summary, required this.polished});
 
   final String summary;
   final bool polished;

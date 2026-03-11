@@ -1,29 +1,14 @@
+import 'package:doctor/core/presentation/async_state.dart';
 import 'package:doctor/features/doctor_patient/domain/entities/doctor_patient_entities.dart';
 
-final class DoctorPatientState {
-  const DoctorPatientState({
-    this.isLoading = false,
-    this.items = const <DoctorPatient>[],
-    this.errorMessage,
-  });
+typedef DoctorPatientState = AsyncState<DoctorPatientData>;
 
-  final bool isLoading;
+final class DoctorPatientData {
+  const DoctorPatientData({this.items = const <DoctorPatient>[]});
+
   final List<DoctorPatient> items;
-  final String? errorMessage;
 
-  DoctorPatientState copyWith({
-    bool? isLoading,
-    List<DoctorPatient>? items,
-    Object? errorMessage = _sentinel,
-  }) {
-    return DoctorPatientState(
-      isLoading: isLoading ?? this.isLoading,
-      items: items ?? this.items,
-      errorMessage: identical(errorMessage, _sentinel)
-          ? this.errorMessage
-          : errorMessage as String?,
-    );
+  DoctorPatientData copyWith({List<DoctorPatient>? items}) {
+    return DoctorPatientData(items: items ?? this.items);
   }
 }
-
-const Object _sentinel = Object();

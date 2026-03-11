@@ -10,9 +10,9 @@ final class TokenRefreshService {
     required Dio refreshDio,
     required SessionStore sessionStore,
     required NetworkAuthStrategy authStrategy,
-  })  : _refreshDio = refreshDio,
-        _sessionStore = sessionStore,
-        _authStrategy = authStrategy;
+  }) : _refreshDio = refreshDio,
+       _sessionStore = sessionStore,
+       _authStrategy = authStrategy;
 
   final Dio _refreshDio;
   final SessionStore _sessionStore;
@@ -66,7 +66,10 @@ final class TokenRefreshService {
       );
       if (token.accessToken.isEmpty || token.refreshToken.isEmpty) return false;
 
-      await _sessionStore.saveSession(principalId: principalId, tokenPair: token);
+      await _sessionStore.saveSession(
+        principalId: principalId,
+        tokenPair: token,
+      );
       return true;
     } catch (_) {
       return false;

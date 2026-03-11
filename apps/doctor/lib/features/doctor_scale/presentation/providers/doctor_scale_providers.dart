@@ -13,11 +13,16 @@ final doctorScaleRepositoryProvider = Provider<DoctorScaleRepository>((ref) {
   return DoctorScaleRepositoryImpl(ref.watch(doctorScaleApiProvider));
 });
 
-final fetchDoctorScaleTrendsUseCaseProvider = Provider<FetchDoctorScaleTrendsUseCase>((ref) {
-  return FetchDoctorScaleTrendsUseCase(ref.watch(doctorScaleRepositoryProvider));
-});
+final fetchDoctorScaleTrendsUseCaseProvider =
+    Provider<FetchDoctorScaleTrendsUseCase>((ref) {
+      return FetchDoctorScaleTrendsUseCase(
+        ref.watch(doctorScaleRepositoryProvider),
+      );
+    });
 
 final generateDoctorAssessmentReportUseCaseProvider =
     Provider<GenerateDoctorAssessmentReportUseCase>((ref) {
-  return GenerateDoctorAssessmentReportUseCase(ref.watch(doctorScaleRepositoryProvider));
-});
+      return GenerateDoctorAssessmentReportUseCase(
+        ref.watch(doctorScaleRepositoryProvider),
+      );
+    });

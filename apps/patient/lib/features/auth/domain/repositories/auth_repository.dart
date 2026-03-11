@@ -15,9 +15,7 @@ abstract interface class AuthRepository {
     Map<String, dynamic>? profile,
   });
 
-  Future<Result<LoginCheckResult>> loginCheck({
-    required String phone,
-  });
+  Future<Result<LoginCheckResult>> loginCheck({required String phone});
 
   Future<Result<AuthSessionResult>> loginDirect({
     required String phone,

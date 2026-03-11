@@ -30,7 +30,10 @@ final class DoctorScaleRepositoryImpl implements DoctorScaleRepository {
     int? days,
   }) {
     return _executor.run(
-      () => _api.generateAssessmentReport(patientUserId: patientUserId, days: days),
+      () => _api.generateAssessmentReport(
+        patientUserId: patientUserId,
+        days: days,
+      ),
       decodeDoctorAssessmentReport,
     );
   }

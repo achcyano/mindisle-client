@@ -31,7 +31,10 @@ final class UpdateDoctorPatientGroupingUseCase {
     required int patientUserId,
     required DoctorPatientGrouping payload,
   }) {
-    return _repository.updateGrouping(patientUserId: patientUserId, payload: payload);
+    return _repository.updateGrouping(
+      patientUserId: patientUserId,
+      payload: payload,
+    );
   }
 }
 
