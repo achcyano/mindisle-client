@@ -1,2 +1,2 @@
-﻿export 'package:models/models.dart' show formatMedicationDoseText;
+export 'package:models/models.dart' show formatMedicationDoseText;
 
