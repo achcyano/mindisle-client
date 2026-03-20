@@ -128,9 +128,14 @@ String _resolveAppErrorMessage({
   required String serverMessage,
   required String? localizedMessage,
 }) {
-  if (serverMessage.isNotEmpty) return serverMessage;
   if (localizedMessage != null) return localizedMessage;
+  if (_containsCjk(serverMessage)) return serverMessage;
   return _fallbackMessageForType(type);
+}
+
+bool _containsCjk(String text) {
+  if (text.isEmpty) return false;
+  return RegExp(r'[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]').hasMatch(text);
 }
 
 String? _localizedMessageForCode(int code, String serverMessage) {
