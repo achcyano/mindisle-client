@@ -4,23 +4,15 @@ import 'package:doctor/features/doctor_binding/domain/entities/doctor_binding_en
 typedef DoctorBindingState = AsyncState<DoctorBindingData>;
 
 final class DoctorBindingData {
-  const DoctorBindingData({
-    this.latestCode,
-    this.history = const <DoctorBindingHistoryItem>[],
-  });
+  const DoctorBindingData({this.latestCode});
 
   final DoctorBindingCode? latestCode;
-  final List<DoctorBindingHistoryItem> history;
 
-  DoctorBindingData copyWith({
-    Object? latestCode = asyncStateNoChange,
-    List<DoctorBindingHistoryItem>? history,
-  }) {
+  DoctorBindingData copyWith({Object? latestCode = asyncStateNoChange}) {
     return DoctorBindingData(
       latestCode: identical(latestCode, asyncStateNoChange)
           ? this.latestCode
           : latestCode as DoctorBindingCode?,
-      history: history ?? this.history,
     );
   }
 }

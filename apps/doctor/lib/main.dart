@@ -65,7 +65,7 @@ class DoctorApp extends ConsumerWidget {
       navigatorKey: AppNavigator.key,
       scaffoldMessengerKey: AppNavigator.scaffoldMessengerKey,
       navigatorObservers: <NavigatorObserver>[AppRouteObserver.instance],
-      title: appDisplayName,
+      title: "$appDisplayName医生端",
       debugShowCheckedModeBanner: false,
       locale: const Locale('zh', 'CN'),
       supportedLocales: const <Locale>[Locale('zh', 'CN'), Locale('en', 'US')],

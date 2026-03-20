@@ -21,6 +21,14 @@ final fetchDoctorProfileUseCaseProvider = Provider<FetchDoctorProfileUseCase>((
   return FetchDoctorProfileUseCase(ref.watch(doctorProfileRepositoryProvider));
 });
 
+final updateDoctorProfileUseCaseProvider = Provider<UpdateDoctorProfileUseCase>(
+  (ref) {
+    return UpdateDoctorProfileUseCase(
+      ref.watch(doctorProfileRepositoryProvider),
+    );
+  },
+);
+
 final fetchDoctorThresholdsUseCaseProvider =
     Provider<FetchDoctorThresholdsUseCase>((ref) {
       return FetchDoctorThresholdsUseCase(

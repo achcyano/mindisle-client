@@ -10,6 +10,16 @@ final class FetchDoctorProfileUseCase {
   Future<Result<DoctorProfile>> execute() => _repository.fetchProfile();
 }
 
+final class UpdateDoctorProfileUseCase {
+  const UpdateDoctorProfileUseCase(this._repository);
+
+  final DoctorProfileRepository _repository;
+
+  Future<Result<DoctorProfile>> execute(DoctorProfileUpdatePayload payload) {
+    return _repository.updateProfile(payload);
+  }
+}
+
 final class FetchDoctorThresholdsUseCase {
   const FetchDoctorThresholdsUseCase(this._repository);
 

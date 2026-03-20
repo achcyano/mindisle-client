@@ -1,3 +1,4 @@
+import 'package:app_core/app_core.dart';
 import 'package:doctor/core/presentation/async_controller.dart';
 import 'package:doctor/core/presentation/async_state.dart';
 import 'package:doctor/features/doctor_binding/domain/entities/doctor_binding_entities.dart';
@@ -16,20 +17,42 @@ final class DoctorBindingController extends AsyncController<DoctorBindingData> {
 
   final Ref _ref;
 
-  Future<void> refreshHistory() async {
-    await runAction<DoctorBindingHistoryResult>(
-      request: () => _ref
-          .read(fetchDoctorBindingHistoryUseCaseProvider)
-          .execute(limit: 50),
-      onSuccess: (current, data) => current.copyWith(history: data.items),
+  Future<void> refreshBindingCode() async {
+    if (state.isLoading) return;
+
+    final preserveErrorWhileLoading = state.data.latestCode == null;
+    state = state.copyWith(
+      data: state.data.copyWith(latestCode: null),
+      isLoading: true,
+      errorMessage: preserveErrorWhileLoading ? state.errorMessage : null,
     );
+
+    final result = await _ref
+        .read(createDoctorBindingCodeUseCaseProvider)
+        .execute();
+    switch (result) {
+      case Success<DoctorBindingCode>(data: final code):
+        final validationMessage = _validateBindingCode(code);
+        state = state.copyWith(
+          data: state.data.copyWith(
+            latestCode: validationMessage == null ? code : null,
+          ),
+          isLoading: false,
+          errorMessage: validationMessage,
+        );
+      case Failure<DoctorBindingCode>(error: final error):
+        state = state.copyWith(
+          data: state.data.copyWith(latestCode: null),
+          isLoading: false,
+          errorMessage: error.message,
+        );
+    }
   }
 
-  Future<String?> createCode() {
-    return runAction<DoctorBindingCode>(
-      request: () =>
-          _ref.read(createDoctorBindingCodeUseCaseProvider).execute(),
-      onSuccess: (current, code) => current.copyWith(latestCode: code),
-    );
+  String? _validateBindingCode(DoctorBindingCode code) {
+    if (code.code.trim().isEmpty) {
+      return '绑定码数据不完整，请稍后重试';
+    }
+    return null;
   }
 }

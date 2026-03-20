@@ -6,6 +6,7 @@
 
 - AI 对话 SSE：`docs/ai-sse-api.md`
 - 量表系统：`docs/scale-api.md`
+- 事件系统：`docs/event-api.md`
 
 ## 1. 服务概览
 
@@ -32,8 +33,11 @@
 - `PUT /api/v1/users/me/profile`
 - `GET /api/v1/users/me/basic-profile`
 - `PUT /api/v1/users/me/basic-profile`
+- `GET /api/v1/users/me/doctor-binding`
+- `PUT /api/v1/users/me/doctor-binding`
 - `PUT /api/v1/users/me/avatar`
 - `GET /api/v1/users/me/avatar`
+- `GET /api/v1/users/me/events`（详见 `docs/event-api.md`）
 - `DELETE /api/v1/users`（仅 `DEBUG=true` 时注册，用于内部调试删号）
 
 ## 2. 通用约定
@@ -191,6 +195,10 @@
 - `diseaseHistory` 传入后会“整表替换”：先删旧数据，再写入新列表。
 - `diseaseHistory` 每项会 `trim()` 后写入，空字符串项会被丢弃；重复值会自动去重并保留首次出现顺序。
 
+`UpsertDoctorBindingRequest`
+
+- `isBound: Boolean`（必填，是否已绑定医生）
+
 ### 3.3 主要响应体
 
 `TokenPairResponse`
@@ -233,6 +241,13 @@
 - `waistCm: Double?`
 - `usesTcm: Boolean`（是否使用中药，默认 `false`）
 - `diseaseHistory: List<String>`
+
+`DoctorBindingStatusResponse`
+
+- `isBound: Boolean`
+- `boundAt: String?`（UTC，ISO-8601）
+- `unboundAt: String?`（UTC，ISO-8601）
+- `updatedAt: String`（UTC，ISO-8601）
 
 `UserAvatarMetaResponse`
 
@@ -551,6 +566,44 @@ This is a test endpoint.
 - `40000` 请求体非法、`birthDate` 格式错误或为未来日期、身高/体重/腰围越界、`diseaseHistory` 超过 50 项、文本超长或含控制字符
 - `40100` access token 无效/缺失，或用户不存在
 
+### `GET /api/v1/users/me/doctor-binding`
+
+- 鉴权：需要 JWT
+- 请求头：
+- `Authorization` 必填
+- 请求体：无
+- 成功：`200 OK`
+
+成功响应：`ApiResponse<DoctorBindingStatusResponse>`。
+
+行为说明（当前版本）：
+
+- 医生绑定业务尚未接入，服务端固定返回 `isBound=false`（TODO 占位）。
+
+接口级可能错误码：
+
+- `40100` access token 无效/缺失，或用户不存在
+
+### `PUT /api/v1/users/me/doctor-binding`
+
+- 鉴权：需要 JWT
+- 请求头：
+- `Authorization` 必填
+- `Content-Type: application/json`
+- 请求体：`UpsertDoctorBindingRequest`
+- 成功：`200 OK`
+
+成功响应：`ApiResponse<DoctorBindingStatusResponse>`。
+
+行为说明（当前版本）：
+
+- 医生绑定业务尚未接入，当前请求体仅用于兼容，占位实现会忽略传入值并固定返回 `isBound=false`。
+
+接口级可能错误码：
+
+- `40000` 请求体非法
+- `40100` access token 无效/缺失，或用户不存在
+
 ### `PUT /api/v1/users/me/avatar`
 
 - 鉴权：需要 JWT
@@ -635,7 +688,7 @@ This is a test endpoint.
 | 业务码 | HTTP 状态 | 含义 | 触发原因（可能） |
 |---|---|---|---|
 | 0 | 200/201/202 | 成功 | 请求处理成功 |
-| 40000 | 400 | INVALID_REQUEST | 请求体反序列化失败；枚举值非法；缺少必填字段；缺失 `X-Device-Id`；`X-Device-Id` 超长或含控制字符；`ticket`/`refreshToken` 超长或含控制字符；`birthDate` 非 `yyyy-MM-dd`（`/users/me/profile`）或为未来日期（`/users/me/basic-profile`）；身高/体重/腰围数值越界（`/users/me/basic-profile`）；`diseaseHistory` 超过 50 项（`/users/me/basic-profile`）；头像上传缺少 `file` 字段、文件大小超限、不是可解码图片、或分辨率不是 `1024x1024`（`/users/me/avatar`）；密码含控制字符；资料文本超过 200 字符或含控制字符 |
+| 40000 | 400 | INVALID_REQUEST | 请求体反序列化失败；枚举值非法；缺少必填字段；缺失 `X-Device-Id`；`X-Device-Id` 超长或含控制字符；`ticket`/`refreshToken` 超长或含控制字符；`birthDate` 非 `yyyy-MM-dd`（`/users/me/profile`）或为未来日期（`/users/me/basic-profile`）；身高/体重/腰围数值越界（`/users/me/basic-profile`）；`diseaseHistory` 超过 50 项（`/users/me/basic-profile`）；头像上传缺少 `file` 字段、文件大小超限、不是可解码图片、或分辨率不是 `1024x1024`（`/users/me/avatar`）；`/users/me/doctor-binding` 请求体非法；密码含控制字符；资料文本超过 200 字符或含控制字符 |
 | 40001 | 400 | INVALID_PHONE | 手机号不符合中国大陆手机号规则 |
 | 40002 | 400 | PASSWORD_TOO_SHORT | `password` 或 `newPassword` 长度不在 6-20 位区间 |
 | 40003 | 400 | INVALID_SMS_CODE | 验证码格式非法，或验证码错误、过期、已消费 |
@@ -718,6 +771,7 @@ This is a test endpoint.
 ### 6.4 资料存储机制
 
 - 用户基础信息在 `user_profiles`（一行，包含姓名/性别/生日/身高/体重/腰围/`uses_tcm`）
+- 医生绑定状态在 `user_doctor_bindings`（一行）
 - 家族史/病史/用药史在独立子表（一对多），由 `/users/me/profile` 维护
 - 疾病史在 `user_disease_histories`（一对多），由 `/users/me/basic-profile` 维护
 - 头像元信息在 `user_avatars`（一行），头像文件落盘在 `data/avatars/`，由 `/api/v1/users/me/avatar` 维护
@@ -751,3 +805,18 @@ This is a test endpoint.
 
 建议客户端将以上 TTL 与限制设计为“服务端可变参数”，不要硬编码固定值。
 
+
+---
+
+## 2026-03 医生绑定接口更新（新增）
+
+为避免与事件接口耦合，医生绑定相关能力已迁移到独立接口（详见 `docs/doctor-api.md`）：
+
+- `GET /api/v1/users/me/doctor-binding`
+- `POST /api/v1/users/me/doctor-binding/bind`
+- `POST /api/v1/users/me/doctor-binding/unbind`
+- `GET /api/v1/users/me/doctor-binding/history`
+
+说明：
+- 现已接入真实医患绑定关系（单活跃绑定 + 历史保留）。
+- 事件接口中的“固定未绑定 TODO”已取消，改为真实绑定状态判定。

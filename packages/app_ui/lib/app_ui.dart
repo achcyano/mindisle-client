@@ -20,5 +20,6 @@ export 'src/widget/login_submit_button.dart';
 export 'src/widget/number_keypad.dart';
 export 'src/widget/profile/profile_action_card.dart';
 export 'src/widget/profile/profile_hero_section.dart';
+export 'src/widget/retry_error_card.dart';
 export 'src/widget/settings_card.dart';
 export 'src/widget/settings_input_field.dart';

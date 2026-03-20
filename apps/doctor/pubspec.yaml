@@ -18,6 +18,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   dio: ^5.8.0+1
   flutter_secure_storage: ^9.2.2
+  qr_flutter: ^4.1.0
   uuid: ^4.5.1
   app_core:
     path: ../../packages/app_core
@@ -59,4 +60,3 @@ flutter_native_splash:
   android_12:
     color: "#ffffff"
     image: assets/icon/app_icon_foreground.png
-

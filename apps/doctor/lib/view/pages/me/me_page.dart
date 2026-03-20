@@ -7,8 +7,9 @@ import 'package:doctor/features/doctor_auth/presentation/providers/doctor_auth_p
 import 'package:doctor/features/doctor_profile/domain/entities/doctor_profile_entities.dart';
 import 'package:doctor/features/doctor_profile/presentation/profile/doctor_profile_controller.dart';
 import 'package:doctor/features/doctor_profile/presentation/profile/doctor_profile_state.dart';
-import 'package:doctor/view/pages/auth/change_password_page.dart';
 import 'package:doctor/view/pages/auth/login_page.dart';
+import 'package:doctor/view/pages/auth/reset_password_page.dart';
+import 'package:doctor/view/pages/me/edit_profile_page.dart';
 import 'package:doctor/view/pages/me/thresholds_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,7 +41,10 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<DoctorProfileState>(doctorProfileControllerProvider, (previous, next) {
+    ref.listen<DoctorProfileState>(doctorProfileControllerProvider, (
+      previous,
+      next,
+    ) {
       final message = next.errorMessage?.trim() ?? '';
       if (message.isEmpty || message == _lastErrorMessage) return;
       _lastErrorMessage = message;
@@ -90,17 +94,17 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
         ProfileHeroSection(
           avatar: _DoctorAvatar(isLoading: state.isLoading),
           title: _displayName(profile),
-          subtitle: _displaySubtitle(profile),
+          subtitle: _displayHospital(profile),
           actions: [
+            ProfileActionCard(
+              icon: Icons.edit_outlined,
+              title: '编辑资料',
+              onTap: () => DoctorEditProfilePage.route.go(context),
+            ),
             ProfileActionCard(
               icon: Icons.tune,
               title: '阈值设置',
               onTap: () => DoctorThresholdsPage.route.go(context),
-            ),
-            ProfileActionCard(
-              icon: Icons.lock_reset,
-              title: '修改密码',
-              onTap: _confirmOpenChangePassword,
             ),
             ProfileActionCard(
               icon: Icons.info_outline,
@@ -123,14 +127,10 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
               position: AppListTilePosition.middle,
             ),
             AppListTile(
-              title: Text(_displayTitle(profile)),
-              subtitle: const Text('职称'),
-              position: AppListTilePosition.middle,
-            ),
-            AppListTile(
               title: Text(_displayHospital(profile)),
               subtitle: const Text('医院'),
               position: AppListTilePosition.last,
+              onTap: () => DoctorEditProfilePage.route.go(context),
             ),
           ],
         ),
@@ -138,33 +138,22 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
         SettingsGroup(
           children: [
             AppListTile(
-              title: const Text('退出登录'),
+              title: const Text('修改密码'),
               position: AppListTilePosition.first,
+              leading: Icon(
+                Icons.lock_reset_outlined,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              onTap: () => _confirmOpenResetPassword(profile),
+            ),
+            AppListTile(
+              title: const Text('退出登录'),
+              position: AppListTilePosition.last,
               leading: Icon(
                 Icons.logout_outlined,
                 color: Theme.of(context).colorScheme.error,
               ),
               onTap: _isLoggingOut ? null : _confirmLogout,
-            ),
-            AppListTile(
-              title: const Text('修改密码'),
-              position: AppListTilePosition.last,
-              leading: Icon(
-                Icons.edit_note,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              onTap: _confirmOpenChangePassword,
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SettingsGroup(
-          children: [
-            AppListTile(
-              title: const Text('关于心岛'),
-              position: AppListTilePosition.single,
-              leading: const Icon(Icons.info_outlined),
-              onTap: _showAboutAppDialog,
             ),
           ],
         ),
@@ -177,10 +166,6 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
     return value.isEmpty ? '未设置姓名' : value;
   }
 
-  String _displaySubtitle(DoctorProfile profile) {
-    return '${_displayTitle(profile)} · ${_displayHospital(profile)}';
-  }
-
   String _displayPhone(DoctorProfile profile) {
     final value = profile.phone.trim();
     return value.isEmpty ? '未绑定手机号' : value;
@@ -191,24 +176,29 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
     return profile.doctorId.toString();
   }
 
-  String _displayTitle(DoctorProfile profile) {
-    final value = profile.title?.trim() ?? '';
-    return value.isEmpty ? '未设置职称' : value;
-  }
-
   String _displayHospital(DoctorProfile profile) {
     final value = profile.hospital?.trim() ?? '';
     return value.isEmpty ? '未设置医院' : value;
   }
 
-  Future<void> _confirmOpenChangePassword() async {
+  Future<void> _openResetPassword(DoctorProfile profile) async {
+    final phone = profile.phone.trim();
+    if (phone.isEmpty) {
+      _showSnack('未绑定手机号，暂时无法修改密码');
+      return;
+    }
+
+    await DoctorResetPasswordPage.route.goRoot(context, phone);
+  }
+
+  Future<void> _confirmOpenResetPassword(DoctorProfile profile) async {
     final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (dialogContext) {
         final errorColor = Theme.of(dialogContext).colorScheme.error;
         return buildAppAlertDialog(
           title: const Text('修改密码'),
-          content: const Text('将进入密码修改页面，是否继续？'),
+          content: const Text('将通过短信验证码验证身份后重置密码，是否继续？'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -225,7 +215,7 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
     );
 
     if (confirmed != true || !mounted) return;
-    await DoctorChangePasswordPage.route.go(context);
+    await _openResetPassword(profile);
   }
 
   Future<void> _showAboutAppDialog() async {
@@ -276,7 +266,9 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
     });
 
     try {
-      final refreshToken = await ref.read(sessionStoreProvider).readRefreshToken();
+      final refreshToken = await ref
+          .read(sessionStoreProvider)
+          .readRefreshToken();
       final result = await ref
           .read(doctorLogoutUseCaseProvider)
           .execute(refreshToken: refreshToken);

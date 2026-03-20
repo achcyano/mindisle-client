@@ -1,6 +1,7 @@
 # MindIsle 医生端 API（v1）
 
-本文档覆盖医生认证、医患绑定、患者管理、量表趋势与报告、用药监测相关接口。  
+本文档覆盖医生认证、医生资料、医患绑定、患者管理、量表趋势与报告、用药监测相关接口。
+
 Base URL：`/api/v1`
 
 ## 1. 通用约定
@@ -17,7 +18,7 @@ Base URL：`/api/v1`
 
 - 患者鉴权：`Authorization: Bearer <userAccessToken>`
 - 医生鉴权：`Authorization: Bearer <doctorAccessToken>`
-- 医生登录/注册/刷新/登出必须携带：`X-Device-Id: <device-id>`
+- 医生注册、登录、刷新、登出必须携带：`X-Device-Id: <device-id>`
 
 ## 2. 医生认证
 
@@ -27,7 +28,7 @@ Base URL：`/api/v1`
    - 入参：`{ "phone": "...", "purpose": "REGISTER|RESET_PASSWORD" }`
 2. `POST /doctor/auth/register`
    - Header：`X-Device-Id`
-   - 入参：`phone/smsCode/password/fullName?/title?/hospital?`
+   - 入参：`phone/smsCode/password/fullName?/hospital?`
 3. `POST /doctor/auth/login/check`
    - Header：`X-Device-Id`
    - 入参：`phone`
@@ -43,13 +44,15 @@ Base URL：`/api/v1`
    - 入参：`refreshToken`
 7. `POST /doctor/auth/password/reset`
    - 入参：`phone/smsCode/newPassword`
-8. `POST /doctor/auth/password/change`（医生 JWT）
+8. `POST /doctor/auth/password/change`
+   - 需要医生 JWT
    - 入参：`oldPassword/newPassword`
-9. `POST /doctor/auth/logout`（医生 JWT）
+9. `POST /doctor/auth/logout`
+   - 需要医生 JWT
    - Header：`X-Device-Id`
    - 入参可选：`refreshToken`
 
-认证成功返回 `DoctorAuthResponse`：
+认证成功返回：
 
 ```json
 {
@@ -63,28 +66,63 @@ Base URL：`/api/v1`
 }
 ```
 
-## 3. 医患绑定（严格新协议）
+注册说明：
+- `fullName` 可不传；未传时服务端会自动生成占位名。
+- `hospital` 可不传。
+- 若传入 `fullName` 或 `hospital`，会先 `trim()`，空白字符串会返回 `400`。
 
-### 3.1 患者侧接口（需要患者 JWT）
+## 3. 医生资料
+
+前缀：`/doctors/me`
+
+1. `GET /doctors/me/profile`
+   - 返回当前医生资料：
+
+```json
+{
+  "doctorId": 1,
+  "fullName": "张医生",
+  "hospital": "某某医院"
+}
+```
+
+2. `PUT /doctors/me/profile`
+   - 入参：
+
+```json
+{
+  "fullName": "张医生",
+  "hospital": "某某医院"
+}
+```
+
+更新语义：
+- `null` 表示不修改该字段
+- 非空字符串会先 `trim()`
+- `trim()` 后为空字符串返回 `400`
+- 更新成功后返回最新完整资料
+
+## 4. 医患绑定（严格 5 位绑定码）
+
+### 4.1 患者侧接口
+
+需要患者 JWT。
 
 1. `GET /users/me/doctor-binding`
-   - 返回当前绑定状态。
 2. `POST /users/me/doctor-binding/bind`
    - 入参：`{ "bindingCode": "01234" }`
-   - `bindingCode` 必须严格匹配 `^\d{5}$`（仅 5 位数字，允许前导 0）。
+   - `bindingCode` 必须严格匹配 `^\d{5}$`
 3. `POST /users/me/doctor-binding/unbind`
-   - 解绑当前活跃绑定，历史保留。
 4. `GET /users/me/doctor-binding/history?limit=20&cursor=<id>`
-   - 返回患者自己的绑定历史。
 5. `POST /users/me/side-effects`
-   - 入参：`symptom/severity(1-10)/note?/recordedAt?(ISO-8601 instant)`
 6. `GET /users/me/side-effects?limit=20&cursor=<id>`
-   - 返回患者自己的副作用记录列表。
 
-### 3.2 医生侧接口（需要医生 JWT）
+### 4.2 医生侧接口
+
+需要医生 JWT。
 
 1. `POST /doctors/me/binding-codes`
-   - 返回 5 位绑定码（10 分钟有效）：
+   - 返回：
 
 ```json
 {
@@ -94,56 +132,38 @@ Base URL：`/api/v1`
 ```
 
 2. `GET /doctors/me/binding-history?limit=20&cursor=<id>&patientUserId=<id?>`
-   - 返回该医生名下绑定历史（含解绑记录）。
 
 说明：
-- 服务端不再返回 `qrPayload`。
-- 客户端可自行生成二维码，二维码载荷只需要承载这 5 位码。
+- 服务端不返回 `qrPayload`
+- 客户端可自行把 5 位绑定码编码到二维码内容中
 
-### 3.3 绑定业务规则
+### 4.3 绑定规则
 
-1. 单活跃绑定：同一患者同一时刻只允许 1 条 `ACTIVE` 绑定。
-2. 冲突绑定：患者已绑定医生 A 时，使用医生 B 绑定码会返回 `409 DOCTOR_BINDING_CONFLICT`。
-3. 解绑保留历史：解绑将当前记录改为 `UNBOUND`，写入 `unboundAt`。
-4. 绑定码一次性：绑定码被消费后立即失效，过期/已消费/错误码都返回 `400 DOCTOR_BINDING_CODE_INVALID`。
-5. 不支持自动换绑：必须先解绑，再绑定新医生。
+1. 同一患者同一时刻只允许 1 条 `ACTIVE` 绑定
+2. 已绑定医生 A 的患者，不能直接绑定医生 B；会返回 `409 DOCTOR_BINDING_CONFLICT`
+3. 解绑后保留历史，当前记录状态改为 `UNBOUND`
+4. 绑定码 10 分钟有效，一次性消费
+5. 过期、已消费、错误码统一返回 `400 DOCTOR_BINDING_CODE_INVALID`
 
-## 4. 医生侧核心接口
+## 5. 医生业务接口
 
 前缀：`/doctors/me`
 
-### 4.1 个人与阈值
+1. `GET /doctors/me/thresholds`
+2. `PUT /doctors/me/thresholds`
+3. `GET /doctors/me/patients`
+4. `PUT /doctors/me/patients/{patientUserId}/grouping`
+5. `GET /doctors/me/patients/{patientUserId}/grouping-history`
+6. `GET /doctors/me/patients/{patientUserId}/scale-trends`
+7. `POST /doctors/me/patients/{patientUserId}/assessment-report`
+8. `POST /doctors/me/patients/{patientUserId}/medications`
+9. `GET /doctors/me/patients/{patientUserId}/medications`
+10. `PUT /doctors/me/patients/{patientUserId}/medications/{medicationId}`
+11. `DELETE /doctors/me/patients/{patientUserId}/medications/{medicationId}`
+12. `GET /doctors/me/patients/{patientUserId}/side-effects/summary`
+13. `GET /doctors/me/patients/{patientUserId}/weight-trend`
 
-1. `GET /doctors/me/profile`
-2. `GET /doctors/me/thresholds`
-3. `PUT /doctors/me/thresholds`
-   - 入参：`scl90Threshold?/phq9Threshold?/gad7Threshold?/psqiThreshold?`
-
-### 4.2 患者管理
-
-1. `GET /doctors/me/patients`
-   - 查询参数：`limit(1..50)`、`cursor`、`keyword`、`abnormalOnly`
-2. `PUT /doctors/me/patients/{patientUserId}/grouping`
-   - 入参：`severityGroup?/treatmentPhase?`
-3. `GET /doctors/me/patients/{patientUserId}/grouping-history?limit=20&cursor=<id>`
-
-### 4.3 量表趋势与报告
-
-1. `GET /doctors/me/patients/{patientUserId}/scale-trends?days=180`
-2. `POST /doctors/me/patients/{patientUserId}/assessment-report`
-   - 入参可选：`{ "days": 90 }`
-   - LLM 失败时返回模板报告，`polished=false`。
-
-### 4.4 用药与监测
-
-1. `POST /doctors/me/patients/{patientUserId}/medications`
-2. `GET /doctors/me/patients/{patientUserId}/medications?limit=50&cursor=<id>&onlyActive=false`
-3. `PUT /doctors/me/patients/{patientUserId}/medications/{medicationId}`
-4. `DELETE /doctors/me/patients/{patientUserId}/medications/{medicationId}`
-5. `GET /doctors/me/patients/{patientUserId}/side-effects/summary?days=30`
-6. `GET /doctors/me/patients/{patientUserId}/weight-trend?days=180`
-
-## 5. 错误码（医生域）
+## 6. 错误码（医生域）
 
 - `40040 DOCTOR_INVALID_ARGUMENT`
 - `40041 DOCTOR_BINDING_CODE_INVALID`

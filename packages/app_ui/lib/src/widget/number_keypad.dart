@@ -139,7 +139,7 @@ class _DigitKey extends StatelessWidget {
     final baseDigitStyle =
         textTheme.titleLarge ??
         const TextStyle(fontSize: 23, fontWeight: FontWeight.w300);
-    final baseLettersStyle = textTheme.bodyMedium!;
+    final baseLettersStyle = textTheme.bodySmall!;
 
     return Material(
       color: Colors.transparent,

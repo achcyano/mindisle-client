@@ -51,6 +51,14 @@ final class DoctorProfileController extends AsyncController<DoctorProfileData> {
     );
   }
 
+  Future<String?> updateProfile(DoctorProfileUpdatePayload payload) {
+    return runAction<DoctorProfile>(
+      request: () =>
+          _ref.read(updateDoctorProfileUseCaseProvider).execute(payload),
+      onSuccess: (current, profile) => current.copyWith(profile: profile),
+    );
+  }
+
   Future<String?> updateThresholds(DoctorThresholds payload) {
     return runAction<DoctorThresholds>(
       request: () =>

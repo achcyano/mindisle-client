@@ -23,11 +23,16 @@ class _DoctorShellState extends State<DoctorShell> {
   );
 
   int _currentIndex = 0;
+  late final ValueNotifier<int> _currentTabIndexListenable = ValueNotifier<int>(
+    _currentIndex,
+  );
   late final PageController _pageController = PageController(initialPage: 0);
 
   late final List<WidgetBuilder> _tabRootBuilders = <WidgetBuilder>[
     (_) => const DoctorPatientsPage(),
-    (_) => const DoctorBindingsPage(),
+    (_) => DoctorBindingsPage(
+      currentTabIndexListenable: _currentTabIndexListenable,
+    ),
     (_) => const DoctorMePage(),
   ];
 
@@ -62,6 +67,7 @@ class _DoctorShellState extends State<DoctorShell> {
     setState(() {
       _currentIndex = index;
     });
+    _currentTabIndexListenable.value = index;
 
     if (_pageController.hasClients) {
       if ((index - fromIndex).abs() == 1) {
@@ -97,6 +103,7 @@ class _DoctorShellState extends State<DoctorShell> {
 
   @override
   void dispose() {
+    _currentTabIndexListenable.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -119,6 +126,7 @@ class _DoctorShellState extends State<DoctorShell> {
             setState(() {
               _currentIndex = index;
             });
+            _currentTabIndexListenable.value = index;
           },
           itemBuilder: (context, index) => _buildTabNavigator(index),
         ),

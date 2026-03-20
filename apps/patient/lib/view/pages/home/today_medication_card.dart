@@ -1,6 +1,6 @@
+import 'package:app_ui/app_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:patient/features/medication/domain/entities/medication_entities.dart';
-import 'package:patient/view/pages/home/startup_network_error_card.dart';
 
 class TodayMedicationCard extends StatelessWidget {
   const TodayMedicationCard({
@@ -24,7 +24,7 @@ class TodayMedicationCard extends StatelessWidget {
     final hasError = (errorMessage ?? '').trim().isNotEmpty;
 
     if (!hasData && hasError && !isLoading) {
-      return StartupNetworkErrorCard(
+      return RetryErrorCard(
         title: '用药数据加载失败',
         message: errorMessage!,
         onRetry: onRetry,
@@ -50,7 +50,7 @@ class TodayMedicationCard extends StatelessWidget {
     }
 
     if (!hasData) {
-      return _EmptyMedicationCard(onTapManage: onTapManage);
+      return const SizedBox.shrink();
     }
 
     final theme = Theme.of(context);
@@ -70,17 +70,15 @@ class TodayMedicationCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withValues(alpha: 0.75),
+                      color: colorScheme.primaryContainer.withValues(
+                        alpha: 0.75,
+                      ),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.medication_outlined),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '今日用药',
-                    ),
-                  ),
+                  Expanded(child: Text('今日用药')),
                   const Icon(Icons.chevron_right),
                 ],
               ),
@@ -93,57 +91,6 @@ class TodayMedicationCard extends StatelessWidget {
                   ),
                 _MedicationLine(item: items[index]),
               ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyMedicationCard extends StatelessWidget {
-  const _EmptyMedicationCard({required this.onTapManage});
-
-  final VoidCallback onTapManage;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTapManage,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withValues(alpha: 0.75),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.medication_outlined),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('今日用药'),
-                    const SizedBox(height: 4),
-                    Text(
-                      '今日暂无用药计划，点击进入用药页管理',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.72),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right),
             ],
           ),
         ),
@@ -172,7 +119,8 @@ class _MedicationLine extends StatelessWidget {
         style: theme.textTheme.bodyMedium,
         children: [
           TextSpan(text: '${item.drugName}  $doseText'),
-          if (timeText.isNotEmpty) TextSpan(text: '  $timeText', style: timeStyle),
+          if (timeText.isNotEmpty)
+            TextSpan(text: '  $timeText', style: timeStyle),
         ],
       ),
       maxLines: 1,

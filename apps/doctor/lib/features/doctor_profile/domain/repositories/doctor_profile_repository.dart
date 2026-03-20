@@ -4,6 +4,10 @@ import 'package:doctor/features/doctor_profile/domain/entities/doctor_profile_en
 abstract interface class DoctorProfileRepository {
   Future<Result<DoctorProfile>> fetchProfile();
 
+  Future<Result<DoctorProfile>> updateProfile(
+    DoctorProfileUpdatePayload payload,
+  );
+
   Future<Result<DoctorThresholds>> fetchThresholds();
 
   Future<Result<DoctorThresholds>> updateThresholds(DoctorThresholds payload);

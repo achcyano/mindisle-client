@@ -1,3 +1,4 @@
+import 'package:app_ui/app_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:patient/core/result/app_error.dart';
@@ -16,7 +17,6 @@ import 'package:patient/shared/session/startup_network_issue_signal.dart';
 import 'package:patient/view/pages/chat/chat_page.dart';
 import 'package:patient/view/pages/home/card_home.dart';
 import 'package:patient/view/pages/home/home_event_card.dart';
-import 'package:patient/view/pages/home/startup_network_error_card.dart';
 import 'package:patient/view/pages/home/today_medication_card.dart';
 import 'package:patient/view/pages/home/today_mood_card.dart';
 import 'package:patient/view/pages/info/info_page.dart';
@@ -25,7 +25,6 @@ import 'package:patient/view/pages/medicine/medicine_page.dart';
 import 'package:patient/view/pages/profile/profile_page.dart';
 import 'package:patient/view/pages/scale/scale_assessment_page.dart';
 import 'package:patient/view/pages/scale/scale_list_page.dart';
-import 'package:patient/view/route/app_route.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, required this.onRouteRequested});
@@ -154,7 +153,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               spacing: 8,
               children: [
                 if (startupIssue != null)
-                  StartupNetworkErrorCard(
+                  RetryErrorCard(
                     title: startupIssue.isNetwork ? '网络连接异常' : '请求失败',
                     message: startupIssue.message,
                     isRetrying: _isRetryingStartupIssue,
@@ -295,7 +294,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         if (!mounted) return;
         await ScaleAssessmentPage.route.goRoot(
           context,
-          ScaleAssessmentArgs(scaleId: scaleId, sessionId: data.session.sessionId),
+          ScaleAssessmentArgs(
+            scaleId: scaleId,
+            sessionId: data.session.sessionId,
+          ),
         );
         if (!mounted) return;
         await ref.read(eventHomeControllerProvider.notifier).refresh();
@@ -307,7 +309,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     final scaleId = item.scaleId;
     final sessionId = item.sessionId;
 
-    if (scaleId == null || scaleId <= 0 || sessionId == null || sessionId <= 0) {
+    if (scaleId == null ||
+        scaleId <= 0 ||
+        sessionId == null ||
+        sessionId <= 0) {
       await ScaleListPage.route.goRoot(context);
       if (!mounted) return;
       await ref.read(eventHomeControllerProvider.notifier).refresh();

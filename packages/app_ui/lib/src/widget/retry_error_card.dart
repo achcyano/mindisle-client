@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class StartupNetworkErrorCard extends StatelessWidget {
-  const StartupNetworkErrorCard({
+class RetryErrorCard extends StatelessWidget {
+  const RetryErrorCard({
     super.key,
     required this.title,
     required this.message,

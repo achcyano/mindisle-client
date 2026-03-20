@@ -14,6 +14,20 @@ final class DoctorProfile {
   final String? hospital;
 }
 
+final class DoctorProfileUpdatePayload {
+  const DoctorProfileUpdatePayload({
+    required this.fullName,
+    required this.hospital,
+  });
+
+  final String fullName;
+  final String hospital;
+
+  Map<String, dynamic> toJson() {
+    return {'fullName': fullName.trim(), 'hospital': hospital.trim()};
+  }
+}
+
 final class DoctorThresholds {
   const DoctorThresholds({
     this.scl90Threshold,
