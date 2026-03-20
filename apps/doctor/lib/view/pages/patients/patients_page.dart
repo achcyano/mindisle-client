@@ -49,7 +49,7 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
     final monitorState = ref.watch(doctorMonitorControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('患者')),
+      appBar: AppBar(title: const Text('患者列表')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: <Widget>[
