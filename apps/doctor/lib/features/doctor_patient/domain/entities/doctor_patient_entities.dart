@@ -35,7 +35,7 @@ final class DoctorPatient {
     int? age,
     double? latestScl90Score,
     DateTime? latestAssessmentAt,
-    String? diagnosis,
+    Object? diagnosis = _doctorPatientNoChange,
   }) {
     return DoctorPatient(
       patientUserId: patientUserId,
@@ -50,7 +50,9 @@ final class DoctorPatient {
       age: age ?? this.age,
       latestScl90Score: latestScl90Score ?? this.latestScl90Score,
       latestAssessmentAt: latestAssessmentAt ?? this.latestAssessmentAt,
-      diagnosis: diagnosis ?? this.diagnosis,
+      diagnosis: identical(diagnosis, _doctorPatientNoChange)
+          ? this.diagnosis
+          : diagnosis as String?,
     );
   }
 }
@@ -103,6 +105,7 @@ final class DoctorPatientQuery {
     this.keyword,
     this.gender,
     this.severityGroup,
+    this.diagnosisKeyword,
     this.abnormalOnly,
     this.scl90ScoreMin,
     this.scl90ScoreMax,
@@ -113,6 +116,7 @@ final class DoctorPatientQuery {
   final String? keyword;
   final DoctorPatientGenderFilter? gender;
   final String? severityGroup;
+  final String? diagnosisKeyword;
   final bool? abnormalOnly;
   final double? scl90ScoreMin;
   final double? scl90ScoreMax;
@@ -123,6 +127,7 @@ final class DoctorPatientQuery {
     Object? keyword = _doctorPatientQueryNoChange,
     Object? gender = _doctorPatientQueryNoChange,
     Object? severityGroup = _doctorPatientQueryNoChange,
+    Object? diagnosisKeyword = _doctorPatientQueryNoChange,
     Object? abnormalOnly = _doctorPatientQueryNoChange,
     Object? scl90ScoreMin = _doctorPatientQueryNoChange,
     Object? scl90ScoreMax = _doctorPatientQueryNoChange,
@@ -139,6 +144,9 @@ final class DoctorPatientQuery {
       severityGroup: identical(severityGroup, _doctorPatientQueryNoChange)
           ? this.severityGroup
           : severityGroup as String?,
+      diagnosisKeyword: identical(diagnosisKeyword, _doctorPatientQueryNoChange)
+          ? this.diagnosisKeyword
+          : diagnosisKeyword as String?,
       abnormalOnly: identical(abnormalOnly, _doctorPatientQueryNoChange)
           ? this.abnormalOnly
           : abnormalOnly as bool?,
@@ -157,9 +165,23 @@ final class DoctorPatientQuery {
     var count = 0;
     if (gender != null) count += 1;
     if (severityGroup != null && severityGroup!.trim().isNotEmpty) count += 1;
+    if (diagnosisKeyword != null && diagnosisKeyword!.trim().isNotEmpty) {
+      count += 1;
+    }
     if (abnormalOnly != null) count += 1;
     if (scl90ScoreMin != null || scl90ScoreMax != null) count += 1;
     return count;
+  }
+
+  bool isRemoteEqualTo(DoctorPatientQuery other) {
+    return keyword?.trim() == other.keyword?.trim() &&
+        gender == other.gender &&
+        severityGroup?.trim() == other.severityGroup?.trim() &&
+        abnormalOnly == other.abnormalOnly &&
+        scl90ScoreMin == other.scl90ScoreMin &&
+        scl90ScoreMax == other.scl90ScoreMax &&
+        sortBy == other.sortBy &&
+        sortOrder == other.sortOrder;
   }
 
   Map<String, dynamic> toQueryParameters({required int limit, String? cursor}) {
@@ -202,6 +224,38 @@ final class DoctorPatientGrouping {
   }
 }
 
+final class DoctorPatientGroupOption {
+  const DoctorPatientGroupOption({
+    required this.severityGroup,
+    required this.patientCount,
+  });
+
+  final String severityGroup;
+  final int patientCount;
+}
+
+final class DoctorPatientDiagnosisUpdatePayload {
+  const DoctorPatientDiagnosisUpdatePayload({required this.diagnosis});
+
+  final String? diagnosis;
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{'diagnosis': diagnosis};
+  }
+}
+
+final class DoctorPatientDiagnosisUpdateResult {
+  const DoctorPatientDiagnosisUpdateResult({
+    required this.patientUserId,
+    required this.diagnosis,
+    required this.updatedAt,
+  });
+
+  final int patientUserId;
+  final String? diagnosis;
+  final DateTime? updatedAt;
+}
+
 final class DoctorPatientGroupingHistoryItem {
   const DoctorPatientGroupingHistoryItem({
     required this.historyId,
@@ -216,4 +270,30 @@ final class DoctorPatientGroupingHistoryItem {
   final DateTime? changedAt;
   final int? operatorDoctorId;
   final String? operatorDoctorName;
+}
+
+final class DoctorPatientProfile {
+  const DoctorPatientProfile({
+    required this.patientUserId,
+    required this.phone,
+    required this.fullName,
+    required this.gender,
+    required this.birthDate,
+    required this.heightCm,
+    required this.weightKg,
+    required this.waistCm,
+    required this.usesTcm,
+    required this.diseaseHistory,
+  });
+
+  final int? patientUserId;
+  final String? phone;
+  final String? fullName;
+  final DoctorPatientGender? gender;
+  final DateTime? birthDate;
+  final double? heightCm;
+  final double? weightKg;
+  final double? waistCm;
+  final bool? usesTcm;
+  final List<String> diseaseHistory;
 }

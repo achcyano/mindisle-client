@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  fl_chart: ^1.1.1
   models:
     path: ../models
   progress_indicator_m3e: ^0.1.1

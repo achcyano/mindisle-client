@@ -13,16 +13,44 @@ final doctorScaleRepositoryProvider = Provider<DoctorScaleRepository>((ref) {
   return DoctorScaleRepositoryImpl(ref.watch(doctorScaleApiProvider));
 });
 
-final fetchDoctorScaleTrendsUseCaseProvider =
-    Provider<FetchDoctorScaleTrendsUseCase>((ref) {
-      return FetchDoctorScaleTrendsUseCase(
+final generateDoctorAssessmentReportUseCaseProvider =
+    Provider<GenerateDoctorAssessmentReportUseCase>((ref) {
+      return GenerateDoctorAssessmentReportUseCase(
         ref.watch(doctorScaleRepositoryProvider),
       );
     });
 
-final generateDoctorAssessmentReportUseCaseProvider =
-    Provider<GenerateDoctorAssessmentReportUseCase>((ref) {
-      return GenerateDoctorAssessmentReportUseCase(
+final fetchDoctorLatestAssessmentReportUseCaseProvider =
+    Provider<FetchDoctorLatestAssessmentReportUseCase>((ref) {
+      return FetchDoctorLatestAssessmentReportUseCase(
+        ref.watch(doctorScaleRepositoryProvider),
+      );
+    });
+
+final fetchDoctorAssessmentReportsUseCaseProvider =
+    Provider<FetchDoctorAssessmentReportsUseCase>((ref) {
+      return FetchDoctorAssessmentReportsUseCase(
+        ref.watch(doctorScaleRepositoryProvider),
+      );
+    });
+
+final fetchDoctorAssessmentReportDetailUseCaseProvider =
+    Provider<FetchDoctorAssessmentReportDetailUseCase>((ref) {
+      return FetchDoctorAssessmentReportDetailUseCase(
+        ref.watch(doctorScaleRepositoryProvider),
+      );
+    });
+
+final fetchDoctorScaleAnswerRecordsUseCaseProvider =
+    Provider<FetchDoctorScaleAnswerRecordsUseCase>((ref) {
+      return FetchDoctorScaleAnswerRecordsUseCase(
+        ref.watch(doctorScaleRepositoryProvider),
+      );
+    });
+
+final fetchDoctorScaleSessionResultUseCaseProvider =
+    Provider<FetchDoctorScaleSessionResultUseCase>((ref) {
+      return FetchDoctorScaleSessionResultUseCase(
         ref.watch(doctorScaleRepositoryProvider),
       );
     });

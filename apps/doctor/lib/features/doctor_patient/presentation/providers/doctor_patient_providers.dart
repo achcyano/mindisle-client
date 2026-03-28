@@ -36,3 +36,31 @@ final fetchDoctorPatientGroupingHistoryUseCaseProvider =
         ref.watch(doctorPatientRepositoryProvider),
       );
     });
+
+final fetchDoctorPatientGroupsUseCaseProvider =
+    Provider<FetchDoctorPatientGroupsUseCase>((ref) {
+      return FetchDoctorPatientGroupsUseCase(
+        ref.watch(doctorPatientRepositoryProvider),
+      );
+    });
+
+final createDoctorPatientGroupUseCaseProvider =
+    Provider<CreateDoctorPatientGroupUseCase>((ref) {
+      return CreateDoctorPatientGroupUseCase(
+        ref.watch(doctorPatientRepositoryProvider),
+      );
+    });
+
+final updateDoctorPatientDiagnosisUseCaseProvider =
+    Provider<UpdateDoctorPatientDiagnosisUseCase>((ref) {
+      return UpdateDoctorPatientDiagnosisUseCase(
+        ref.watch(doctorPatientRepositoryProvider),
+      );
+    });
+
+final fetchDoctorPatientProfileUseCaseProvider =
+    Provider<FetchDoctorPatientProfileUseCase>((ref) {
+      return FetchDoctorPatientProfileUseCase(
+        ref.watch(doctorPatientRepositoryProvider),
+      );
+    });

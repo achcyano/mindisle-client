@@ -102,7 +102,7 @@ abstract final class InfoPageUtils {
 
   static List<String> diseaseHistoryEntries(ProfileState state) {
     final raw = state.diseaseHistoryInput.trim();
-    if (raw.isEmpty) return const <String>[];
+    if (raw.isEmpty) return <String>[];
     return normalizeDiseaseHistoryTokens(raw.split(RegExp(r'[\n,，、;；]+')));
   }
 

@@ -43,4 +43,41 @@ final class DoctorPatientApi {
     );
     return response.data ?? const <String, dynamic>{};
   }
+
+  Future<Map<String, dynamic>> fetchPatientGroups() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/doctors/me/patient-groups',
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> createPatientGroup({
+    required String severityGroup,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/doctors/me/patient-groups',
+      data: {'severityGroup': severityGroup},
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> updateDiagnosis({
+    required int patientUserId,
+    required DoctorPatientDiagnosisUpdatePayload payload,
+  }) async {
+    final response = await _dio.put<Map<String, dynamic>>(
+      '/api/v1/doctors/me/patients/$patientUserId/diagnosis',
+      data: payload.toJson(),
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
+
+  Future<Map<String, dynamic>> fetchPatientProfile({
+    required int patientUserId,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/api/v1/doctors/me/patients/$patientUserId/profile',
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
 }

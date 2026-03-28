@@ -27,7 +27,9 @@ class InfoDiseaseHistoryGroup extends StatelessWidget {
   }
 
   List<Widget> _buildDiseaseHistoryEntries(BuildContext context) {
-    final entries = InfoPageUtils.diseaseHistoryEntries(state);
+    final entries = List<String>.from(
+      InfoPageUtils.diseaseHistoryEntries(state),
+    );
     final tiles = <Widget>[];
 
     if (entries.isNotEmpty) {
@@ -60,13 +62,10 @@ class InfoDiseaseHistoryGroup extends StatelessWidget {
         title: Text(
           '添加',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-              ),
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
-        leading: Icon(
-          Icons.add,
-          color: Theme.of(context).colorScheme.primary,
-        ),
+        leading: Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
         position: AppListTilePosition.last,
         onTap: state.isSaving ? null : () => _addDiseaseHistory(context),
       ),
@@ -92,7 +91,9 @@ class InfoDiseaseHistoryGroup extends StatelessWidget {
       return;
     }
 
-    final entries = InfoPageUtils.diseaseHistoryEntries(state);
+    final entries = List<String>.from(
+      InfoPageUtils.diseaseHistoryEntries(state),
+    );
     if (entries.contains(entry)) {
       onShowSnack('该疾病已录入');
       return;

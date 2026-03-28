@@ -18,4 +18,19 @@ abstract interface class DoctorPatientRepository {
     int limit = 20,
     String? cursor,
   });
+
+  Future<Result<List<DoctorPatientGroupOption>>> fetchPatientGroups();
+
+  Future<Result<DoctorPatientGroupOption>> createPatientGroup({
+    required String severityGroup,
+  });
+
+  Future<Result<DoctorPatientDiagnosisUpdateResult>> updateDiagnosis({
+    required int patientUserId,
+    required DoctorPatientDiagnosisUpdatePayload payload,
+  });
+
+  Future<Result<DoctorPatientProfile>> fetchPatientProfile({
+    required int patientUserId,
+  });
 }

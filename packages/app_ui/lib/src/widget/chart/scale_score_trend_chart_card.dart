@@ -6,22 +6,28 @@ final class ScaleTrendPoint {
     required this.sessionId,
     required this.time,
     required this.score,
+    this.scaleName,
   });
 
   final int sessionId;
   final DateTime time;
   final double score;
+  final String? scaleName;
 }
 
 class ScaleScoreTrendChartCard extends StatelessWidget {
   const ScaleScoreTrendChartCard({
     super.key,
     required this.points,
+    this.title = '作答趋势',
+    this.scoreLabel = '总分',
     this.errorMessage,
     this.onRetry,
   });
 
   final List<ScaleTrendPoint> points;
+  final String title;
+  final String scoreLabel;
   final String? errorMessage;
   final VoidCallback? onRetry;
 
@@ -37,15 +43,12 @@ class ScaleScoreTrendChartCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('作答趋势', style: theme.textTheme.titleSmall),
+              Text(title, style: theme.textTheme.titleSmall),
               const SizedBox(height: 8),
               Text(errorMessage!, style: theme.textTheme.bodySmall),
               if (onRetry != null) ...[
                 const SizedBox(height: 8),
-                OutlinedButton(
-                  onPressed: onRetry,
-                  child: const Text('重试'),
-                ),
+                OutlinedButton(onPressed: onRetry, child: const Text('重试')),
               ],
             ],
           ),
@@ -61,7 +64,9 @@ class ScaleScoreTrendChartCard extends StatelessWidget {
     final values = dataPoints.map((it) => it.score).toList(growable: false);
     final minYRaw = values.reduce((a, b) => a < b ? a : b);
     final maxYRaw = values.reduce((a, b) => a > b ? a : b);
-    final padding = (maxYRaw - minYRaw).abs() < 1 ? 1.0 : (maxYRaw - minYRaw) * 0.15;
+    final padding = (maxYRaw - minYRaw).abs() < 1
+        ? 1.0
+        : (maxYRaw - minYRaw) * 0.15;
     final minY = (minYRaw - padding).floorToDouble();
     final maxY = (maxYRaw + padding).ceilToDouble();
 
@@ -74,7 +79,7 @@ class ScaleScoreTrendChartCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('作答趋势', style: theme.textTheme.titleSmall),
+            Text(title, style: theme.textTheme.titleSmall),
             const SizedBox(height: 10),
             SizedBox(
               height: 220,
@@ -147,23 +152,36 @@ class ScaleScoreTrendChartCard extends StatelessWidget {
                       fitInsideVertically: true,
                       tooltipPadding: const EdgeInsets.all(8),
                       getTooltipItems: (spots) {
-                        return spots.map((spot) {
-                          final index = spot.x.toInt();
-                          if (index < 0 || index >= dataPoints.length) {
-                            return null;
-                          }
-                          final point = dataPoints[index];
-                          final local = point.time.toLocal();
-                          final hour = local.hour.toString().padLeft(2, '0');
-                          final minute = local.minute.toString().padLeft(2, '0');
-                          return LineTooltipItem(
-                            '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} $hour:$minute\n'
-                            '总分 ${point.score.toStringAsFixed(1)}',
-                            theme.textTheme.bodySmall!.copyWith(
-                              color: colorScheme.onInverseSurface,
-                            ),
-                          );
-                        }).toList(growable: false);
+                        return spots
+                            .map((spot) {
+                              final index = spot.x.toInt();
+                              if (index < 0 || index >= dataPoints.length) {
+                                return null;
+                              }
+                              final point = dataPoints[index];
+                              final local = point.time.toLocal();
+                              final hour = local.hour.toString().padLeft(
+                                2,
+                                '0',
+                              );
+                              final minute = local.minute.toString().padLeft(
+                                2,
+                                '0',
+                              );
+                              final scaleNameText = (point.scaleName ?? '')
+                                  .trim();
+                              final scaleLine = scaleNameText.isEmpty
+                                  ? ''
+                                  : '$scaleNameText\n';
+                              return LineTooltipItem(
+                                '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} $hour:$minute\n'
+                                '$scaleLine$scoreLabel ${point.score.toStringAsFixed(1)}',
+                                theme.textTheme.bodySmall!.copyWith(
+                                  color: colorScheme.onInverseSurface,
+                                ),
+                              );
+                            })
+                            .toList(growable: false);
                       },
                     ),
                   ),

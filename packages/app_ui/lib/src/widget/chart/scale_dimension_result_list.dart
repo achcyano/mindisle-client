@@ -1,16 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:patient/features/scale/domain/entities/scale_entities.dart';
+
+final class ScaleDimensionResultItemData {
+  const ScaleDimensionResultItemData({
+    required this.dimensionKey,
+    required this.dimensionName,
+    this.rawScore,
+    this.averageScore,
+    this.standardScore,
+    this.levelName,
+  });
+
+  final String dimensionKey;
+  final String dimensionName;
+  final double? rawScore;
+  final double? averageScore;
+  final double? standardScore;
+  final String? levelName;
+}
 
 class ScaleDimensionResultList extends StatelessWidget {
-  const ScaleDimensionResultList({super.key, required this.result});
+  const ScaleDimensionResultList({
+    super.key,
+    required this.dimensionResults,
+    this.dimensionScores = const <String, double>{},
+    this.title = '维度结果',
+  });
 
-  final ScaleResult result;
+  final List<ScaleDimensionResultItemData> dimensionResults;
+  final Map<String, double> dimensionScores;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
-    final dimensionResults = result.dimensionResults;
-    final dimensionScores = result.dimensionScores;
-
     if (dimensionResults.isEmpty && dimensionScores.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -21,7 +42,7 @@ class ScaleDimensionResultList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('维度结果', style: Theme.of(context).textTheme.titleSmall),
+            Text(title, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             if (dimensionResults.isNotEmpty)
               for (final item in dimensionResults) ...[
@@ -48,7 +69,7 @@ class ScaleDimensionResultList extends StatelessWidget {
     );
   }
 
-  String _resolveDimensionValue(ScaleDimensionResult item) {
+  String _resolveDimensionValue(ScaleDimensionResultItemData item) {
     if (item.rawScore != null) return item.rawScore!.toStringAsFixed(1);
     if (item.averageScore != null) return item.averageScore!.toStringAsFixed(2);
     if (item.standardScore != null) {

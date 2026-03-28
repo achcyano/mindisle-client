@@ -51,4 +51,44 @@ final class DoctorPatientRepositoryImpl implements DoctorPatientRepository {
       decodeDoctorPatientGroupingHistory,
     );
   }
+
+  @override
+  Future<Result<List<DoctorPatientGroupOption>>> fetchPatientGroups() {
+    return _executor.run(
+      _api.fetchPatientGroups,
+      decodeDoctorPatientGroupOptions,
+    );
+  }
+
+  @override
+  Future<Result<DoctorPatientGroupOption>> createPatientGroup({
+    required String severityGroup,
+  }) {
+    return _executor.run(
+      () => _api.createPatientGroup(severityGroup: severityGroup),
+      decodeDoctorPatientGroupOption,
+    );
+  }
+
+  @override
+  Future<Result<DoctorPatientDiagnosisUpdateResult>> updateDiagnosis({
+    required int patientUserId,
+    required DoctorPatientDiagnosisUpdatePayload payload,
+  }) {
+    return _executor.run(
+      () =>
+          _api.updateDiagnosis(patientUserId: patientUserId, payload: payload),
+      decodeDoctorPatientDiagnosisUpdateResult,
+    );
+  }
+
+  @override
+  Future<Result<DoctorPatientProfile>> fetchPatientProfile({
+    required int patientUserId,
+  }) {
+    return _executor.run(
+      () => _api.fetchPatientProfile(patientUserId: patientUserId),
+      decodeDoctorPatientProfile,
+    );
+  }
 }

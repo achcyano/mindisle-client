@@ -23,8 +23,17 @@ List<WeightTrendPoint> decodeWeightTrend(Object? rawData) {
       for (final raw in rawItems)
         if (raw is Map)
           WeightTrendPoint(
-            date: _toDateTime(raw['recordedDate']) ?? _toDateTime(raw['date']),
-            weightKg: _toDouble(raw['weightKg']) ?? _toDouble(raw['weight']),
+            date:
+                _toDateTime(raw['recordedDate']) ??
+                _toDateTime(raw['date']) ??
+                _toDateTime(raw['recordedAt']) ??
+                _toDateTime(raw['measuredAt']) ??
+                _toDateTime(raw['createdAt']) ??
+                _toDateTime(raw['updatedAt']),
+            weightKg:
+                _toDouble(raw['weightKg']) ??
+                _toDouble(raw['weight']) ??
+                _toDouble(raw['value']),
           ),
   ];
 }

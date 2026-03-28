@@ -1,28 +1,32 @@
+import 'package:app_core/app_core.dart';
+import 'package:app_ui/app_ui.dart';
+import 'package:doctor/features/doctor_scale/domain/entities/doctor_scale_entities.dart';
+import 'package:doctor/features/doctor_scale/presentation/providers/doctor_scale_providers.dart';
+import 'package:doctor/features/doctor_scale/presentation/result/doctor_scale_session_result_args.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:app_ui/app_ui.dart';
-import 'package:patient/core/result/result.dart';
-import 'package:patient/features/scale/domain/entities/scale_entities.dart';
-import 'package:patient/features/scale/presentation/result/scale_result_args.dart';
-import 'package:patient/features/scale/presentation/providers/scale_providers.dart';
 
-class ScaleResultPage extends ConsumerStatefulWidget {
-  const ScaleResultPage({super.key, required this.args});
+class DoctorScaleSessionResultPage extends ConsumerStatefulWidget {
+  const DoctorScaleSessionResultPage({super.key, required this.args});
 
-  final ScaleResultArgs args;
+  final DoctorScaleSessionResultArgs args;
 
-  static final route = AppRouteArg<void, ScaleResultArgs>(
-    path: '/home/scale/result',
-    builder: (args) => ScaleResultPage(args: args),
+  static final route = AppRouteArg<void, DoctorScaleSessionResultArgs>(
+    path: '/patients/scale/result',
+    builder: (args) => DoctorScaleSessionResultPage(args: args),
   );
 
   @override
-  ConsumerState<ScaleResultPage> createState() => _ScaleResultPageState();
+  ConsumerState<DoctorScaleSessionResultPage> createState() =>
+      _DoctorScaleSessionResultPageState();
 }
 
-class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
+class _DoctorScaleSessionResultPageState
+    extends ConsumerState<DoctorScaleSessionResultPage> {
+  static const int _historyFetchLimit = 100;
+
   bool _isLoading = false;
-  ScaleResult? _result;
+  DoctorScaleSessionResult? _result;
   String? _errorMessage;
   String? _historyErrorMessage;
   List<ScaleTrendPoint> _trendPoints = const <ScaleTrendPoint>[];
@@ -46,22 +50,25 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
     });
 
     final sessionResultFuture = ref
-        .read(fetchScaleSessionResultUseCaseProvider)
-        .execute(sessionId: widget.args.sessionId);
+        .read(fetchDoctorScaleSessionResultUseCaseProvider)
+        .execute(
+          patientUserId: widget.args.patientUserId,
+          sessionId: widget.args.sessionId,
+        );
     final historyResultFuture = ref
-        .read(fetchScaleHistoryUseCaseProvider)
-        .execute(limit: 200);
+        .read(fetchDoctorScaleAnswerRecordsUseCaseProvider)
+        .execute(
+          patientUserId: widget.args.patientUserId,
+          limit: _historyFetchLimit,
+        );
 
     final result = await sessionResultFuture;
     final historyResult = await historyResultFuture;
 
     if (!mounted) return;
     switch (result) {
-      case Failure<ScaleResult>(error: final error):
-        var message = error.message;
-        if (error.code == 40020 && error.statusCode == 409) {
-          message = '结果暂未生成，请稍后重试';
-        }
+      case Failure<DoctorScaleSessionResult>(error: final error):
+        final message = error.code == 40020 ? '结果暂未生成，请稍后重试' : error.message;
         setState(() {
           _isLoading = false;
           _errorMessage = message;
@@ -71,19 +78,18 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
           _radarEntries = const <ScaleRadarDimensionEntry>[];
         });
         return;
-      case Success<ScaleResult>(data: final data):
+      case Success<DoctorScaleSessionResult>(data: final data):
         final radarEntries = _buildRadarEntries(data);
         String? historyError;
         List<ScaleTrendPoint> trendPoints = const <ScaleTrendPoint>[];
         switch (historyResult) {
-          case Success<List<ScaleHistoryItem>>(data: final historyItems):
+          case Success<DoctorScaleAnswerRecordListResult>(data: final history):
             trendPoints = _buildTrendPoints(
-              scaleId: widget.args.scaleId,
               currentSessionId: widget.args.sessionId,
               result: data,
-              historyItems: historyItems,
+              historyItems: history.items,
             );
-          case Failure<List<ScaleHistoryItem>>(error: final error):
+          case Failure<DoctorScaleAnswerRecordListResult>(error: final error):
             historyError = error.message;
         }
 
@@ -218,21 +224,20 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
   }
 
   List<ScaleTrendPoint> _buildTrendPoints({
-    required int scaleId,
     required int currentSessionId,
-    required ScaleResult result,
-    required List<ScaleHistoryItem> historyItems,
+    required DoctorScaleSessionResult result,
+    required List<DoctorScaleAnswerRecord> historyItems,
   }) {
     final points = historyItems
-        .where((item) => item.scaleId == scaleId)
-        .where((item) => item.totalScore != null)
+        .where(_isSameScale)
+        .where((item) => item.numericScore != null)
         .map((item) {
-          final time = item.submittedAt ?? item.updatedAt;
+          final time = item.answeredAt;
           if (time == null) return null;
           return ScaleTrendPoint(
-            sessionId: item.sessionId,
+            sessionId: item.sessionId ?? item.recordId,
             time: time,
-            score: item.totalScore!,
+            score: item.numericScore!,
           );
         })
         .whereType<ScaleTrendPoint>()
@@ -257,7 +262,21 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
     return points;
   }
 
-  List<ScaleRadarDimensionEntry> _buildRadarEntries(ScaleResult result) {
+  bool _isSameScale(DoctorScaleAnswerRecord item) {
+    if (widget.args.scaleId != null && item.scaleId != null) {
+      return item.scaleId == widget.args.scaleId;
+    }
+    final expectedCode = widget.args.scaleCode?.trim().toUpperCase();
+    final actualCode = item.scaleCode?.trim().toUpperCase();
+    if (expectedCode != null && expectedCode.isNotEmpty) {
+      return actualCode == expectedCode;
+    }
+    return true;
+  }
+
+  List<ScaleRadarDimensionEntry> _buildRadarEntries(
+    DoctorScaleSessionResult result,
+  ) {
     final dimensionResults = result.dimensionResults;
     if (dimensionResults.isNotEmpty) {
       return dimensionResults
@@ -286,7 +305,9 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
         .toList(growable: false);
   }
 
-  List<ScaleDimensionResultItemData> _toDimensionItems(ScaleResult result) {
+  List<ScaleDimensionResultItemData> _toDimensionItems(
+    DoctorScaleSessionResult result,
+  ) {
     return result.dimensionResults
         .map(
           (item) => ScaleDimensionResultItemData(
@@ -301,7 +322,7 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
         .toList(growable: false);
   }
 
-  double? _resolveDimensionValue(ScaleDimensionResult item) {
+  double? _resolveDimensionValue(DoctorAssessmentDimensionResult item) {
     if (item.rawScore != null) return item.rawScore!;
     if (item.averageScore != null) return item.averageScore!;
     if (item.standardScore != null) return item.standardScore!;

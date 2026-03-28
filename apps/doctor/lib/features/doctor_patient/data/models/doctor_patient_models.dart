@@ -65,6 +65,75 @@ List<DoctorPatientGroupingHistoryItem> decodeDoctorPatientGroupingHistory(
   ];
 }
 
+List<DoctorPatientGroupOption> decodeDoctorPatientGroupOptions(
+  Object? rawData,
+) {
+  if (rawData is List) {
+    return [
+      for (final raw in rawData)
+        if (raw is Map)
+          if (_decodeGroupOption(Map<String, dynamic>.from(raw))
+              case final option when option.severityGroup.isNotEmpty)
+            option,
+    ];
+  }
+
+  final map = rawData is Map<String, dynamic>
+      ? rawData
+      : rawData is Map
+      ? Map<String, dynamic>.from(rawData)
+      : const <String, dynamic>{};
+  final rawItems = map['items'] ?? map['groups'];
+  return [
+    if (rawItems is List)
+      for (final raw in rawItems)
+        if (raw is Map)
+          if (_decodeGroupOption(Map<String, dynamic>.from(raw))
+              case final option when option.severityGroup.isNotEmpty)
+            option,
+  ];
+}
+
+DoctorPatientGroupOption decodeDoctorPatientGroupOption(Object? rawData) {
+  final map = Map<String, dynamic>.from(rawData as Map);
+  return _decodeGroupOption(map);
+}
+
+DoctorPatientDiagnosisUpdateResult decodeDoctorPatientDiagnosisUpdateResult(
+  Object? rawData,
+) {
+  final map = Map<String, dynamic>.from(rawData as Map);
+  return DoctorPatientDiagnosisUpdateResult(
+    patientUserId: _toInt(map['patientUserId']) ?? _toInt(map['userId']) ?? 0,
+    diagnosis: _toNonEmptyString(map['diagnosis']),
+    updatedAt: _toDateTime(map['updatedAt']) ?? _toDateTime(map['changedAt']),
+  );
+}
+
+DoctorPatientProfile decodeDoctorPatientProfile(Object? rawData) {
+  final map = Map<String, dynamic>.from(rawData as Map);
+  return DoctorPatientProfile(
+    patientUserId: _toInt(map['patientUserId']) ?? _toInt(map['userId']),
+    phone: _toNonEmptyString(map['phone']),
+    fullName: _toNonEmptyString(map['fullName']),
+    gender: DoctorPatientGender.fromApiValue(map['gender']),
+    birthDate: _toDateTime(map['birthDate']),
+    heightCm: _toDouble(map['heightCm']),
+    weightKg: _toDouble(map['weightKg']),
+    waistCm: _toDouble(map['waistCm']),
+    usesTcm: _toBoolOrNull(map['usesTcm']),
+    diseaseHistory: _toStringList(map['diseaseHistory']),
+  );
+}
+
+DoctorPatientGroupOption _decodeGroupOption(Map<String, dynamic> map) {
+  return DoctorPatientGroupOption(
+    severityGroup: _toNonEmptyString(map['severityGroup']) ?? '',
+    patientCount:
+        _toInt(map['patientCount']) ?? _toInt(map['boundPatientCount']) ?? 0,
+  );
+}
+
 int? _toInt(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
@@ -98,4 +167,24 @@ bool _toBool(Object? value) {
     return n == 'true' || n == '1';
   }
   return false;
+}
+
+bool? _toBoolOrNull(Object? value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final normalized = value.toLowerCase().trim();
+    if (normalized == 'true' || normalized == '1') return true;
+    if (normalized == 'false' || normalized == '0') return false;
+  }
+  return null;
+}
+
+List<String> _toStringList(Object? value) {
+  if (value is! List) return const <String>[];
+  return value
+      .map((item) => item.toString().trim())
+      .where((item) => item.isNotEmpty)
+      .toList(growable: false);
 }

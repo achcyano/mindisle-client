@@ -53,3 +53,51 @@ final class FetchDoctorPatientGroupingHistoryUseCase {
     );
   }
 }
+
+final class FetchDoctorPatientGroupsUseCase {
+  const FetchDoctorPatientGroupsUseCase(this._repository);
+
+  final DoctorPatientRepository _repository;
+
+  Future<Result<List<DoctorPatientGroupOption>>> execute() {
+    return _repository.fetchPatientGroups();
+  }
+}
+
+final class CreateDoctorPatientGroupUseCase {
+  const CreateDoctorPatientGroupUseCase(this._repository);
+
+  final DoctorPatientRepository _repository;
+
+  Future<Result<DoctorPatientGroupOption>> execute({
+    required String severityGroup,
+  }) {
+    return _repository.createPatientGroup(severityGroup: severityGroup);
+  }
+}
+
+final class UpdateDoctorPatientDiagnosisUseCase {
+  const UpdateDoctorPatientDiagnosisUseCase(this._repository);
+
+  final DoctorPatientRepository _repository;
+
+  Future<Result<DoctorPatientDiagnosisUpdateResult>> execute({
+    required int patientUserId,
+    required DoctorPatientDiagnosisUpdatePayload payload,
+  }) {
+    return _repository.updateDiagnosis(
+      patientUserId: patientUserId,
+      payload: payload,
+    );
+  }
+}
+
+final class FetchDoctorPatientProfileUseCase {
+  const FetchDoctorPatientProfileUseCase(this._repository);
+
+  final DoctorPatientRepository _repository;
+
+  Future<Result<DoctorPatientProfile>> execute({required int patientUserId}) {
+    return _repository.fetchPatientProfile(patientUserId: patientUserId);
+  }
+}

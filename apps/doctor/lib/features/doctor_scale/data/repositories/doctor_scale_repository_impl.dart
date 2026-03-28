@@ -14,17 +14,6 @@ final class DoctorScaleRepositoryImpl implements DoctorScaleRepository {
   final ApiCallExecutor _executor;
 
   @override
-  Future<Result<List<DoctorScaleTrendPoint>>> fetchScaleTrends({
-    required int patientUserId,
-    int days = 180,
-  }) {
-    return _executor.run(
-      () => _api.fetchScaleTrends(patientUserId: patientUserId, days: days),
-      decodeDoctorScaleTrends,
-    );
-  }
-
-  @override
   Future<Result<DoctorAssessmentReport>> generateAssessmentReport({
     required int patientUserId,
     int? days,
@@ -35,6 +24,76 @@ final class DoctorScaleRepositoryImpl implements DoctorScaleRepository {
         days: days,
       ),
       decodeDoctorAssessmentReport,
+    );
+  }
+
+  @override
+  Future<Result<DoctorAssessmentReportSummary>> fetchLatestAssessmentReport({
+    required int patientUserId,
+  }) {
+    return _executor.run(
+      () => _api.fetchLatestAssessmentReport(patientUserId: patientUserId),
+      decodeDoctorLatestAssessmentReport,
+    );
+  }
+
+  @override
+  Future<Result<DoctorAssessmentReportListResult>> fetchAssessmentReports({
+    required int patientUserId,
+    int limit = 20,
+    String? cursor,
+  }) {
+    return _executor.run(
+      () => _api.fetchAssessmentReports(
+        patientUserId: patientUserId,
+        limit: limit,
+        cursor: cursor,
+      ),
+      decodeDoctorAssessmentReports,
+    );
+  }
+
+  @override
+  Future<Result<DoctorAssessmentReportDetail>> fetchAssessmentReportDetail({
+    required int patientUserId,
+    required int reportId,
+  }) {
+    return _executor.run(
+      () => _api.fetchAssessmentReportDetail(
+        patientUserId: patientUserId,
+        reportId: reportId,
+      ),
+      decodeDoctorAssessmentReportDetail,
+    );
+  }
+
+  @override
+  Future<Result<DoctorScaleAnswerRecordListResult>> fetchScaleAnswerRecords({
+    required int patientUserId,
+    int limit = 20,
+    String? cursor,
+  }) {
+    return _executor.run(
+      () => _api.fetchScaleAnswerRecords(
+        patientUserId: patientUserId,
+        limit: limit,
+        cursor: cursor,
+      ),
+      decodeDoctorScaleAnswerRecords,
+    );
+  }
+
+  @override
+  Future<Result<DoctorScaleSessionResult>> fetchSessionResult({
+    required int patientUserId,
+    required int sessionId,
+  }) {
+    return _executor.run(
+      () => _api.fetchScaleSessionResult(
+        patientUserId: patientUserId,
+        sessionId: sessionId,
+      ),
+      decodeDoctorScaleSessionResult,
     );
   }
 }

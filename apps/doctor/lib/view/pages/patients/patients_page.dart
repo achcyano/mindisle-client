@@ -1,7 +1,9 @@
 import 'package:app_ui/app_ui.dart';
 import 'package:doctor/features/doctor_patient/domain/entities/doctor_patient_entities.dart';
+import 'package:doctor/features/doctor_patient/presentation/detail/doctor_patient_detail_args.dart';
 import 'package:doctor/features/doctor_patient/presentation/patient/doctor_patient_controller.dart';
 import 'package:doctor/features/doctor_patient/presentation/patient/doctor_patient_state.dart';
+import 'package:doctor/view/pages/patients/patient_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,6 +23,7 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final Set<int> _updatingGroupPatientIds = <int>{};
+  final Set<int> _updatingDiagnosisPatientIds = <int>{};
   String? _lastErrorMessage;
 
   @override
@@ -31,7 +34,9 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
     _searchController.text = initialQuery.keyword ?? '';
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(doctorPatientControllerProvider.notifier).refresh();
+      final controller = ref.read(doctorPatientControllerProvider.notifier);
+      controller.refresh();
+      controller.loadGroupOptions();
     });
   }
 
@@ -151,7 +156,13 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
                             patient: patient,
                             isUpdatingGrouping: _updatingGroupPatientIds
                                 .contains(patient.patientUserId),
-                            onLongPress: () => _editGrouping(patient),
+                            isUpdatingDiagnosis: _updatingDiagnosisPatientIds
+                                .contains(patient.patientUserId),
+                            onTap: () => DoctorPatientDetailPage.route.goRoot(
+                              context,
+                              DoctorPatientDetailArgs(patient: patient),
+                            ),
+                            onLongPress: () => _openManageSheet(patient),
                           );
                         }, childCount: patientState.data.items.length * 2 - 1),
                       ),
@@ -172,8 +183,10 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
     );
   }
 
-  Future<void> _onRefresh() {
-    return ref.read(doctorPatientControllerProvider.notifier).refresh();
+  Future<void> _onRefresh() async {
+    final controller = ref.read(doctorPatientControllerProvider.notifier);
+    await controller.refresh();
+    await controller.loadGroupOptions(force: true);
   }
 
   void _onScroll() {
@@ -202,12 +215,17 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
   }
 
   Future<void> _openFilterSortSheet(DoctorPatientQuery currentQuery) async {
+    final currentState = ref.read(doctorPatientControllerProvider);
     final nextQuery = await showModalBottomSheet<DoctorPatientQuery>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _PatientFilterSortSheet(query: currentQuery),
+      builder: (_) => _PatientFilterSortSheet(
+        query: currentQuery,
+        groupOptions: currentState.data.groupOptions,
+        onCreateGroup: _createGroup,
+      ),
     );
     if (!mounted || nextQuery == null) return;
     await ref
@@ -215,14 +233,52 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
         .applyQuery(nextQuery);
   }
 
-  Future<void> _editGrouping(DoctorPatient patient) async {
-    final input = await showDialog<String?>(
+  Future<void> _openManageSheet(DoctorPatient patient) async {
+    final action = await showModalBottomSheet<_PatientManageAction>(
       context: context,
-      builder: (context) => _EditGroupingDialog(patient: patient),
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.sell_outlined),
+              title: const Text('编辑分组'),
+              onTap: () =>
+                  Navigator.of(context).pop(_PatientManageAction.editGroup),
+            ),
+            ListTile(
+              leading: const Icon(Icons.medical_information_outlined),
+              title: const Text('编辑诊断'),
+              onTap: () =>
+                  Navigator.of(context).pop(_PatientManageAction.editDiagnosis),
+            ),
+          ],
+        ),
+      ),
     );
-    if (!mounted || input == null) return;
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _PatientManageAction.editGroup:
+        await _editGrouping(patient);
+      case _PatientManageAction.editDiagnosis:
+        await _editDiagnosis(patient);
+    }
+  }
 
-    final severityGroup = _normalizeText(input);
+  Future<void> _editGrouping(DoctorPatient patient) async {
+    final groups = ref.read(doctorPatientControllerProvider).data.groupOptions;
+    final selected = await showDialog<String?>(
+      context: context,
+      builder: (context) => _EditGroupingDialog(
+        patient: patient,
+        groupOptions: groups,
+        onCreateGroup: _createGroup,
+      ),
+    );
+    if (!mounted || selected == null) return;
+
+    final severityGroup = _normalizeText(selected);
     setState(() {
       _updatingGroupPatientIds.add(patient.patientUserId);
     });
@@ -249,6 +305,52 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
     }
   }
 
+  Future<void> _editDiagnosis(DoctorPatient patient) async {
+    final text = await showDialog<String?>(
+      context: context,
+      builder: (context) => _EditDiagnosisDialog(patient: patient),
+    );
+    if (!mounted || text == null) return;
+    final diagnosis = _normalizeText(text);
+    setState(() {
+      _updatingDiagnosisPatientIds.add(patient.patientUserId);
+    });
+    try {
+      final message = await ref
+          .read(doctorPatientControllerProvider.notifier)
+          .updateDiagnosis(
+            patientUserId: patient.patientUserId,
+            payload: DoctorPatientDiagnosisUpdatePayload(diagnosis: diagnosis),
+          );
+      if (!mounted) return;
+      if (message != null && message.trim().isNotEmpty) {
+        _showSnack(message);
+        return;
+      }
+      _showSnack(diagnosis == null ? '已清除诊断' : '诊断已更新');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _updatingDiagnosisPatientIds.remove(patient.patientUserId);
+        });
+      }
+    }
+  }
+
+  Future<String?> _createGroup(String input) async {
+    final severityGroup = _normalizeText(input);
+    if (severityGroup == null) {
+      return '分组名称不能为空';
+    }
+    final message = await ref
+        .read(doctorPatientControllerProvider.notifier)
+        .createGroup(severityGroup: severityGroup);
+    if (mounted && message != null && message.trim().isNotEmpty) {
+      _showSnack(message);
+    }
+    return message;
+  }
+
   String? _normalizeText(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
@@ -260,6 +362,8 @@ class _DoctorPatientsPageState extends ConsumerState<DoctorPatientsPage> {
     messenger?.showSnackBar(SnackBar(content: Text(message)));
   }
 }
+
+enum _PatientManageAction { editGroup, editDiagnosis }
 
 class _AppBarSearchField extends StatelessWidget {
   const _AppBarSearchField({
@@ -375,9 +479,15 @@ class _PatientTopBar extends StatelessWidget {
 }
 
 class _PatientFilterSortSheet extends StatefulWidget {
-  const _PatientFilterSortSheet({required this.query});
+  const _PatientFilterSortSheet({
+    required this.query,
+    required this.groupOptions,
+    required this.onCreateGroup,
+  });
 
   final DoctorPatientQuery query;
+  final List<DoctorPatientGroupOption> groupOptions;
+  final Future<String?> Function(String input) onCreateGroup;
 
   @override
   State<_PatientFilterSortSheet> createState() =>
@@ -389,9 +499,12 @@ class _PatientFilterSortSheetState extends State<_PatientFilterSortSheet> {
   late bool? _abnormalOnly;
   late DoctorPatientSortBy _sortBy;
   late DoctorSortOrder _sortOrder;
-  late final TextEditingController _groupController;
+  late String? _selectedGroup;
+  late final TextEditingController _diagnosisController;
   late final TextEditingController _sclMinController;
   late final TextEditingController _sclMaxController;
+  late List<DoctorPatientGroupOption> _groupOptions;
+  bool _isCreatingGroup = false;
 
   @override
   void initState() {
@@ -400,8 +513,9 @@ class _PatientFilterSortSheetState extends State<_PatientFilterSortSheet> {
     _abnormalOnly = widget.query.abnormalOnly;
     _sortBy = widget.query.sortBy;
     _sortOrder = widget.query.sortOrder;
-    _groupController = TextEditingController(
-      text: widget.query.severityGroup ?? '',
+    _selectedGroup = widget.query.severityGroup?.trim();
+    _diagnosisController = TextEditingController(
+      text: widget.query.diagnosisKeyword ?? '',
     );
     _sclMinController = TextEditingController(
       text: widget.query.scl90ScoreMin?.toString() ?? '',
@@ -409,11 +523,23 @@ class _PatientFilterSortSheetState extends State<_PatientFilterSortSheet> {
     _sclMaxController = TextEditingController(
       text: widget.query.scl90ScoreMax?.toString() ?? '',
     );
+    _groupOptions = widget.groupOptions.toList(growable: false);
+    if (_selectedGroup != null &&
+        _selectedGroup!.isNotEmpty &&
+        !_groupOptions.any((item) => item.severityGroup == _selectedGroup)) {
+      _groupOptions = [
+        ..._groupOptions,
+        DoctorPatientGroupOption(
+          severityGroup: _selectedGroup!,
+          patientCount: 0,
+        ),
+      ];
+    }
   }
 
   @override
   void dispose() {
-    _groupController.dispose();
+    _diagnosisController.dispose();
     _sclMinController.dispose();
     _sclMaxController.dispose();
     super.dispose();
@@ -461,11 +587,54 @@ class _PatientFilterSortSheetState extends State<_PatientFilterSortSheet> {
               onChanged: (value) => setState(() => _gender = value),
             ),
             const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String?>(
+                    key: ValueKey<String>('group-${_selectedGroup ?? 'all'}'),
+                    initialValue: _selectedGroup,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: '分组'),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('全部'),
+                      ),
+                      for (final item in _groupOptions)
+                        DropdownMenuItem<String?>(
+                          value: item.severityGroup,
+                          child: Text(
+                            item.patientCount > 0
+                                ? '${item.severityGroup}（${item.patientCount}）'
+                                : item.severityGroup,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _selectedGroup = value),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: _isCreatingGroup ? null : _createGroup,
+                  icon: _isCreatingGroup
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add),
+                  label: const Text('新增'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             TextField(
-              controller: _groupController,
+              controller: _diagnosisController,
               decoration: const InputDecoration(
-                labelText: '分组',
-                hintText: '输入分组名称，留空表示不过滤',
+                labelText: '诊断关键字（本地筛选）',
+                hintText: '输入后按本地诊断文本筛选',
               ),
             ),
             const SizedBox(height: 12),
@@ -571,7 +740,8 @@ class _PatientFilterSortSheetState extends State<_PatientFilterSortSheet> {
       _abnormalOnly = null;
       _sortBy = DoctorPatientSortBy.latestAssessmentAt;
       _sortOrder = DoctorSortOrder.desc;
-      _groupController.clear();
+      _selectedGroup = null;
+      _diagnosisController.clear();
       _sclMinController.clear();
       _sclMaxController.clear();
     });
@@ -593,7 +763,8 @@ class _PatientFilterSortSheetState extends State<_PatientFilterSortSheet> {
 
     final nextQuery = widget.query.copyWith(
       gender: _gender,
-      severityGroup: _normalizeText(_groupController.text),
+      severityGroup: _selectedGroup,
+      diagnosisKeyword: _normalizeText(_diagnosisController.text),
       abnormalOnly: _abnormalOnly,
       scl90ScoreMin: min,
       scl90ScoreMax: max,
@@ -601,6 +772,49 @@ class _PatientFilterSortSheetState extends State<_PatientFilterSortSheet> {
       sortOrder: _sortOrder,
     );
     Navigator.of(context).pop(nextQuery);
+  }
+
+  Future<void> _createGroup() async {
+    final text = await showDialog<String?>(
+      context: context,
+      builder: (_) => const _CreateGroupDialog(),
+    );
+    if (!mounted || text == null) return;
+    final normalized = _normalizeText(text);
+    if (normalized == null) {
+      _showSnack('分组名称不能为空');
+      return;
+    }
+    setState(() {
+      _isCreatingGroup = true;
+    });
+    try {
+      final message = await widget.onCreateGroup(normalized);
+      if (!mounted) return;
+      if (message != null && message.trim().isNotEmpty) {
+        _showSnack(message);
+        return;
+      }
+      setState(() {
+        if (!_groupOptions.any((item) => item.severityGroup == normalized)) {
+          _groupOptions = [
+            ..._groupOptions,
+            DoctorPatientGroupOption(
+              severityGroup: normalized,
+              patientCount: 0,
+            ),
+          ];
+        }
+        _selectedGroup = normalized;
+      });
+      _showSnack('分组已添加');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingGroup = false;
+        });
+      }
+    }
   }
 
   String? _normalizeText(String value) {
@@ -619,11 +833,15 @@ class _PatientCard extends StatelessWidget {
   const _PatientCard({
     required this.patient,
     required this.isUpdatingGrouping,
+    required this.isUpdatingDiagnosis,
+    required this.onTap,
     required this.onLongPress,
   });
 
   final DoctorPatient patient;
   final bool isUpdatingGrouping;
+  final bool isUpdatingDiagnosis;
+  final VoidCallback onTap;
   final VoidCallback onLongPress;
 
   @override
@@ -635,11 +853,17 @@ class _PatientCard extends StatelessWidget {
     final groupText = patient.severityGroup?.trim().isNotEmpty == true
         ? patient.severityGroup!.trim()
         : '未分组';
+    final diagnosisText = patient.diagnosis?.trim().isNotEmpty == true
+        ? patient.diagnosis!.trim()
+        : '暂无诊断';
+    final summaryText = '$groupText | $diagnosisText';
+    final isUpdating = isUpdatingGrouping || isUpdatingDiagnosis;
 
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onLongPress: isUpdatingGrouping ? null : onLongPress,
+        onTap: onTap,
+        onLongPress: isUpdating ? null : onLongPress,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: Column(
@@ -659,13 +883,13 @@ class _PatientCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   Flexible(
                     child: Text(
-                      groupText,
+                      summaryText,
                       style: smallTextStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (isUpdatingGrouping) ...[
+                  if (isUpdating) ...[
                     const SizedBox(width: 8),
                     const SizedBox.square(
                       dimension: 16,
@@ -758,29 +982,41 @@ class _EmptyPatientsState extends StatelessWidget {
 }
 
 class _EditGroupingDialog extends StatefulWidget {
-  const _EditGroupingDialog({required this.patient});
+  const _EditGroupingDialog({
+    required this.patient,
+    required this.groupOptions,
+    required this.onCreateGroup,
+  });
 
   final DoctorPatient patient;
+  final List<DoctorPatientGroupOption> groupOptions;
+  final Future<String?> Function(String input) onCreateGroup;
 
   @override
   State<_EditGroupingDialog> createState() => _EditGroupingDialogState();
 }
 
 class _EditGroupingDialogState extends State<_EditGroupingDialog> {
-  late final TextEditingController _controller;
+  late String? _selectedGroup;
+  late List<DoctorPatientGroupOption> _groupOptions;
+  bool _isCreatingGroup = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(
-      text: widget.patient.severityGroup ?? '',
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    _selectedGroup = widget.patient.severityGroup?.trim();
+    _groupOptions = widget.groupOptions.toList(growable: false);
+    if (_selectedGroup != null &&
+        _selectedGroup!.isNotEmpty &&
+        !_groupOptions.any((item) => item.severityGroup == _selectedGroup)) {
+      _groupOptions = [
+        ..._groupOptions,
+        DoctorPatientGroupOption(
+          severityGroup: _selectedGroup!,
+          patientCount: 0,
+        ),
+      ];
+    }
   }
 
   @override
@@ -798,17 +1034,140 @@ class _EditGroupingDialogState extends State<_EditGroupingDialog> {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: '分组',
-              hintText: '留空表示清除分组',
+          DropdownButtonFormField<String?>(
+            key: ValueKey<String>('edit-group-${_selectedGroup ?? 'none'}'),
+            initialValue: _selectedGroup,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: '分组'),
+            items: [
+              const DropdownMenuItem<String?>(value: null, child: Text('未分组')),
+              for (final item in _groupOptions)
+                DropdownMenuItem<String?>(
+                  value: item.severityGroup,
+                  child: Text(item.severityGroup),
+                ),
+            ],
+            onChanged: (value) => setState(() => _selectedGroup = value),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _isCreatingGroup ? null : _createGroup,
+              icon: _isCreatingGroup
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.add),
+              label: const Text('新增分组'),
             ),
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _save(),
           ),
         ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_selectedGroup ?? ''),
+          child: const Text('保存'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _createGroup() async {
+    final text = await showDialog<String?>(
+      context: context,
+      builder: (_) => const _CreateGroupDialog(),
+    );
+    if (!mounted || text == null) return;
+    final normalized = text.trim();
+    if (normalized.isEmpty) {
+      _showSnack('分组名称不能为空');
+      return;
+    }
+    setState(() {
+      _isCreatingGroup = true;
+    });
+    try {
+      final message = await widget.onCreateGroup(normalized);
+      if (!mounted) return;
+      if (message != null && message.trim().isNotEmpty) {
+        _showSnack(message);
+        return;
+      }
+      setState(() {
+        if (!_groupOptions.any((item) => item.severityGroup == normalized)) {
+          _groupOptions = [
+            ..._groupOptions,
+            DoctorPatientGroupOption(
+              severityGroup: normalized,
+              patientCount: 0,
+            ),
+          ];
+        }
+        _selectedGroup = normalized;
+      });
+      _showSnack('分组已添加');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingGroup = false;
+        });
+      }
+    }
+  }
+
+  void _showSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _EditDiagnosisDialog extends StatefulWidget {
+  const _EditDiagnosisDialog({required this.patient});
+
+  final DoctorPatient patient;
+
+  @override
+  State<_EditDiagnosisDialog> createState() => _EditDiagnosisDialogState();
+}
+
+class _EditDiagnosisDialogState extends State<_EditDiagnosisDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.patient.diagnosis ?? '');
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('编辑诊断'),
+      content: TextField(
+        controller: _controller,
+        maxLines: 3,
+        minLines: 1,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: '诊断',
+          hintText: '留空表示清除诊断',
+        ),
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _save(),
       ),
       actions: [
         TextButton(
@@ -820,6 +1179,51 @@ class _EditGroupingDialogState extends State<_EditGroupingDialog> {
           child: const Text('清除'),
         ),
         FilledButton(onPressed: _save, child: const Text('保存')),
+      ],
+    );
+  }
+
+  void _save() {
+    Navigator.of(context).pop(_controller.text);
+  }
+}
+
+class _CreateGroupDialog extends StatefulWidget {
+  const _CreateGroupDialog();
+
+  @override
+  State<_CreateGroupDialog> createState() => _CreateGroupDialogState();
+}
+
+class _CreateGroupDialogState extends State<_CreateGroupDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('新增分组'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(
+          labelText: '分组名称',
+          hintText: '请输入分组名称',
+        ),
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _save(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('取消'),
+        ),
+        FilledButton(onPressed: _save, child: const Text('确定')),
       ],
     );
   }

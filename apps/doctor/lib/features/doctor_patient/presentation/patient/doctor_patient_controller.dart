@@ -24,7 +24,8 @@ final class DoctorPatientController extends AsyncController<DoctorPatientData> {
     final previousData = state.data;
     final targetQuery = query ?? previousData.query;
     final shouldResetItems = clearItems || !previousData.hasLoaded;
-    final showFullLoading = shouldResetItems || previousData.items.isEmpty;
+    final showFullLoading =
+        shouldResetItems || previousData.sourceItems.isEmpty;
 
     state = state.copyWith(
       isLoading: showFullLoading,
@@ -32,6 +33,9 @@ final class DoctorPatientController extends AsyncController<DoctorPatientData> {
       data: previousData.copyWith(
         query: targetQuery,
         items: shouldResetItems ? const <DoctorPatient>[] : previousData.items,
+        sourceItems: shouldResetItems
+            ? const <DoctorPatient>[]
+            : previousData.sourceItems,
         nextCursor: shouldResetItems ? null : previousData.nextCursor,
         isRefreshing: !showFullLoading,
         isLoadingMore: false,
@@ -44,11 +48,16 @@ final class DoctorPatientController extends AsyncController<DoctorPatientData> {
 
     result.when(
       success: (data) {
+        final visibleItems = _applyDiagnosisFilter(
+          data.items,
+          targetQuery.diagnosisKeyword,
+        );
         state = state.copyWith(
           isLoading: false,
           errorMessage: null,
           data: state.data.copyWith(
-            items: data.items,
+            sourceItems: data.items,
+            items: visibleItems,
             nextCursor: data.nextCursor,
             isRefreshing: false,
             isLoadingMore: false,
@@ -71,6 +80,20 @@ final class DoctorPatientController extends AsyncController<DoctorPatientData> {
   }
 
   Future<void> applyQuery(DoctorPatientQuery query) {
+    final current = state.data.query;
+    if (current.isRemoteEqualTo(query)) {
+      state = state.copyWith(
+        errorMessage: null,
+        data: state.data.copyWith(
+          query: query,
+          items: _applyDiagnosisFilter(
+            state.data.sourceItems,
+            query.diagnosisKeyword,
+          ),
+        ),
+      );
+      return Future.value();
+    }
     return refresh(query: query, clearItems: true);
   }
 
@@ -98,10 +121,19 @@ final class DoctorPatientController extends AsyncController<DoctorPatientData> {
 
     result.when(
       success: (data) {
+        final mergedItems = _mergeByPatientUserId(
+          state.data.sourceItems,
+          data.items,
+        );
+        final visibleItems = _applyDiagnosisFilter(
+          mergedItems,
+          state.data.query.diagnosisKeyword,
+        );
         state = state.copyWith(
           errorMessage: null,
           data: state.data.copyWith(
-            items: _mergeByPatientUserId(state.data.items, data.items),
+            sourceItems: mergedItems,
+            items: visibleItems,
             nextCursor: data.nextCursor,
             isLoadingMore: false,
             hasLoaded: true,
@@ -127,16 +159,114 @@ final class DoctorPatientController extends AsyncController<DoctorPatientData> {
 
     return result.when(
       success: (data) {
+        final updated = _updatePatient(
+          state.data.sourceItems,
+          patientUserId: patientUserId,
+          updater: (patient) =>
+              patient.copyWith(severityGroup: data.severityGroup),
+        );
+        final visibleItems = _applyDiagnosisFilter(
+          updated,
+          state.data.query.diagnosisKeyword,
+        );
         state = state.copyWith(
           errorMessage: null,
           data: state.data.copyWith(
-            items: [
-              for (final patient in state.data.items)
-                if (patient.patientUserId == patientUserId)
-                  patient.copyWith(severityGroup: data.severityGroup)
-                else
-                  patient,
-            ],
+            sourceItems: updated,
+            items: visibleItems,
+            groupOptions: _mergeGroupOption(
+              state.data.groupOptions,
+              data.severityGroup,
+            ),
+          ),
+        );
+        return null;
+      },
+      failure: (error) {
+        state = state.copyWith(errorMessage: error.message);
+        return error.message;
+      },
+    );
+  }
+
+  Future<void> loadGroupOptions({bool force = false}) async {
+    final currentData = state.data;
+    if (currentData.isLoadingGroups) return;
+    if (!force && currentData.groupOptions.isNotEmpty) return;
+
+    state = state.copyWith(data: currentData.copyWith(isLoadingGroups: true));
+
+    final result = await _ref
+        .read(fetchDoctorPatientGroupsUseCaseProvider)
+        .execute();
+    result.when(
+      success: (groups) {
+        state = state.copyWith(
+          data: state.data.copyWith(
+            groupOptions: _sortGroupOptions(groups),
+            isLoadingGroups: false,
+          ),
+        );
+      },
+      failure: (error) {
+        state = state.copyWith(
+          data: state.data.copyWith(isLoadingGroups: false),
+          errorMessage: error.message,
+        );
+      },
+    );
+  }
+
+  Future<String?> createGroup({required String severityGroup}) async {
+    final normalized = severityGroup.trim();
+    if (normalized.isEmpty) {
+      return '分组名称不能为空';
+    }
+    final result = await _ref
+        .read(createDoctorPatientGroupUseCaseProvider)
+        .execute(severityGroup: normalized);
+    return result.when(
+      success: (group) {
+        final merged = _mergeGroupOption(
+          state.data.groupOptions,
+          group.severityGroup,
+          patientCount: group.patientCount,
+        );
+        state = state.copyWith(
+          errorMessage: null,
+          data: state.data.copyWith(groupOptions: merged),
+        );
+        return null;
+      },
+      failure: (error) {
+        state = state.copyWith(errorMessage: error.message);
+        return error.message;
+      },
+    );
+  }
+
+  Future<String?> updateDiagnosis({
+    required int patientUserId,
+    required DoctorPatientDiagnosisUpdatePayload payload,
+  }) async {
+    final result = await _ref
+        .read(updateDoctorPatientDiagnosisUseCaseProvider)
+        .execute(patientUserId: patientUserId, payload: payload);
+    return result.when(
+      success: (data) {
+        final updated = _updatePatient(
+          state.data.sourceItems,
+          patientUserId: patientUserId,
+          updater: (patient) => patient.copyWith(diagnosis: data.diagnosis),
+        );
+        state = state.copyWith(
+          errorMessage: null,
+          data: state.data.copyWith(
+            sourceItems: updated,
+            items: _applyDiagnosisFilter(
+              updated,
+              state.data.query.diagnosisKeyword,
+            ),
           ),
         );
         return null;
@@ -159,5 +289,79 @@ final class DoctorPatientController extends AsyncController<DoctorPatientData> {
       map[item.patientUserId] = item;
     }
     return map.values.toList(growable: false);
+  }
+
+  List<DoctorPatient> _updatePatient(
+    List<DoctorPatient> source, {
+    required int patientUserId,
+    required DoctorPatient Function(DoctorPatient patient) updater,
+  }) {
+    return [
+      for (final patient in source)
+        if (patient.patientUserId == patientUserId)
+          updater(patient)
+        else
+          patient,
+    ];
+  }
+
+  List<DoctorPatient> _applyDiagnosisFilter(
+    List<DoctorPatient> source,
+    String? diagnosisKeyword,
+  ) {
+    final normalized = diagnosisKeyword?.trim().toLowerCase();
+    if (normalized == null || normalized.isEmpty) {
+      return source;
+    }
+    return [
+      for (final patient in source)
+        if ((patient.diagnosis ?? '').trim().toLowerCase().contains(normalized))
+          patient,
+    ];
+  }
+
+  List<DoctorPatientGroupOption> _mergeGroupOption(
+    List<DoctorPatientGroupOption> source,
+    String? severityGroup, {
+    int patientCount = 0,
+  }) {
+    final normalized = severityGroup?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return source;
+    }
+    final existingIndex = source.indexWhere(
+      (item) => item.severityGroup == normalized,
+    );
+    if (existingIndex < 0) {
+      return _sortGroupOptions([
+        ...source,
+        DoctorPatientGroupOption(
+          severityGroup: normalized,
+          patientCount: patientCount,
+        ),
+      ]);
+    }
+
+    final existing = source[existingIndex];
+    final next = source.toList(growable: false);
+    next[existingIndex] = DoctorPatientGroupOption(
+      severityGroup: existing.severityGroup,
+      patientCount: existing.patientCount > 0
+          ? existing.patientCount
+          : patientCount,
+    );
+    return _sortGroupOptions(next);
+  }
+
+  List<DoctorPatientGroupOption> _sortGroupOptions(
+    List<DoctorPatientGroupOption> input,
+  ) {
+    final sorted = input.toList(growable: false);
+    sorted.sort((a, b) {
+      final countCompare = b.patientCount.compareTo(a.patientCount);
+      if (countCompare != 0) return countCompare;
+      return a.severityGroup.compareTo(b.severityGroup);
+    });
+    return sorted;
   }
 }

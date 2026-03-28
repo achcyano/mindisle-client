@@ -81,7 +81,11 @@ AppError mapServerCodeToAppError({
     40021 ||
     40030 ||
     40040 ||
-    40041 => AppErrorType.validation,
+    40041 ||
+    40043 ||
+    40044 ||
+    40045 ||
+    40046 => AppErrorType.validation,
     40042 || 40101 => AppErrorType.invalidCredentials,
     40100 || 40310 || 40320 || 40340 => AppErrorType.unauthorized,
     40401 ||
@@ -94,7 +98,8 @@ AppError mapServerCodeToAppError({
     40422 ||
     40430 ||
     40440 ||
-    40441 => AppErrorType.notFound,
+    40441 ||
+    40442 => AppErrorType.notFound,
     40901 || 40910 || 40911 || 40920 || 40921 || 40940 => AppErrorType.conflict,
     42901 || 42902 || 42903 || 42910 || 42920 => AppErrorType.rateLimited,
     42220 => AppErrorType.validation,
@@ -152,8 +157,12 @@ String? _localizedMessageForCode(int code, String serverMessage) {
     40021 => '量表作答数据错误',
     40030 => '医生绑定参数错误',
     40040 => '医生端注册参数错误',
-    40041 => '医生端认证参数错误',
+    40041 => '绑定码无效或已过期',
     40042 => '医生端密码错误',
+    40043 => '筛选条件无效',
+    40044 => '排序参数无效',
+    40045 => '分页参数无效',
+    40046 => '该功能暂未开放',
     40100 => '登录状态已过期，请重新登录',
     40101 => '用户名或密码错误',
     40310 => '无权限访问该资源',
@@ -169,7 +178,8 @@ String? _localizedMessageForCode(int code, String serverMessage) {
     40422 => '副作用记录不存在',
     40430 => '绑定记录不存在',
     40440 => '医生不存在',
-    40441 => '医生绑定历史不存在',
+    40441 => '医患绑定关系不存在',
+    40442 => '报告不存在',
     40901 => '手机号已注册',
     40910 => '量表会话状态冲突',
     40911 => '量表会话已结束或不可提交',

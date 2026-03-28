@@ -2,10 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 final class ScaleRadarDimensionEntry {
-  const ScaleRadarDimensionEntry({
-    required this.label,
-    required this.value,
-  });
+  const ScaleRadarDimensionEntry({required this.label, required this.value});
 
   final String label;
   final double value;
@@ -15,9 +12,11 @@ class ScaleDimensionRadarChartCard extends StatelessWidget {
   const ScaleDimensionRadarChartCard({
     super.key,
     required this.entries,
+    this.title = '维度雷达图',
   });
 
   final List<ScaleRadarDimensionEntry> entries;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +34,7 @@ class ScaleDimensionRadarChartCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('维度雷达图', style: theme.textTheme.titleSmall),
+            Text(title, style: theme.textTheme.titleSmall),
             const SizedBox(height: 10),
             SizedBox(
               height: 260,
@@ -61,7 +60,9 @@ class ScaleDimensionRadarChartCard extends StatelessWidget {
                     if (index < 0 || index >= entries.length) {
                       return const RadarChartTitle(text: '');
                     }
-                    return RadarChartTitle(text: _shortLabel(entries[index].label));
+                    return RadarChartTitle(
+                      text: _shortLabel(entries[index].label),
+                    );
                   },
                   dataSets: [
                     RadarDataSet(
@@ -87,7 +88,9 @@ class ScaleDimensionRadarChartCard extends StatelessWidget {
                 for (final item in entries)
                   Chip(
                     visualDensity: VisualDensity.compact,
-                    label: Text('${item.label} ${item.value.toStringAsFixed(1)}'),
+                    label: Text(
+                      '${item.label} ${item.value.toStringAsFixed(1)}',
+                    ),
                   ),
               ],
             ),
@@ -98,9 +101,7 @@ class ScaleDimensionRadarChartCard extends StatelessWidget {
   }
 
   double _maxValue(List<ScaleRadarDimensionEntry> values) {
-    final maxRaw = values
-        .map((it) => it.value)
-        .reduce((a, b) => a > b ? a : b);
+    final maxRaw = values.map((it) => it.value).reduce((a, b) => a > b ? a : b);
     final scaled = maxRaw <= 0 ? 1.0 : maxRaw * 1.2;
     return scaled < 1 ? 1.0 : scaled;
   }
