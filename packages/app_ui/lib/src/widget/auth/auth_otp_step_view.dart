@@ -21,6 +21,8 @@ class AuthOtpStepView extends StatefulWidget {
     this.title = '输入验证码',
     this.descriptionBuilder,
     this.resendLabel = '重发验证码',
+    this.codeLength = 6,
+    this.useOuterSpacers = true,
   });
 
   final String phoneDigits;
@@ -38,6 +40,8 @@ class AuthOtpStepView extends StatefulWidget {
   final String title;
   final String Function(String formattedPhone)? descriptionBuilder;
   final String resendLabel;
+  final int codeLength;
+  final bool useOuterSpacers;
 
   @override
   State<AuthOtpStepView> createState() => _AuthOtpStepViewState();
@@ -48,7 +52,8 @@ class _AuthOtpStepViewState extends State<AuthOtpStepView> {
   void didUpdateWidget(covariant AuthOtpStepView oldWidget) {
     super.didUpdateWidget(oldWidget);
     final justCompleted =
-        oldWidget.otpDigits.length < 6 && widget.otpDigits.length == 6;
+        oldWidget.otpDigits.length < widget.codeLength &&
+        widget.otpDigits.length == widget.codeLength;
     if (!justCompleted || !widget.autoSubmitOnComplete) return;
     if (widget.isSubmitting || widget.isSendingCode) return;
 
@@ -74,7 +79,7 @@ class _AuthOtpStepViewState extends State<AuthOtpStepView> {
 
     return Column(
       children: <Widget>[
-        const Spacer(flex: 4),
+        if (widget.useOuterSpacers) const Spacer(flex: 4),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
@@ -96,13 +101,18 @@ class _AuthOtpStepViewState extends State<AuthOtpStepView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  for (var index = 0; index < 6; index++) ...<Widget>[
+                  for (
+                    var index = 0;
+                    index < widget.codeLength;
+                    index++
+                  ) ...<Widget>[
                     _AuthOtpCell(
                       value: index < widget.otpDigits.length
                           ? widget.otpDigits[index]
                           : '',
                     ),
-                    if (index != 5) const SizedBox(width: 8),
+                    if (index != widget.codeLength - 1)
+                      const SizedBox(width: 8),
                   ],
                 ],
               ),
@@ -145,7 +155,7 @@ class _AuthOtpStepViewState extends State<AuthOtpStepView> {
             ],
           ),
         ),
-        const Spacer(flex: 3),
+        if (widget.useOuterSpacers) const Spacer(flex: 3),
         if (widget.showSubmitButton) ...<Widget>[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -41,6 +41,7 @@ dependencies:
   image: ^4.7.2
   url_launcher: ^6.3.1
   fl_chart: ^1.0.0
+  mobile_scanner: ^5.2.3
   app_core:
     path: ../../packages/app_core
   app_ui:

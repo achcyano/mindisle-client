@@ -16,6 +16,7 @@ import 'package:patient/features/user/presentation/providers/user_providers.dart
 import 'package:patient/shared/session/startup_network_issue_signal.dart';
 import 'package:patient/view/pages/chat/chat_page.dart';
 import 'package:patient/view/pages/home/card_home.dart';
+import 'package:patient/view/pages/doctor_binding/doctor_binding_page.dart';
 import 'package:patient/view/pages/home/home_event_card.dart';
 import 'package:patient/view/pages/home/today_medication_card.dart';
 import 'package:patient/view/pages/home/today_mood_card.dart';
@@ -266,7 +267,11 @@ class _HomePageState extends ConsumerState<HomePage> {
         await ref.read(eventHomeControllerProvider.notifier).refresh();
         return;
       case UserEventType.bindDoctor:
-        // TODO(hztcm): wire up doctor binding flow and update status.
+        final changed = await PatientDoctorBindingPage.route.goRoot(context);
+        if (!mounted) return;
+        if (changed == true) {
+          await ref.read(eventHomeControllerProvider.notifier).refresh();
+        }
         return;
       case UserEventType.unknown:
         return;

@@ -8,16 +8,14 @@ final class FetchDoctorPatientsUseCase {
   final DoctorPatientRepository _repository;
 
   Future<Result<DoctorPatientListResult>> execute({
+    required DoctorPatientQuery query,
     int limit = 20,
     String? cursor,
-    String? keyword,
-    bool? abnormalOnly,
   }) {
     return _repository.fetchPatients(
+      query: query,
       limit: limit,
       cursor: cursor,
-      keyword: keyword,
-      abnormalOnly: abnormalOnly,
     );
   }
 }

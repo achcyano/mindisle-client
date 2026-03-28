@@ -7,19 +7,13 @@ final class DoctorPatientApi {
   final Dio _dio;
 
   Future<Map<String, dynamic>> fetchPatients({
+    required DoctorPatientQuery query,
     int limit = 20,
     String? cursor,
-    String? keyword,
-    bool? abnormalOnly,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/doctors/me/patients',
-      queryParameters: {
-        'limit': limit,
-        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
-        if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
-        if (abnormalOnly != null) 'abnormalOnly': abnormalOnly,
-      },
+      queryParameters: query.toQueryParameters(limit: limit, cursor: cursor),
     );
     return response.data ?? const <String, dynamic>{};
   }

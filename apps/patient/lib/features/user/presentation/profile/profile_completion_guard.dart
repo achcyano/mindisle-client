@@ -20,6 +20,7 @@ String? basicProfileIncompleteReason(UserBasicProfile profile) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   if (birthDate.isAfter(today)) return '出生日期晚于今天';
+  if (!_isAdultBirthDate(birthDate, today: today)) return '仅支持成年用户';
 
   if (!_isInRange(profile.heightCm, min: 50, max: 260)) return '身高未填写或不合法';
   if (!_isInRange(profile.weightKg, min: 10, max: 500)) return '体重未填写或不合法';
@@ -50,11 +51,16 @@ DateTime? _tryParseBirthDate(String value) {
   return candidate;
 }
 
-bool _isInRange(
-  double? value, {
-  required double min,
-  required double max,
-}) {
+bool _isInRange(double? value, {required double min, required double max}) {
   if (value == null) return false;
   return value >= min && value <= max;
+}
+
+bool _isAdultBirthDate(DateTime birthDate, {required DateTime today}) {
+  final eighteenthBirthday = DateTime(
+    birthDate.year + 18,
+    birthDate.month,
+    birthDate.day,
+  );
+  return !eighteenthBirthday.isAfter(today);
 }

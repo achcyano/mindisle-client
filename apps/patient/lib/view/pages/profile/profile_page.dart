@@ -9,6 +9,7 @@ import 'package:patient/features/user/presentation/profile/profile_controller.da
 import 'package:patient/features/user/presentation/profile/profile_state.dart';
 import 'package:patient/features/user/presentation/providers/user_providers.dart';
 import 'package:patient/view/pages/info/info_page.dart';
+import 'package:patient/view/pages/doctor_binding/doctor_binding_page.dart';
 import 'package:patient/view/pages/login/login_page.dart';
 import 'package:patient/view/pages/login/reset_password_page.dart';
 import 'package:patient/view/pages/profile/widgets/profile_avatar_picker_sheet.dart';
@@ -110,9 +111,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               title: '编辑信息',
               onTap: () => InfoPage.route.goRoot(context),
             ),
-            const ProfileActionCard(
+            ProfileActionCard(
               icon: Icons.person_add_alt,
               title: '我的医生',
+              onTap: _openDoctorBindingPage,
             ),
           ],
         ),
@@ -240,6 +242,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _showSnack(message);
   }
 
+  Future<void> _openDoctorBindingPage() async {
+    final changed = await PatientDoctorBindingPage.route.goRoot(context);
+    if (!mounted || changed != true) return;
+    _showSnack('医生绑定状态已更新');
+  }
+
   String _displayName(ProfileState state) {
     final text = state.profile?.fullName?.trim() ?? '';
     if (text.isEmpty) return '未设置姓名';
@@ -259,9 +267,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   String _displayBirthDate(ProfileState state) {
-    final text = (
-      state.birthDate.isNotEmpty ? state.birthDate : (state.profile?.birthDate ?? '')
-    ).trim();
+    final text =
+        (state.birthDate.isNotEmpty
+                ? state.birthDate
+                : (state.profile?.birthDate ?? ''))
+            .trim();
     if (text.isEmpty) return '未设置生日';
     return text;
   }
@@ -351,7 +361,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     });
 
     try {
-      final refreshToken = await ref.read(sessionStoreProvider).readRefreshToken();
+      final refreshToken = await ref
+          .read(sessionStoreProvider)
+          .readRefreshToken();
       final result = await ref
           .read(logoutUseCaseProvider)
           .execute(refreshToken: refreshToken);

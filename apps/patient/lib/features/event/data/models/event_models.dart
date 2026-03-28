@@ -109,10 +109,7 @@ final class UserEventItemDto {
 }
 
 final class UserEventListDto {
-  const UserEventListDto({
-    required this.generatedAt,
-    required this.items,
-  });
+  const UserEventListDto({required this.generatedAt, required this.items});
 
   factory UserEventListDto.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];
@@ -146,19 +143,60 @@ final class DoctorBindingStatusDto {
     required this.updatedAt,
     this.currentDoctorId,
     this.currentDoctorName,
+    this.currentDoctorHospital,
   });
 
   factory DoctorBindingStatusDto.fromJson(Map<String, dynamic> json) {
     final rawDoctor = json['doctor'];
-    final doctorMap = rawDoctor is Map ? Map<String, dynamic>.from(rawDoctor) : null;
+    final rawCurrent = json['current'];
+    final doctorMap = rawDoctor is Map
+        ? Map<String, dynamic>.from(rawDoctor)
+        : null;
+    final currentMap = rawCurrent is Map
+        ? Map<String, dynamic>.from(rawCurrent)
+        : null;
+    final rawCurrentDoctor = currentMap?['doctor'];
+    final currentDoctorMap = rawCurrentDoctor is Map
+        ? Map<String, dynamic>.from(rawCurrentDoctor)
+        : null;
 
     return DoctorBindingStatusDto(
       isBound: _toBool(json['isBound'], fallback: false),
-      boundAt: _toDateTime(json['boundAt']),
-      unboundAt: _toDateTime(json['unboundAt']),
-      updatedAt: _toDateTime(json['updatedAt']),
-      currentDoctorId: _toInt(json['doctorId']) ?? _toInt(doctorMap?['doctorId']) ?? _toInt(doctorMap?['id']),
-      currentDoctorName: _toNonEmptyString(json['doctorName']) ?? _toNonEmptyString(doctorMap?['fullName']) ?? _toNonEmptyString(doctorMap?['name']),
+      boundAt:
+          _toDateTime(json['boundAt']) ?? _toDateTime(currentMap?['boundAt']),
+      unboundAt:
+          _toDateTime(json['unboundAt']) ??
+          _toDateTime(currentMap?['unboundAt']),
+      updatedAt:
+          _toDateTime(json['updatedAt']) ??
+          _toDateTime(currentMap?['updatedAt']),
+      currentDoctorId:
+          _toInt(json['doctorId']) ??
+          _toInt(currentMap?['doctorId']) ??
+          _toInt(doctorMap?['doctorId']) ??
+          _toInt(doctorMap?['id']) ??
+          _toInt(currentDoctorMap?['doctorId']) ??
+          _toInt(currentDoctorMap?['id']),
+      currentDoctorName:
+          _toNonEmptyString(json['doctorName']) ??
+          _toNonEmptyString(currentMap?['doctorName']) ??
+          _toNonEmptyString(currentMap?['fullName']) ??
+          _toNonEmptyString(currentMap?['name']) ??
+          _toNonEmptyString(doctorMap?['fullName']) ??
+          _toNonEmptyString(doctorMap?['name']) ??
+          _toNonEmptyString(currentDoctorMap?['doctorName']) ??
+          _toNonEmptyString(currentDoctorMap?['fullName']) ??
+          _toNonEmptyString(currentDoctorMap?['name']),
+      currentDoctorHospital:
+          _toNonEmptyString(json['doctorHospital']) ??
+          _toNonEmptyString(json['hospital']) ??
+          _toNonEmptyString(currentMap?['doctorHospital']) ??
+          _toNonEmptyString(currentMap?['hospital']) ??
+          _toNonEmptyString(doctorMap?['hospital']) ??
+          _toNonEmptyString(doctorMap?['hospitalName']) ??
+          _toNonEmptyString(currentDoctorMap?['doctorHospital']) ??
+          _toNonEmptyString(currentDoctorMap?['hospital']) ??
+          _toNonEmptyString(currentDoctorMap?['hospitalName']),
     );
   }
 
@@ -168,6 +206,7 @@ final class DoctorBindingStatusDto {
   final DateTime? updatedAt;
   final int? currentDoctorId;
   final String? currentDoctorName;
+  final String? currentDoctorHospital;
 
   DoctorBindingStatus toDomain() {
     return DoctorBindingStatus(
@@ -177,6 +216,7 @@ final class DoctorBindingStatusDto {
       updatedAt: updatedAt,
       currentDoctorId: currentDoctorId,
       currentDoctorName: currentDoctorName,
+      currentDoctorHospital: currentDoctorHospital,
     );
   }
 }
@@ -193,15 +233,23 @@ final class DoctorBindingHistoryItemDto {
 
   factory DoctorBindingHistoryItemDto.fromJson(Map<String, dynamic> json) {
     final rawDoctor = json['doctor'];
-    final doctorMap = rawDoctor is Map ? Map<String, dynamic>.from(rawDoctor) : null;
+    final doctorMap = rawDoctor is Map
+        ? Map<String, dynamic>.from(rawDoctor)
+        : null;
 
     return DoctorBindingHistoryItemDto(
       recordId: _toInt(json['bindingId']) ?? _toInt(json['id']) ?? 0,
       status: _toNonEmptyString(json['status']) ?? 'UNKNOWN',
       boundAt: _toDateTime(json['boundAt']),
       unboundAt: _toDateTime(json['unboundAt']),
-      doctorId: _toInt(json['doctorId']) ?? _toInt(doctorMap?['doctorId']) ?? _toInt(doctorMap?['id']),
-      doctorName: _toNonEmptyString(json['doctorName']) ?? _toNonEmptyString(doctorMap?['fullName']) ?? _toNonEmptyString(doctorMap?['name']),
+      doctorId:
+          _toInt(json['doctorId']) ??
+          _toInt(doctorMap?['doctorId']) ??
+          _toInt(doctorMap?['id']),
+      doctorName:
+          _toNonEmptyString(json['doctorName']) ??
+          _toNonEmptyString(doctorMap?['fullName']) ??
+          _toNonEmptyString(doctorMap?['name']),
     );
   }
 
@@ -237,7 +285,9 @@ final class DoctorBindingHistoryResultDto {
         if (rawItems is List)
           for (final raw in rawItems)
             if (raw is Map)
-              DoctorBindingHistoryItemDto.fromJson(Map<String, dynamic>.from(raw)),
+              DoctorBindingHistoryItemDto.fromJson(
+                Map<String, dynamic>.from(raw),
+              ),
       ],
       nextCursor: _toNonEmptyString(json['nextCursor']),
     );

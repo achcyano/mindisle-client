@@ -159,15 +159,15 @@ class _DigitKey extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
                 children: [
-                  SizedBox(
-                    width: 28,
+                  Expanded(
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         digit,
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
+                        softWrap: false,
                         style: baseDigitStyle.copyWith(
                           color: enabled
                               ? colorScheme.onSurface
@@ -176,13 +176,15 @@ class _DigitKey extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  SizedBox(
-                    width: 44,
+                  Flexible(
+                    fit: FlexFit.loose,
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: Text(
                         letters,
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
+                        softWrap: false,
                         style: baseLettersStyle.copyWith(
                           color: enabled
                               ? colorScheme.onSurface.withValues(alpha: 0.55)

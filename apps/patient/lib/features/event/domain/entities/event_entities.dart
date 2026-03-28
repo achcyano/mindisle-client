@@ -41,10 +41,7 @@ final class UserEventItem {
 }
 
 final class UserEventList {
-  const UserEventList({
-    required this.generatedAt,
-    required this.items,
-  });
+  const UserEventList({required this.generatedAt, required this.items});
 
   final DateTime? generatedAt;
   final List<UserEventItem> items;
@@ -58,6 +55,7 @@ final class DoctorBindingStatus {
     required this.updatedAt,
     this.currentDoctorId,
     this.currentDoctorName,
+    this.currentDoctorHospital,
   });
 
   final bool isBound;
@@ -66,6 +64,7 @@ final class DoctorBindingStatus {
   final DateTime? updatedAt;
   final int? currentDoctorId;
   final String? currentDoctorName;
+  final String? currentDoctorHospital;
 }
 
 final class DoctorBindingHistoryItem {

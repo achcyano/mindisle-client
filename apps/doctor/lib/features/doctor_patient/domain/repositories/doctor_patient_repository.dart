@@ -3,10 +3,9 @@ import 'package:doctor/features/doctor_patient/domain/entities/doctor_patient_en
 
 abstract interface class DoctorPatientRepository {
   Future<Result<DoctorPatientListResult>> fetchPatients({
+    required DoctorPatientQuery query,
     int limit = 20,
     String? cursor,
-    String? keyword,
-    bool? abnormalOnly,
   });
 
   Future<Result<DoctorPatientGrouping>> updateGrouping({

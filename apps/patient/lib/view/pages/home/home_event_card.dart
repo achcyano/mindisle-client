@@ -3,18 +3,14 @@ import 'package:patient/features/event/domain/entities/event_entities.dart';
 import 'package:patient/view/pages/home/card_home.dart';
 
 class HomeEventCard extends StatelessWidget {
-  const HomeEventCard({
-    super.key,
-    required this.item,
-    this.onTap,
-  });
+  const HomeEventCard({super.key, required this.item, this.onTap});
 
   final UserEventItem item;
   final VoidCallback? onTap;
 
   static bool isActionable(UserEventItem item) {
     return switch (item.eventType) {
-      UserEventType.bindDoctor || UserEventType.unknown => false,
+      UserEventType.unknown => false,
       _ => true,
     };
   }
@@ -50,8 +46,7 @@ final class _HomeEventCardConfig {
       UserEventType.openScale => _HomeEventCardConfig(
         icon: Icons.assignment_outlined,
         title: '量表待完成',
-        subtitle:
-            item.scaleName?.trim().isNotEmpty == true
+        subtitle: item.scaleName?.trim().isNotEmpty == true
             ? item.scaleName!.trim()
             : '有待完成的量表',
       ),

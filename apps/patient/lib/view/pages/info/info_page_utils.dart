@@ -82,6 +82,17 @@ abstract final class InfoPageUtils {
     return candidate;
   }
 
+  static bool isAdultBirthDate(DateTime birthDate, {DateTime? today}) {
+    final anchor = today ?? DateTime.now();
+    final currentDate = DateTime(anchor.year, anchor.month, anchor.day);
+    final eighteenthBirthday = DateTime(
+      birthDate.year + 18,
+      birthDate.month,
+      birthDate.day,
+    );
+    return !eighteenthBirthday.isAfter(currentDate);
+  }
+
   static String formatBirthDate(DateTime value) {
     final yyyy = value.year.toString().padLeft(4, '0');
     final mm = value.month.toString().padLeft(2, '0');
@@ -92,9 +103,7 @@ abstract final class InfoPageUtils {
   static List<String> diseaseHistoryEntries(ProfileState state) {
     final raw = state.diseaseHistoryInput.trim();
     if (raw.isEmpty) return const <String>[];
-    return normalizeDiseaseHistoryTokens(
-      raw.split(RegExp(r'[\n,，、;；]+')),
-    );
+    return normalizeDiseaseHistoryTokens(raw.split(RegExp(r'[\n,，、;；]+')));
   }
 
   static List<String> normalizeDiseaseHistoryTokens(Iterable<String> source) {

@@ -27,9 +27,14 @@ DoctorPatient _decodePatient(Map<String, dynamic> map) {
     severityGroup:
         _toNonEmptyString(map['severityGroup']) ??
         _toNonEmptyString(groupingMap?['severityGroup']),
-    treatmentPhase:
-        _toNonEmptyString(map['treatmentPhase']) ??
-        _toNonEmptyString(groupingMap?['treatmentPhase']),
+    gender:
+        DoctorPatientGender.fromApiValue(map['gender']) ??
+        DoctorPatientGender.fromApiValue(groupingMap?['gender']),
+    birthDate: _toDateTime(map['birthDate']),
+    age: _toInt(map['age']),
+    latestScl90Score: _toDouble(map['latestScl90Score']),
+    latestAssessmentAt: _toDateTime(map['latestAssessmentAt']),
+    diagnosis: _toNonEmptyString(map['diagnosis']),
   );
 }
 
@@ -37,7 +42,6 @@ DoctorPatientGrouping decodeDoctorPatientGrouping(Object? rawData) {
   final map = Map<String, dynamic>.from(rawData as Map);
   return DoctorPatientGrouping(
     severityGroup: _toNonEmptyString(map['severityGroup']),
-    treatmentPhase: _toNonEmptyString(map['treatmentPhase']),
   );
 }
 
@@ -53,8 +57,10 @@ List<DoctorPatientGroupingHistoryItem> decodeDoctorPatientGroupingHistory(
           DoctorPatientGroupingHistoryItem(
             historyId: _toInt(raw['historyId']) ?? _toInt(raw['id']) ?? 0,
             severityGroup: _toNonEmptyString(raw['severityGroup']),
-            treatmentPhase: _toNonEmptyString(raw['treatmentPhase']),
-            createdAt: _toDateTime(raw['createdAt']),
+            changedAt:
+                _toDateTime(raw['changedAt']) ?? _toDateTime(raw['createdAt']),
+            operatorDoctorId: _toInt(raw['operatorDoctorId']),
+            operatorDoctorName: _toNonEmptyString(raw['operatorDoctorName']),
           ),
   ];
 }
@@ -75,6 +81,13 @@ String? _toNonEmptyString(Object? value) {
 DateTime? _toDateTime(Object? value) {
   if (value is! String || value.trim().isEmpty) return null;
   return DateTime.tryParse(value);
+}
+
+double? _toDouble(Object? value) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
 }
 
 bool _toBool(Object? value) {

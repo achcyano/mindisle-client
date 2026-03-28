@@ -17,10 +17,7 @@ import 'package:patient/view/widget/settings_input_field.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
 class InfoPage extends ConsumerStatefulWidget {
-  const InfoPage({
-    this.requireCompletion = false,
-    super.key,
-  });
+  const InfoPage({this.requireCompletion = false, super.key});
 
   final bool requireCompletion;
 
@@ -90,7 +87,9 @@ class _InfoPageState extends ConsumerState<InfoPage> {
         floatingActionButton: state.profile == null
             ? null
             : FloatingActionButton(
-                onPressed: state.isSaving ? null : () => _saveAndPop(controller),
+                onPressed: state.isSaving
+                    ? null
+                    : () => _saveAndPop(controller),
                 child: const Icon(Icons.arrow_forward),
               ),
       ),
@@ -345,10 +344,17 @@ class _InfoPageState extends ConsumerState<InfoPage> {
   }
 
   Future<bool> _saveBeforeExit(ProfileController controller) async {
-    final validationMessage =
-        validateInfoBeforeExit(ref.read(profileControllerProvider));
+    final currentState = ref.read(profileControllerProvider);
+    final validationMessage = validateInfoBeforeExit(currentState);
     if (validationMessage != null) {
       _showSnack(validationMessage);
+      return false;
+    }
+
+    final birthDateText = InfoPageUtils.effectiveBirthDateText(currentState);
+    final birthDate = InfoPageUtils.tryParseBirthDate(birthDateText);
+    if (birthDate != null && !InfoPageUtils.isAdultBirthDate(birthDate)) {
+      await _showMinorNotSupportedDialog();
       return false;
     }
 
@@ -360,6 +366,25 @@ class _InfoPageState extends ConsumerState<InfoPage> {
 
     _showSnack(message);
     return true;
+  }
+
+  Future<void> _showMinorNotSupportedDialog() async {
+    if (!mounted) return;
+    await showAppDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return buildAppAlertDialog(
+          title: const Text('暂不支持'),
+          content: const Text('当前仅对成年用户（18 周岁及以上）提供服务。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('我知道了'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showSnack(String message) {

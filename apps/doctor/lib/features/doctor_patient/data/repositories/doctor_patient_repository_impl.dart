@@ -15,18 +15,12 @@ final class DoctorPatientRepositoryImpl implements DoctorPatientRepository {
 
   @override
   Future<Result<DoctorPatientListResult>> fetchPatients({
+    required DoctorPatientQuery query,
     int limit = 20,
     String? cursor,
-    String? keyword,
-    bool? abnormalOnly,
   }) {
     return _executor.run(
-      () => _api.fetchPatients(
-        limit: limit,
-        cursor: cursor,
-        keyword: keyword,
-        abnormalOnly: abnormalOnly,
-      ),
+      () => _api.fetchPatients(query: query, limit: limit, cursor: cursor),
       decodeDoctorPatientList,
     );
   }
