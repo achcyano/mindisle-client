@@ -7,6 +7,7 @@ import 'package:doctor/features/doctor_scale/domain/entities/doctor_scale_entiti
 import 'package:doctor/features/doctor_scale/presentation/result/doctor_scale_session_result_args.dart';
 import 'package:doctor/view/pages/patients/patient_scale_result_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DoctorPatientDetailPage extends ConsumerStatefulWidget {
@@ -748,7 +749,15 @@ class _ReportDetailSheet extends StatelessWidget {
           if (summary != null && summary.isNotEmpty) ...[
             Text('分析结论', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
-            Text(summary),
+            MarkdownBody(
+              data: summary,
+              selectable: true,
+              styleSheet: MarkdownStyleSheet.fromTheme(
+                Theme.of(context),
+              ).copyWith(
+                p: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
             const SizedBox(height: 12),
           ],
           Text('原始作答答案', style: Theme.of(context).textTheme.titleSmall),
