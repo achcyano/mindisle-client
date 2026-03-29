@@ -754,25 +754,10 @@ class _ReportDetailSheet extends StatelessWidget {
               selectable: true,
               styleSheet: MarkdownStyleSheet.fromTheme(
                 Theme.of(context),
-              ).copyWith(
-                p: Theme.of(context).textTheme.bodyMedium,
-              ),
+              ).copyWith(p: Theme.of(context).textTheme.bodyMedium),
             ),
             const SizedBox(height: 12),
           ],
-          Text('原始作答答案', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 6),
-          if (detail.answerRecords.isEmpty)
-            Text('暂无原始作答答案', style: bodySmall)
-          else
-            ...detail.answerRecords.map(
-              (item) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(item.questionText),
-                subtitle: Text(item.answerText),
-                dense: true,
-              ),
-            ),
         ],
       ),
     );
