@@ -34,7 +34,7 @@ final class ScaleHistoryController extends StateNotifier<ScaleHistoryState> {
 
     final result = await _ref.read(fetchScaleHistoryUseCaseProvider).execute();
     switch (result) {
-      case Failure<List<ScaleHistoryItem>>(error: final error):
+      case Failure<ScaleHistoryPage>(error: final error):
         state = state.copyWith(
           initialized: true,
           isLoading: false,
@@ -42,12 +42,12 @@ final class ScaleHistoryController extends StateNotifier<ScaleHistoryState> {
           errorMessage: error.message,
         );
         return;
-      case Success<List<ScaleHistoryItem>>(data: final items):
+      case Success<ScaleHistoryPage>(data: final page):
         state = state.copyWith(
           initialized: true,
           isLoading: false,
           isRefreshing: false,
-          items: items,
+          items: page.items,
         );
         return;
     }

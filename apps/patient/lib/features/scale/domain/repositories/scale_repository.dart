@@ -28,10 +28,7 @@ abstract interface class ScaleRepository {
 
   Future<Result<ScaleResult>> fetchSessionResult({required int sessionId});
 
-  Future<Result<List<ScaleHistoryItem>>> fetchHistory({
-    int limit,
-    String? cursor,
-  });
+  Future<Result<ScaleHistoryPage>> fetchHistory({int limit, String? cursor});
 
   Future<Result<bool>> deleteSession({required int sessionId});
 

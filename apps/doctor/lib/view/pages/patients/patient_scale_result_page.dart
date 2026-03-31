@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app_core/app_core.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:doctor/features/doctor_scale/domain/entities/doctor_scale_entities.dart';
@@ -23,7 +25,9 @@ class DoctorScaleSessionResultPage extends ConsumerStatefulWidget {
 
 class _DoctorScaleSessionResultPageState
     extends ConsumerState<DoctorScaleSessionResultPage> {
-  static const int _historyFetchLimit = 100;
+  static const int _historyFetchLimit = 50;
+  static const int _historyMaxPages = 10;
+  static const int _historyMaxScalePoints = 120;
 
   bool _isLoading = false;
   DoctorScaleSessionResult? _result;
@@ -32,6 +36,7 @@ class _DoctorScaleSessionResultPageState
   List<ScaleTrendPoint> _trendPoints = const <ScaleTrendPoint>[];
   List<ScaleRadarDimensionEntry> _radarEntries =
       const <ScaleRadarDimensionEntry>[];
+  int _requestToken = 0;
 
   @override
   void initState() {
@@ -43,29 +48,20 @@ class _DoctorScaleSessionResultPageState
 
   Future<void> _loadResult() async {
     if (_isLoading) return;
+    final requestToken = ++_requestToken;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
       _historyErrorMessage = null;
     });
 
-    final sessionResultFuture = ref
+    final result = await ref
         .read(fetchDoctorScaleSessionResultUseCaseProvider)
         .execute(
           patientUserId: widget.args.patientUserId,
           sessionId: widget.args.sessionId,
         );
-    final historyResultFuture = ref
-        .read(fetchDoctorScaleAnswerRecordsUseCaseProvider)
-        .execute(
-          patientUserId: widget.args.patientUserId,
-          limit: _historyFetchLimit,
-        );
-
-    final result = await sessionResultFuture;
-    final historyResult = await historyResultFuture;
-
-    if (!mounted) return;
+    if (!_isRequestActive(requestToken)) return;
     switch (result) {
       case Failure<DoctorScaleSessionResult>(error: final error):
         final message = error.code == 40020 ? '结果暂未生成，请稍后重试' : error.message;
@@ -80,29 +76,86 @@ class _DoctorScaleSessionResultPageState
         return;
       case Success<DoctorScaleSessionResult>(data: final data):
         final radarEntries = _buildRadarEntries(data);
-        String? historyError;
-        List<ScaleTrendPoint> trendPoints = const <ScaleTrendPoint>[];
-        switch (historyResult) {
-          case Success<DoctorScaleAnswerRecordListResult>(data: final history):
-            trendPoints = _buildTrendPoints(
-              currentSessionId: widget.args.sessionId,
-              result: data,
-              historyItems: history.items,
-            );
-          case Failure<DoctorScaleAnswerRecordListResult>(error: final error):
-            historyError = error.message;
-        }
-
         setState(() {
           _isLoading = false;
           _errorMessage = null;
           _result = data;
-          _historyErrorMessage = historyError;
-          _trendPoints = trendPoints;
+          _historyErrorMessage = null;
+          _trendPoints = const <ScaleTrendPoint>[];
           _radarEntries = radarEntries;
         });
+        unawaited(_loadSupplementaryHistory(requestToken, data));
         return;
     }
+  }
+
+  Future<void> _loadSupplementaryHistory(
+    int requestToken,
+    DoctorScaleSessionResult result,
+  ) async {
+    final historyResult = await _fetchTrendHistoryPages();
+    if (!_isRequestActive(requestToken)) return;
+    switch (historyResult) {
+      case Success<List<DoctorScaleAnswerRecord>>(data: final historyItems):
+        setState(() {
+          _historyErrorMessage = null;
+          _trendPoints = _buildTrendPoints(
+            currentSessionId: widget.args.sessionId,
+            result: result,
+            historyItems: historyItems,
+          );
+        });
+      case Failure<List<DoctorScaleAnswerRecord>>(error: final error):
+        setState(() {
+          _historyErrorMessage = error.message;
+          _trendPoints = const <ScaleTrendPoint>[];
+        });
+    }
+  }
+
+  Future<Result<List<DoctorScaleAnswerRecord>>>
+  _fetchTrendHistoryPages() async {
+    final mergedByRecordId = <int, DoctorScaleAnswerRecord>{};
+    String? cursor;
+    var pageCount = 0;
+    while (pageCount < _historyMaxPages) {
+      var shouldStop = false;
+      final result = await ref
+          .read(fetchDoctorScaleAnswerRecordsUseCaseProvider)
+          .execute(
+            patientUserId: widget.args.patientUserId,
+            limit: _historyFetchLimit,
+            cursor: cursor,
+          );
+      switch (result) {
+        case Failure<DoctorScaleAnswerRecordListResult>(error: final error):
+          return Failure(error);
+        case Success<DoctorScaleAnswerRecordListResult>(data: final page):
+          for (final item in page.items) {
+            mergedByRecordId[item.recordId] = item;
+          }
+          final targetPointCount = mergedByRecordId.values
+              .where(_isSameScale)
+              .where((item) => item.numericScore != null)
+              .length;
+          final nextCursor = page.nextCursor;
+          final hasNext = nextCursor != null && nextCursor.isNotEmpty;
+          if (targetPointCount >= _historyMaxScalePoints ||
+              !hasNext ||
+              page.items.isEmpty) {
+            shouldStop = true;
+          } else {
+            cursor = nextCursor;
+          }
+      }
+      if (shouldStop) break;
+      pageCount += 1;
+    }
+    return Success(mergedByRecordId.values.toList(growable: false));
+  }
+
+  bool _isRequestActive(int requestToken) {
+    return mounted && requestToken == _requestToken;
   }
 
   @override
@@ -129,7 +182,7 @@ class _DoctorScaleSessionResultPageState
       ),
       body: SafeArea(
         top: false,
-        child: _isLoading
+        child: _isLoading && _result == null
             ? const Center(child: CircularProgressIndicatorM3E())
             : _errorMessage != null
             ? Center(

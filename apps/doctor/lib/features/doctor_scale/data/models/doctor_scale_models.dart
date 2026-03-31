@@ -199,36 +199,9 @@ DoctorAssessmentAnswerRecord _decodeAnswerRecord(Map<String, dynamic> raw) {
 
 DoctorScaleAnswerRecord _decodeScaleAnswerRecord(Map<String, dynamic> raw) {
   final normalizedMap = _asMap(raw['normalizedAnswer']);
+  final rawScale = _asMap(raw['scale']);
   final sessionId =
       _toInt(raw['sessionId']) ?? _toInt(normalizedMap?['sessionId']);
-  final dimensionScores = _decodeDimensionScores(
-    raw['dimensionScores'] ?? normalizedMap?['dimensionScores'],
-  );
-  final dimensionResults = _decodeDimensionResults(
-    raw['dimensionResults'] ?? normalizedMap?['dimensionResults'],
-  );
-  var rawEntries = _decodeRawEntries(raw['rawAnswer']);
-  if (rawEntries.isEmpty) {
-    rawEntries = _decodeRawEntries(raw['answers'] ?? raw['answerRecords']);
-  }
-  if (rawEntries.isEmpty) {
-    final questionText =
-        _toNonEmptyString(raw['questionText']) ??
-        _toNonEmptyString(raw['questionTitle']) ??
-        _toNonEmptyString(raw['question']) ??
-        _toNonEmptyString(raw['stem']);
-    if (questionText != null) {
-      rawEntries = <DoctorScaleAnswerRawEntry>[
-        DoctorScaleAnswerRawEntry(
-          questionText: questionText,
-          answerText: _stringifyAnswer(
-            raw['answerText'] ?? raw['answer'] ?? raw['value'],
-          ),
-        ),
-      ];
-    }
-  }
-
   return DoctorScaleAnswerRecord(
     recordId: _toInt(raw['recordId']) ?? _toInt(raw['id']) ?? sessionId ?? 0,
     sessionId: sessionId,
@@ -240,11 +213,11 @@ DoctorScaleAnswerRecord _decodeScaleAnswerRecord(Map<String, dynamic> raw) {
     scaleId: _toInt(raw['scaleId']) ?? _toInt(normalizedMap?['scaleId']),
     scaleCode:
         _toNonEmptyString(raw['scaleCode']) ??
-        _toNonEmptyString(_asMap(raw['scale'])?['code']) ??
+        _toNonEmptyString(rawScale?['code']) ??
         _toNonEmptyString(normalizedMap?['scaleCode']),
     scaleName:
         _toNonEmptyString(raw['scaleName']) ??
-        _toNonEmptyString(_asMap(raw['scale'])?['name']) ??
+        _toNonEmptyString(rawScale?['name']) ??
         _toNonEmptyString(normalizedMap?['scaleName']),
     versionId: _toInt(raw['versionId']) ?? _toInt(normalizedMap?['versionId']),
     version: _toInt(raw['version']) ?? _toInt(normalizedMap?['version']),
@@ -259,79 +232,7 @@ DoctorScaleAnswerRecord _decodeScaleAnswerRecord(Map<String, dynamic> raw) {
         _toDateTime(raw['submittedAt']) ??
         _toDateTime(raw['updatedAt']) ??
         _toDateTime(raw['createdAt']),
-    dimensionScores: dimensionScores,
-    dimensionResults: dimensionResults,
-    rawEntries: rawEntries,
   );
-}
-
-List<DoctorAssessmentDimensionResult> _decodeDimensionResults(Object? raw) {
-  if (raw is! List) return const <DoctorAssessmentDimensionResult>[];
-  return [
-    for (final item in raw)
-      if (item is Map) _decodeDimensionResult(Map<String, dynamic>.from(item)),
-  ];
-}
-
-List<DoctorScaleAnswerRawEntry> _decodeRawEntries(Object? raw) {
-  if (raw == null) return const <DoctorScaleAnswerRawEntry>[];
-  if (raw is List) {
-    return [for (final item in raw) ..._decodeRawEntries(item)];
-  }
-  if (raw is Map) {
-    final map = Map<String, dynamic>.from(raw);
-    final nestedList =
-        map['answers'] ?? map['items'] ?? map['records'] ?? map['questions'];
-    if (nestedList is List && nestedList.isNotEmpty) {
-      return _decodeRawEntries(nestedList);
-    }
-
-    final questionText =
-        _toNonEmptyString(map['questionText']) ??
-        _toNonEmptyString(map['questionTitle']) ??
-        _toNonEmptyString(map['question']) ??
-        _toNonEmptyString(map['stem']);
-    if (questionText != null) {
-      final answerValue =
-          map['answerText'] ??
-          map['answer'] ??
-          map['value'] ??
-          map['selected'] ??
-          map['selectedOption'] ??
-          map['selectedOptions'];
-      return <DoctorScaleAnswerRawEntry>[
-        DoctorScaleAnswerRawEntry(
-          questionText: questionText,
-          answerText: _stringifyAnswer(answerValue),
-        ),
-      ];
-    }
-
-    final entries = <DoctorScaleAnswerRawEntry>[];
-    map.forEach((key, value) {
-      if (_isMetadataKey(key)) return;
-      entries.add(
-        DoctorScaleAnswerRawEntry(
-          questionText: key,
-          answerText: _stringifyAnswer(value),
-        ),
-      );
-    });
-    if (entries.isNotEmpty) return entries;
-
-    return <DoctorScaleAnswerRawEntry>[
-      DoctorScaleAnswerRawEntry(
-        questionText: '原始作答',
-        answerText: _stringifyAnswer(map),
-      ),
-    ];
-  }
-  return <DoctorScaleAnswerRawEntry>[
-    DoctorScaleAnswerRawEntry(
-      questionText: '原始作答',
-      answerText: _stringifyAnswer(raw),
-    ),
-  ];
 }
 
 Map<String, dynamic>? _asMap(Object? raw) {
@@ -349,36 +250,6 @@ String? _toCursorString(Object? value) {
     return value.toInt().toString();
   }
   return null;
-}
-
-bool _isMetadataKey(String key) {
-  const metadataKeys = <String>{
-    'recordId',
-    'id',
-    'sessionId',
-    'reportId',
-    'assessmentReportId',
-    'scaleId',
-    'scaleCode',
-    'scaleName',
-    'answeredAt',
-    'submittedAt',
-    'updatedAt',
-    'createdAt',
-    'numericScore',
-    'totalScore',
-    'state',
-    'status',
-    'answers',
-    'items',
-    'records',
-    'questions',
-    'rawAnswer',
-    'normalizedAnswer',
-    'dimensionScores',
-    'dimensionResults',
-  };
-  return metadataKeys.contains(key);
 }
 
 String _stringifyAnswer(Object? value) {

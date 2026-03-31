@@ -700,6 +700,59 @@ final class ScaleHistoryItemDto {
   }
 }
 
+final class ScaleHistoryPageDto {
+  const ScaleHistoryPageDto({required this.items, required this.nextCursor});
+
+  factory ScaleHistoryPageDto.fromJson(Object? raw) {
+    if (raw is List) {
+      return ScaleHistoryPageDto(
+        items: raw
+            .whereType<Map>()
+            .map(
+              (item) =>
+                  ScaleHistoryItemDto.fromJson(Map<String, dynamic>.from(item)),
+            )
+            .toList(growable: false),
+        nextCursor: null,
+      );
+    }
+    if (raw is Map) {
+      final map = Map<String, dynamic>.from(raw);
+      final rawItems = map['items'] ?? map['history'] ?? map['list'];
+      final items = rawItems is List
+          ? rawItems
+                .whereType<Map>()
+                .map(
+                  (item) => ScaleHistoryItemDto.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ),
+                )
+                .toList(growable: false)
+          : const <ScaleHistoryItemDto>[];
+      return ScaleHistoryPageDto(
+        items: items,
+        nextCursor:
+            _toCursorString(map['nextCursor']) ??
+            _toCursorString(map['cursor']),
+      );
+    }
+    return const ScaleHistoryPageDto(
+      items: <ScaleHistoryItemDto>[],
+      nextCursor: null,
+    );
+  }
+
+  final List<ScaleHistoryItemDto> items;
+  final String? nextCursor;
+
+  ScaleHistoryPage toDomain() {
+    return ScaleHistoryPage(
+      items: items.map((item) => item.toDomain()).toList(growable: false),
+      nextCursor: nextCursor,
+    );
+  }
+}
+
 int? _toInt(Object? value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
@@ -728,6 +781,13 @@ String? _toNonEmptyString(Object? value) {
   if (value is! String) return null;
   final trimmed = value.trim();
   return trimmed.isEmpty ? null : trimmed;
+}
+
+String? _toCursorString(Object? value) {
+  final text = _toNonEmptyString(value);
+  if (text != null) return text;
+  if (value is num) return value.toInt().toString();
+  return null;
 }
 
 DateTime? _parseDateTime(Object? value) {

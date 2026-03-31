@@ -273,6 +273,13 @@ final class ScaleHistoryItem {
   final DateTime? updatedAt;
 }
 
+final class ScaleHistoryPage {
+  const ScaleHistoryPage({required this.items, required this.nextCursor});
+
+  final List<ScaleHistoryItem> items;
+  final String? nextCursor;
+}
+
 final class ScaleAssistEvent {
   const ScaleAssistEvent({
     required this.type,

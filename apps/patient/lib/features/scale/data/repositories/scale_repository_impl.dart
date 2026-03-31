@@ -84,13 +84,13 @@ final class ScaleRepositoryImpl implements ScaleRepository {
   }
 
   @override
-  Future<Result<List<ScaleHistoryItem>>> fetchHistory({
+  Future<Result<ScaleHistoryPage>> fetchHistory({
     int limit = 20,
     String? cursor,
   }) {
     return _run(
       () => _api.getHistory(limit: limit, cursor: cursor),
-      _decodeHistoryItems,
+      _decodeHistoryPage,
     );
   }
 
@@ -231,19 +231,8 @@ final class ScaleRepositoryImpl implements ScaleRepository {
     throw const FormatException('量表结果格式错误');
   }
 
-  List<ScaleHistoryItem> _decodeHistoryItems(Object? rawData) {
-    final list = _extractList(
-      rawData,
-      fallbackKeys: const ['items', 'history', 'list'],
-    );
-    return list
-        .whereType<Map>()
-        .map(
-          (item) => ScaleHistoryItemDto.fromJson(
-            Map<String, dynamic>.from(item),
-          ).toDomain(),
-        )
-        .toList(growable: false);
+  ScaleHistoryPage _decodeHistoryPage(Object? rawData) {
+    return ScaleHistoryPageDto.fromJson(rawData).toDomain();
   }
 
   List<dynamic> _extractList(

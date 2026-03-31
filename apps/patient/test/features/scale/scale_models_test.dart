@@ -69,5 +69,26 @@ void main() {
       expect(summary.lastCompletedAt!.toUtc().hour, 13);
       expect(summary.lastCompletedAt!.toUtc().minute, 30);
     });
+
+    test('parses history page dto with nextCursor', () {
+      final dto = ScaleHistoryPageDto.fromJson(const <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          {
+            'sessionId': 11,
+            'scaleId': 7,
+            'scaleCode': 'PHQ9',
+            'scaleName': 'PHQ-9',
+            'totalScore': 9,
+            'submittedAt': '2026-03-20T10:00:00Z',
+          },
+        ],
+        'nextCursor': 'abc123',
+      });
+
+      final page = dto.toDomain();
+      expect(page.items, hasLength(1));
+      expect(page.items.first.sessionId, 11);
+      expect(page.nextCursor, 'abc123');
+    });
   });
 }

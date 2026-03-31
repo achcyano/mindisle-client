@@ -93,10 +93,7 @@ final class FetchScaleHistoryUseCase {
 
   final ScaleRepository _repository;
 
-  Future<Result<List<ScaleHistoryItem>>> execute({
-    int limit = 20,
-    String? cursor,
-  }) {
+  Future<Result<ScaleHistoryPage>> execute({int limit = 20, String? cursor}) {
     return _repository.fetchHistory(limit: limit, cursor: cursor);
   }
 }

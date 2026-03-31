@@ -112,9 +112,6 @@ final class DoctorScaleAnswerRecord {
     this.progress,
     this.numericScore,
     this.answeredAt,
-    this.dimensionScores = const <String, double>{},
-    this.dimensionResults = const <DoctorAssessmentDimensionResult>[],
-    this.rawEntries = const <DoctorScaleAnswerRawEntry>[],
   });
 
   final int recordId;
@@ -128,19 +125,6 @@ final class DoctorScaleAnswerRecord {
   final int? progress;
   final double? numericScore;
   final DateTime? answeredAt;
-  final Map<String, double> dimensionScores;
-  final List<DoctorAssessmentDimensionResult> dimensionResults;
-  final List<DoctorScaleAnswerRawEntry> rawEntries;
-}
-
-final class DoctorScaleAnswerRawEntry {
-  const DoctorScaleAnswerRawEntry({
-    required this.questionText,
-    required this.answerText,
-  });
-
-  final String questionText;
-  final String answerText;
 }
 
 final class DoctorScaleSessionResult {

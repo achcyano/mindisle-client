@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:app_ui/app_ui.dart';
@@ -21,6 +23,10 @@ class ScaleResultPage extends ConsumerStatefulWidget {
 }
 
 class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
+  static const int _historyPageLimit = 50;
+  static const int _historyMaxPages = 10;
+  static const int _historyMaxScalePoints = 120;
+
   bool _isLoading = false;
   ScaleResult? _result;
   String? _errorMessage;
@@ -28,6 +34,7 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
   List<ScaleTrendPoint> _trendPoints = const <ScaleTrendPoint>[];
   List<ScaleRadarDimensionEntry> _radarEntries =
       const <ScaleRadarDimensionEntry>[];
+  int _requestToken = 0;
 
   @override
   void initState() {
@@ -39,27 +46,17 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
 
   Future<void> _loadResult() async {
     if (_isLoading) return;
+    final requestToken = ++_requestToken;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
       _historyErrorMessage = null;
     });
 
-    final sessionResultFuture = ref
+    final result = await ref
         .read(fetchScaleSessionResultUseCaseProvider)
         .execute(sessionId: widget.args.sessionId);
-    final detailResultFuture = ref
-        .read(fetchScaleDetailUseCaseProvider)
-        .execute(scaleRef: widget.args.scaleId.toString());
-    final historyResultFuture = ref
-        .read(fetchScaleHistoryUseCaseProvider)
-        .execute(limit: 200);
-
-    final result = await sessionResultFuture;
-    final detailResult = await detailResultFuture;
-    final historyResult = await historyResultFuture;
-
-    if (!mounted) return;
+    if (!_isRequestActive(requestToken)) return;
     switch (result) {
       case Failure<ScaleResult>(error: final error):
         var message = error.message;
@@ -76,44 +73,115 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
         });
         return;
       case Success<ScaleResult>(data: final data):
-        String? scaleCode = _guessScaleCode(widget.args.scaleName);
-        Map<String, double> dimensionMaxById = const <String, double>{};
-        switch (detailResult) {
-          case Success<ScaleDetail>(data: final detail):
-            scaleCode = detail.code;
-            dimensionMaxById = _buildDimensionMaxById(detail);
-          case Failure<ScaleDetail>():
-            dimensionMaxById = const <String, double>{};
-        }
         final radarEntries = _buildRadarEntries(
           data,
-          dimensionMaxById: dimensionMaxById,
-          scaleCode: scaleCode,
+          dimensionMaxById: const <String, double>{},
+          scaleCode: _guessScaleCode(widget.args.scaleName),
         );
-        String? historyError;
-        List<ScaleTrendPoint> trendPoints = const <ScaleTrendPoint>[];
-        switch (historyResult) {
-          case Success<List<ScaleHistoryItem>>(data: final historyItems):
-            trendPoints = _buildTrendPoints(
-              scaleId: widget.args.scaleId,
-              currentSessionId: widget.args.sessionId,
-              result: data,
-              historyItems: historyItems,
-            );
-          case Failure<List<ScaleHistoryItem>>(error: final error):
-            historyError = error.message;
-        }
-
         setState(() {
           _isLoading = false;
           _errorMessage = null;
           _result = data;
-          _historyErrorMessage = historyError;
-          _trendPoints = trendPoints;
+          _historyErrorMessage = null;
+          _trendPoints = const <ScaleTrendPoint>[];
           _radarEntries = radarEntries;
         });
+        unawaited(_loadSupplementaryDetail(requestToken, data));
+        unawaited(_loadSupplementaryHistory(requestToken, data));
         return;
     }
+  }
+
+  Future<void> _loadSupplementaryDetail(
+    int requestToken,
+    ScaleResult result,
+  ) async {
+    final detailResult = await ref
+        .read(fetchScaleDetailUseCaseProvider)
+        .execute(scaleRef: widget.args.scaleId.toString());
+    if (!_isRequestActive(requestToken)) return;
+    switch (detailResult) {
+      case Success<ScaleDetail>(data: final detail):
+        setState(() {
+          _radarEntries = _buildRadarEntries(
+            result,
+            dimensionMaxById: _buildDimensionMaxById(detail),
+            scaleCode: detail.code,
+          );
+        });
+      case Failure<ScaleDetail>():
+        return;
+    }
+  }
+
+  Future<void> _loadSupplementaryHistory(
+    int requestToken,
+    ScaleResult result,
+  ) async {
+    final historyResult = await _fetchTrendHistoryPages(
+      scaleId: widget.args.scaleId,
+    );
+    if (!_isRequestActive(requestToken)) return;
+    switch (historyResult) {
+      case Success<List<ScaleHistoryItem>>(data: final historyItems):
+        setState(() {
+          _historyErrorMessage = null;
+          _trendPoints = _buildTrendPoints(
+            scaleId: widget.args.scaleId,
+            currentSessionId: widget.args.sessionId,
+            result: result,
+            historyItems: historyItems,
+          );
+        });
+      case Failure<List<ScaleHistoryItem>>(error: final error):
+        setState(() {
+          _historyErrorMessage = error.message;
+          _trendPoints = const <ScaleTrendPoint>[];
+        });
+    }
+  }
+
+  Future<Result<List<ScaleHistoryItem>>> _fetchTrendHistoryPages({
+    required int scaleId,
+  }) async {
+    final mergedBySessionId = <int, ScaleHistoryItem>{};
+    String? cursor;
+    var pageCount = 0;
+    while (pageCount < _historyMaxPages) {
+      var shouldStop = false;
+      final result = await ref
+          .read(fetchScaleHistoryUseCaseProvider)
+          .execute(limit: _historyPageLimit, cursor: cursor);
+      switch (result) {
+        case Failure<ScaleHistoryPage>(error: final error):
+          return Failure(error);
+        case Success<ScaleHistoryPage>(data: final page):
+          for (final item in page.items) {
+            mergedBySessionId[item.sessionId] = item;
+          }
+          final targetPointCount = mergedBySessionId.values
+              .where(
+                (item) => item.scaleId == scaleId && item.totalScore != null,
+              )
+              .length;
+          final nextCursor = page.nextCursor;
+          final hasNext = nextCursor != null && nextCursor.isNotEmpty;
+          if (targetPointCount >= _historyMaxScalePoints ||
+              !hasNext ||
+              page.items.isEmpty) {
+            shouldStop = true;
+          } else {
+            cursor = nextCursor;
+          }
+      }
+      if (shouldStop) break;
+      pageCount += 1;
+    }
+    return Success(mergedBySessionId.values.toList(growable: false));
+  }
+
+  bool _isRequestActive(int requestToken) {
+    return mounted && requestToken == _requestToken;
   }
 
   @override
@@ -140,7 +208,7 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
       ),
       body: SafeArea(
         top: false,
-        child: _isLoading
+        child: _isLoading && _result == null
             ? const Center(child: CircularProgressIndicatorM3E())
             : _errorMessage != null
             ? Center(
