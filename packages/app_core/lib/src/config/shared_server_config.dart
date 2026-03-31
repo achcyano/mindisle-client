@@ -42,8 +42,8 @@ final class SharedServerConfig {
 }
 
 const defaultSharedServerConfig = SharedServerConfig(
-  apiScheme: 'http',
-  apiHost: '10.21.169.131',
-  apiPort: 80,
+  apiScheme: 'https',
+  apiHost: '123.57.247.87',
+  apiPort: 8888,
   apiPrefix: '/api/v1',
 );

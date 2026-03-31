@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 /apps/patient/build
 /apps/doctor/build
+/apps/doctor/android/key.properties
+/apps/patient/android/key.properties
+/mind-client/*.jks
