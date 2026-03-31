@@ -80,4 +80,11 @@ final class DoctorPatientApi {
     );
     return response.data ?? const <String, dynamic>{};
   }
+
+  Future<Response<List<int>>> exportPatients() {
+    return _dio.get<List<int>>(
+      '/api/v1/doctors/me/patients/export',
+      options: Options(responseType: ResponseType.bytes),
+    );
+  }
 }

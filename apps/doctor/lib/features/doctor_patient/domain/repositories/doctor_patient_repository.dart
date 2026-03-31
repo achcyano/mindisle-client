@@ -33,4 +33,6 @@ abstract interface class DoctorPatientRepository {
   Future<Result<DoctorPatientProfile>> fetchPatientProfile({
     required int patientUserId,
   });
+
+  Future<Result<DoctorPatientExportFile>> exportPatients();
 }

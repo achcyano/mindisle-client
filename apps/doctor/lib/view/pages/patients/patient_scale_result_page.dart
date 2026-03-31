@@ -277,16 +277,31 @@ class _DoctorScaleSessionResultPageState
   List<ScaleRadarDimensionEntry> _buildRadarEntries(
     DoctorScaleSessionResult result,
   ) {
+    final scaleCode = _resolveScaleCode();
     final dimensionResults = result.dimensionResults;
     if (dimensionResults.isNotEmpty) {
       return dimensionResults
           .map((item) {
-            final value = _resolveDimensionValue(item);
-            if (value == null) return null;
+            final normalized = normalizeScaleRadarMetric(
+              ScaleRadarMetricInput(
+                scaleCode: scaleCode,
+                dimensionKey: item.dimensionKey,
+                dimensionName: item.dimensionName,
+                rawScore: item.rawScore,
+                averageScore: item.averageScore,
+                standardScore: item.standardScore,
+              ),
+            );
+            if (normalized == null) return null;
             final label = item.dimensionName.trim().isNotEmpty
                 ? item.dimensionName.trim()
                 : item.dimensionKey;
-            return ScaleRadarDimensionEntry(label: label, value: value);
+            return ScaleRadarDimensionEntry(
+              label: label,
+              value: normalized.plotValue,
+              displayValue: normalized.displayValue,
+              maxValue: normalized.axisMax,
+            );
           })
           .whereType<ScaleRadarDimensionEntry>()
           .toList(growable: false);
@@ -298,10 +313,24 @@ class _DoctorScaleSessionResultPageState
 
     return result.dimensionScores.entries
         .where((entry) => entry.value.isFinite)
-        .map(
-          (entry) =>
-              ScaleRadarDimensionEntry(label: entry.key, value: entry.value),
-        )
+        .map((entry) {
+          final normalized = normalizeScaleRadarMetric(
+            ScaleRadarMetricInput(
+              scaleCode: scaleCode,
+              dimensionKey: entry.key,
+              dimensionName: entry.key,
+              rawScore: entry.value,
+            ),
+          );
+          if (normalized == null) return null;
+          return ScaleRadarDimensionEntry(
+            label: entry.key,
+            value: normalized.plotValue,
+            displayValue: normalized.displayValue,
+            maxValue: normalized.axisMax,
+          );
+        })
+        .whereType<ScaleRadarDimensionEntry>()
         .toList(growable: false);
   }
 
@@ -322,10 +351,27 @@ class _DoctorScaleSessionResultPageState
         .toList(growable: false);
   }
 
-  double? _resolveDimensionValue(DoctorAssessmentDimensionResult item) {
-    if (item.rawScore != null) return item.rawScore!;
-    if (item.averageScore != null) return item.averageScore!;
-    if (item.standardScore != null) return item.standardScore!;
+  String? _resolveScaleCode() {
+    final code = widget.args.scaleCode?.trim();
+    if (code != null && code.isNotEmpty) {
+      return code;
+    }
+    final normalizedName = (widget.args.scaleName ?? '').trim().toUpperCase();
+    if (normalizedName.contains('SCL-90') || normalizedName.contains('SCL90')) {
+      return 'SCL90';
+    }
+    if (normalizedName.contains('PHQ-9') || normalizedName.contains('PHQ9')) {
+      return 'PHQ9';
+    }
+    if (normalizedName.contains('GAD-7') || normalizedName.contains('GAD7')) {
+      return 'GAD7';
+    }
+    if (normalizedName.contains('PSQI')) {
+      return 'PSQI';
+    }
+    if (normalizedName.contains('EPQ')) {
+      return 'EPQ';
+    }
     return null;
   }
 }

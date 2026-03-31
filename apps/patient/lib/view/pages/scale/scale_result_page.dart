@@ -48,11 +48,15 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
     final sessionResultFuture = ref
         .read(fetchScaleSessionResultUseCaseProvider)
         .execute(sessionId: widget.args.sessionId);
+    final detailResultFuture = ref
+        .read(fetchScaleDetailUseCaseProvider)
+        .execute(scaleRef: widget.args.scaleId.toString());
     final historyResultFuture = ref
         .read(fetchScaleHistoryUseCaseProvider)
         .execute(limit: 200);
 
     final result = await sessionResultFuture;
+    final detailResult = await detailResultFuture;
     final historyResult = await historyResultFuture;
 
     if (!mounted) return;
@@ -72,7 +76,20 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
         });
         return;
       case Success<ScaleResult>(data: final data):
-        final radarEntries = _buildRadarEntries(data);
+        String? scaleCode = _guessScaleCode(widget.args.scaleName);
+        Map<String, double> dimensionMaxById = const <String, double>{};
+        switch (detailResult) {
+          case Success<ScaleDetail>(data: final detail):
+            scaleCode = detail.code;
+            dimensionMaxById = _buildDimensionMaxById(detail);
+          case Failure<ScaleDetail>():
+            dimensionMaxById = const <String, double>{};
+        }
+        final radarEntries = _buildRadarEntries(
+          data,
+          dimensionMaxById: dimensionMaxById,
+          scaleCode: scaleCode,
+        );
         String? historyError;
         List<ScaleTrendPoint> trendPoints = const <ScaleTrendPoint>[];
         switch (historyResult) {
@@ -257,17 +274,40 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
     return points;
   }
 
-  List<ScaleRadarDimensionEntry> _buildRadarEntries(ScaleResult result) {
+  List<ScaleRadarDimensionEntry> _buildRadarEntries(
+    ScaleResult result, {
+    required Map<String, double> dimensionMaxById,
+    required String? scaleCode,
+  }) {
     final dimensionResults = result.dimensionResults;
     if (dimensionResults.isNotEmpty) {
       return dimensionResults
           .map((item) {
-            final value = _resolveDimensionValue(item);
-            if (value == null) return null;
+            final normalized = normalizeScaleRadarMetric(
+              ScaleRadarMetricInput(
+                scaleCode: scaleCode,
+                dimensionKey: item.dimensionKey,
+                dimensionName: item.dimensionName,
+                rawScore: item.rawScore,
+                averageScore: item.averageScore,
+                standardScore: item.standardScore,
+                scoreRangeMax: _resolveDimensionMax(
+                  dimensionMaxById: dimensionMaxById,
+                  dimensionKey: item.dimensionKey,
+                  dimensionName: item.dimensionName,
+                ),
+              ),
+            );
+            if (normalized == null) return null;
             final label = item.dimensionName.trim().isNotEmpty
                 ? item.dimensionName.trim()
                 : item.dimensionKey;
-            return ScaleRadarDimensionEntry(label: label, value: value);
+            return ScaleRadarDimensionEntry(
+              label: label,
+              value: normalized.plotValue,
+              displayValue: normalized.displayValue,
+              maxValue: normalized.axisMax,
+            );
           })
           .whereType<ScaleRadarDimensionEntry>()
           .toList(growable: false);
@@ -279,11 +319,72 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
 
     return result.dimensionScores.entries
         .where((entry) => entry.value.isFinite)
-        .map(
-          (entry) =>
-              ScaleRadarDimensionEntry(label: entry.key, value: entry.value),
-        )
+        .map((entry) {
+          final normalized = normalizeScaleRadarMetric(
+            ScaleRadarMetricInput(
+              scaleCode: scaleCode,
+              dimensionKey: entry.key,
+              dimensionName: entry.key,
+              rawScore: entry.value,
+              scoreRangeMax: _resolveDimensionMax(
+                dimensionMaxById: dimensionMaxById,
+                dimensionKey: entry.key,
+                dimensionName: entry.key,
+              ),
+            ),
+          );
+          if (normalized == null) return null;
+          return ScaleRadarDimensionEntry(
+            label: entry.key,
+            value: normalized.plotValue,
+            displayValue: normalized.displayValue,
+            maxValue: normalized.axisMax,
+          );
+        })
+        .whereType<ScaleRadarDimensionEntry>()
         .toList(growable: false);
+  }
+
+  Map<String, double> _buildDimensionMaxById(ScaleDetail detail) {
+    final map = <String, double>{};
+    for (final dimension in detail.dimensions) {
+      final max = dimension.scoreRange?.max;
+      if (max == null || !max.isFinite || max <= 0) {
+        continue;
+      }
+
+      final keyId = _normalizeDimensionId(dimension.key);
+      if (keyId.isNotEmpty) {
+        map[keyId] = max;
+      }
+      final nameId = _normalizeDimensionId(dimension.name);
+      if (nameId.isNotEmpty) {
+        map[nameId] = max;
+      }
+    }
+    return map;
+  }
+
+  double? _resolveDimensionMax({
+    required Map<String, double> dimensionMaxById,
+    required String dimensionKey,
+    required String dimensionName,
+  }) {
+    final keyId = _normalizeDimensionId(dimensionKey);
+    if (keyId.isNotEmpty) {
+      final maxByKey = dimensionMaxById[keyId];
+      if (maxByKey != null) {
+        return maxByKey;
+      }
+    }
+    final nameId = _normalizeDimensionId(dimensionName);
+    if (nameId.isNotEmpty) {
+      final maxByName = dimensionMaxById[nameId];
+      if (maxByName != null) {
+        return maxByName;
+      }
+    }
+    return null;
   }
 
   List<ScaleDimensionResultItemData> _toDimensionItems(ScaleResult result) {
@@ -301,10 +402,28 @@ class _ScaleResultPageState extends ConsumerState<ScaleResultPage> {
         .toList(growable: false);
   }
 
-  double? _resolveDimensionValue(ScaleDimensionResult item) {
-    if (item.rawScore != null) return item.rawScore!;
-    if (item.averageScore != null) return item.averageScore!;
-    if (item.standardScore != null) return item.standardScore!;
+  String _normalizeDimensionId(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+  }
+
+  String? _guessScaleCode(String? scaleName) {
+    final normalizedName = (scaleName ?? '').trim().toUpperCase();
+    if (normalizedName.isEmpty) return null;
+    if (normalizedName.contains('SCL-90') || normalizedName.contains('SCL90')) {
+      return 'SCL90';
+    }
+    if (normalizedName.contains('PHQ-9') || normalizedName.contains('PHQ9')) {
+      return 'PHQ9';
+    }
+    if (normalizedName.contains('GAD-7') || normalizedName.contains('GAD7')) {
+      return 'GAD7';
+    }
+    if (normalizedName.contains('PSQI')) {
+      return 'PSQI';
+    }
+    if (normalizedName.contains('EPQ')) {
+      return 'EPQ';
+    }
     return null;
   }
 }

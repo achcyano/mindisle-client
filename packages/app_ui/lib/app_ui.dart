@@ -17,6 +17,7 @@ export 'src/widget/auth/auth_utils.dart';
 export 'src/widget/auth/change_password_form_page.dart';
 export 'src/widget/chart/scale_dimension_radar_chart_card.dart';
 export 'src/widget/chart/scale_dimension_result_list.dart';
+export 'src/widget/chart/scale_radar_normalizer.dart';
 export 'src/widget/chart/scale_result_summary_card.dart';
 export 'src/widget/chart/scale_score_trend_chart_card.dart';
 export 'src/widget/guided_entry_button.dart';

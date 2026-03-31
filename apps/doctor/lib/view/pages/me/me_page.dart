@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:app_core/app_core.dart';
 import 'package:app_ui/app_ui.dart';
 import 'package:doctor/core/providers/app_providers.dart';
 import 'package:doctor/core/static.dart';
 import 'package:doctor/features/doctor_auth/presentation/auth/doctor_auth_controller.dart';
 import 'package:doctor/features/doctor_auth/presentation/providers/doctor_auth_providers.dart';
+import 'package:doctor/features/doctor_patient/domain/entities/doctor_patient_entities.dart';
+import 'package:doctor/features/doctor_patient/presentation/providers/doctor_patient_providers.dart';
 import 'package:doctor/features/doctor_profile/domain/entities/doctor_profile_entities.dart';
 import 'package:doctor/features/doctor_profile/presentation/profile/doctor_profile_controller.dart';
 import 'package:doctor/features/doctor_profile/presentation/profile/doctor_profile_state.dart';
@@ -13,9 +17,15 @@ import 'package:doctor/view/pages/me/edit_profile_page.dart';
 import 'package:doctor/view/pages/me/thresholds_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class DoctorMePage extends ConsumerStatefulWidget {
-  const DoctorMePage({super.key});
+  const DoctorMePage({super.key, this.writeExportFile, this.shareExportFile});
+
+  final Future<File> Function(DoctorPatientExportFile file)? writeExportFile;
+  final Future<void> Function(File file, DoctorPatientExportFile meta)?
+  shareExportFile;
 
   static final route = AppRoute<void>(
     path: '/me',
@@ -29,6 +39,7 @@ class DoctorMePage extends ConsumerStatefulWidget {
 class _DoctorMePageState extends ConsumerState<DoctorMePage> {
   String? _lastErrorMessage;
   bool _isLoggingOut = false;
+  bool _isExportingPatients = false;
 
   @override
   void initState() {
@@ -138,8 +149,21 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
         SettingsGroup(
           children: [
             AppListTile(
-              title: const Text('修改密码'),
+              title: const Text('导出患者数据'),
               position: AppListTilePosition.first,
+              leadingIcon: Icons.download_outlined,
+              trailing: _isExportingPatients
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: FittedBox(child: CircularProgressIndicatorM3E()),
+                    )
+                  : const Icon(Icons.chevron_right),
+              onTap: _isExportingPatients ? null : _exportPatients,
+            ),
+            AppListTile(
+              title: const Text('修改密码'),
+              position: AppListTilePosition.middle,
               leading: Icon(
                 Icons.lock_reset_outlined,
                 color: Theme.of(context).colorScheme.error,
@@ -230,6 +254,115 @@ class _DoctorMePageState extends ConsumerState<DoctorMePage> {
         height: 64,
       ),
     );
+  }
+
+  Future<void> _exportPatients() async {
+    if (_isExportingPatients) return;
+    setState(() {
+      _isExportingPatients = true;
+    });
+
+    try {
+      final result = await ref
+          .read(exportDoctorPatientsUseCaseProvider)
+          .execute();
+      if (!mounted) return;
+
+      switch (result) {
+        case Success<DoctorPatientExportFile>(data: final file):
+          if (file.bytes.isEmpty) {
+            _showSnack('导出失败，文件内容为空');
+            return;
+          }
+          final outputFile = await _writeExportFile(file);
+          if (!mounted) return;
+          setState(() {
+            _isExportingPatients = false;
+          });
+          final shouldShare = await _showExportSuccessDialog(file.fileName);
+          if (shouldShare != true || !mounted) return;
+          await _shareExportFile(file: outputFile, meta: file);
+          return;
+        case Failure<DoctorPatientExportFile>(error: final error):
+          _showSnack(error.message);
+          return;
+      }
+    } on FileSystemException catch (_) {
+      _showSnack('导出失败，文件写入异常，请稍后重试');
+    } catch (_) {
+      _showSnack('导出失败，请稍后重试');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isExportingPatients = false;
+        });
+      }
+    }
+  }
+
+  Future<Directory> _resolveExportDirectory() async {
+    try {
+      return await getTemporaryDirectory();
+    } catch (_) {
+      return Directory.systemTemp;
+    }
+  }
+
+  Future<File> _writeExportFile(DoctorPatientExportFile file) async {
+    if (widget.writeExportFile case final customWriter?) {
+      return customWriter(file);
+    }
+
+    final directory = await _resolveExportDirectory();
+    final outputPath =
+        '${directory.path}${Platform.pathSeparator}${file.fileName}';
+    final outputFile = File(outputPath);
+    await outputFile.writeAsBytes(file.bytes, flush: true);
+    return outputFile;
+  }
+
+  Future<bool?> _showExportSuccessDialog(String fileName) {
+    return showAppDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return buildAppAlertDialog(
+          title: const Text('导出成功'),
+          content: Text('文件已下载：$fileName'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('稍后'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('分享文件'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _shareExportFile({
+    required File file,
+    required DoctorPatientExportFile meta,
+  }) async {
+    try {
+      if (widget.shareExportFile case final customShare?) {
+        await customShare(file, meta);
+        return;
+      }
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            XFile(file.path, mimeType: meta.mimeType, name: meta.fileName),
+          ],
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _showSnack('分享失败，请稍后重试');
+    }
   }
 
   Future<void> _confirmLogout() async {

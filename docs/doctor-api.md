@@ -176,36 +176,45 @@ Base URL: `/api/v1`
    - 返回补充字段：`gender`、`birthDate`、`age`、`latestScl90Score`、`latestAssessmentAt`、`diagnosis`。
    - 本期未落地依从性统计：若传入 `adherenceRateMin/Max`、`missedDoseRateMin/Max` 或依从性排序字段，返回 `40046 DOCTOR_FEATURE_NOT_SUPPORTED`。
    - `treatmentPhase` 已下线：若传入 `treatmentPhase` 查询参数，返回 `40046 DOCTOR_FEATURE_NOT_SUPPORTED`。
-6. `PUT /doctors/me/patients/{patientUserId}/grouping`
+6. `GET /doctors/me/patients/export`
+   - 导出范围：当前医生下 `ACTIVE + unboundAt IS NULL` 的患者（按患者去重）
+   - 返回：`application/zip` 二进制流（不走 `ApiResponse` 包装）
+   - 响应头：`Content-Disposition: attachment; filename="doctor-{doctorId}-patients-export-{yyyyMMddHHmmss}.zip"`
+   - ZIP 固定包含 4 个 CSV（UTF-8 BOM，空数据也保留表头）：
+     - `patients.csv`：患者基本信息（id、手机号、姓名、性别、出生日期、既往史、是否使用中药、身高、腰围、疾病史）
+     - `weight_logs.csv`：体重变化（记录日期、体重、来源）
+     - `medications.csv`：用药全字段（包含 `deletedAt` 非空的历史删除记录）
+     - `scale_answers.csv`：量表作答（仅 `SUBMITTED` 会话；每个 `sessionId + questionId` 取最终一条原始答案；题目标识格式如 `SCL-90-1`）
+7. `PUT /doctors/me/patients/{patientUserId}/grouping`
    - 入参：`severityGroup?`
    - 若请求体包含 `treatmentPhase`，返回 `40046 DOCTOR_FEATURE_NOT_SUPPORTED`
    - 若请求体包含 `reason`，返回 `40046 DOCTOR_FEATURE_NOT_SUPPORTED`
-7. `PUT /doctors/me/patients/{patientUserId}/diagnosis`
+8. `PUT /doctors/me/patients/{patientUserId}/diagnosis`
    - 入参：`diagnosis?: string | null`
    - 返回：`patientUserId`、`diagnosis`、`updatedAt`
-8. `GET /doctors/me/patients/{patientUserId}/grouping-history`
+9. `GET /doctors/me/patients/{patientUserId}/grouping-history`
    - 返回包含：`operatorDoctorId`、`operatorDoctorName`、`changedAt`
-9. `GET /doctors/me/patients/{patientUserId}/profile`
+10. `GET /doctors/me/patients/{patientUserId}/profile`
    - 仅允许查询当前绑定患者
    - 返回：`phone/fullName/gender/birthDate/heightCm/weightKg/waistCm/usesTcm/diseaseHistory`
-10. `GET /doctors/me/patients/{patientUserId}/scale-history?limit=20&cursor=<sessionId>`
+11. `GET /doctors/me/patients/{patientUserId}/scale-history?limit=20&cursor=<sessionId>`
    - 与患者端 `GET /scales/history` 同口径（会话级历史列表）
    - 返回字段：`items[].sessionId/scaleId/scaleCode/scaleName/versionId/version/progress/totalScore/submittedAt/updatedAt`、`nextCursor`
-11. `GET /doctors/me/patients/{patientUserId}/scales/sessions/{sessionId}/result`
+12. `GET /doctors/me/patients/{patientUserId}/scales/sessions/{sessionId}/result`
    - 与患者端 `GET /scales/sessions/{sessionId}/result` 同口径，返回单次会话的评分结果与维度结果
    - 仅允许查询当前医生已绑定患者的会话
-12. `POST /doctors/me/patients/{patientUserId}/assessment-report`
+13. `POST /doctors/me/patients/{patientUserId}/assessment-report`
    - 生成并持久化评估报告，返回 `reportId`
    - 当前版本为 LLM 必经链路：不再使用“模板回退”逻辑；若模型调用失败或输出为空，返回 `502 AI_UPSTREAM_ERROR`
-13. `GET /doctors/me/patients/{patientUserId}/assessment-reports/latest`
-14. `GET /doctors/me/patients/{patientUserId}/assessment-reports?limit=20&cursor=<id>`
-15. `GET /doctors/me/patients/{patientUserId}/assessment-reports/{reportId}`
-16. `POST /doctors/me/patients/{patientUserId}/medications`
-17. `GET /doctors/me/patients/{patientUserId}/medications`
-18. `PUT /doctors/me/patients/{patientUserId}/medications/{medicationId}`
-19. `DELETE /doctors/me/patients/{patientUserId}/medications/{medicationId}`
-20. `GET /doctors/me/patients/{patientUserId}/side-effects/summary`
-21. `GET /doctors/me/patients/{patientUserId}/weight-trend`
+14. `GET /doctors/me/patients/{patientUserId}/assessment-reports/latest`
+15. `GET /doctors/me/patients/{patientUserId}/assessment-reports?limit=20&cursor=<id>`
+16. `GET /doctors/me/patients/{patientUserId}/assessment-reports/{reportId}`
+17. `POST /doctors/me/patients/{patientUserId}/medications`
+18. `GET /doctors/me/patients/{patientUserId}/medications`
+19. `PUT /doctors/me/patients/{patientUserId}/medications/{medicationId}`
+20. `DELETE /doctors/me/patients/{patientUserId}/medications/{medicationId}`
+21. `GET /doctors/me/patients/{patientUserId}/side-effects/summary`
+22. `GET /doctors/me/patients/{patientUserId}/weight-trend`
 
 补充说明：
 

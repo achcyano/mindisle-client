@@ -64,3 +64,10 @@ final fetchDoctorPatientProfileUseCaseProvider =
         ref.watch(doctorPatientRepositoryProvider),
       );
     });
+
+final exportDoctorPatientsUseCaseProvider =
+    Provider<ExportDoctorPatientsUseCase>((ref) {
+      return ExportDoctorPatientsUseCase(
+        ref.watch(doctorPatientRepositoryProvider),
+      );
+    });

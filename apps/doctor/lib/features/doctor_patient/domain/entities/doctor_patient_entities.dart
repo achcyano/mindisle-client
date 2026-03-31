@@ -297,3 +297,15 @@ final class DoctorPatientProfile {
   final bool? usesTcm;
   final List<String> diseaseHistory;
 }
+
+final class DoctorPatientExportFile {
+  const DoctorPatientExportFile({
+    required this.bytes,
+    required this.fileName,
+    this.mimeType = 'application/zip',
+  });
+
+  final List<int> bytes;
+  final String fileName;
+  final String mimeType;
+}

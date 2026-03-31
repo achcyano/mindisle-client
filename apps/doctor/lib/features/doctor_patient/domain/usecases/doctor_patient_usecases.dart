@@ -101,3 +101,13 @@ final class FetchDoctorPatientProfileUseCase {
     return _repository.fetchPatientProfile(patientUserId: patientUserId);
   }
 }
+
+final class ExportDoctorPatientsUseCase {
+  const ExportDoctorPatientsUseCase(this._repository);
+
+  final DoctorPatientRepository _repository;
+
+  Future<Result<DoctorPatientExportFile>> execute() {
+    return _repository.exportPatients();
+  }
+}

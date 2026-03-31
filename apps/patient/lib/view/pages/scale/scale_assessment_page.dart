@@ -201,10 +201,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
     unawaited(
       ScaleResultPage.route.replace(
         context,
-        ScaleResultArgs(
-          sessionId: submittedSessionId,
-          scaleId: _args.scaleId,
-        ),
+        ScaleResultArgs(sessionId: submittedSessionId, scaleId: _args.scaleId),
       ),
     );
   }
@@ -297,7 +294,7 @@ class _ScaleAssessmentPageState extends ConsumerState<ScaleAssessmentPage> {
   Widget _buildRetry() {
     return Center(
       child: TextButton(
-        onPressed: _controller.initialize,
+        onPressed: () => _controller.initialize(force: true),
         child: const Text('重试'),
       ),
     );

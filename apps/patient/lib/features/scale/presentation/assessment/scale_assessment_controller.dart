@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:patient/core/result/app_error.dart';
 import 'package:patient/core/result/result.dart';
 import 'package:patient/features/scale/domain/entities/scale_entities.dart';
 import 'package:patient/features/scale/presentation/assessment/scale_answer_codec.dart';
@@ -21,61 +24,86 @@ final class ScaleAssessmentController
   ScaleAssessmentController(this._ref, this._args)
     : super(const ScaleAssessmentState());
 
+  static const _initializeTimeout = Duration(seconds: 15);
+
   final Ref _ref;
   final ScaleAssessmentArgs _args;
 
-  Future<void> initialize() async {
-    if (state.initialized) return;
+  Future<void> initialize({bool force = false}) async {
+    if (state.isLoading) return;
+    if (!force &&
+        state.initialized &&
+        state.detail != null &&
+        state.session != null) {
+      return;
+    }
+
     state = state.copyWith(
       initialized: true,
       isLoading: true,
       errorMessage: null,
     );
 
-    final detailFuture = _ref
-        .read(fetchScaleDetailUseCaseProvider)
-        .execute(scaleRef: _args.scaleId.toString());
-    final sessionFuture = _ref
-        .read(fetchScaleSessionDetailUseCaseProvider)
-        .execute(sessionId: _args.sessionId);
-    final detailResult = await detailFuture;
-    final sessionResult = await sessionFuture;
+    try {
+      final detailFuture = _ref
+          .read(fetchScaleDetailUseCaseProvider)
+          .execute(scaleRef: _args.scaleId.toString())
+          .timeout(
+            _initializeTimeout,
+            onTimeout: () => const Failure<ScaleDetail>(
+              AppError(type: AppErrorType.network, message: '加载量表超时，请重试'),
+            ),
+          );
+      final sessionFuture = _ref
+          .read(fetchScaleSessionDetailUseCaseProvider)
+          .execute(sessionId: _args.sessionId)
+          .timeout(
+            _initializeTimeout,
+            onTimeout: () => const Failure<ScaleSessionDetail>(
+              AppError(type: AppErrorType.network, message: '加载会话超时，请重试'),
+            ),
+          );
+      final detailResult = await detailFuture;
+      final sessionResult = await sessionFuture;
 
-    switch (detailResult) {
-      case Failure<ScaleDetail>(error: final error):
-        state = state.copyWith(isLoading: false, errorMessage: error.message);
-        return;
-      case Success<ScaleDetail>(data: final detail):
-        switch (sessionResult) {
-          case Failure<ScaleSessionDetail>(error: final error):
-            state = state.copyWith(
-              isLoading: false,
-              detail: detail,
-              errorMessage: error.message,
-            );
-            return;
-          case Success<ScaleSessionDetail>(data: final sessionDetail):
-            final answerDrafts = ScaleAnswerCodec.fromSessionAnswers(
-              answers: sessionDetail.answers,
-              questions: detail.questions,
-            );
-            final initialIndex = _findInitialQuestionIndex(
-              questions: detail.questions,
-              answerDrafts: answerDrafts,
-              unansweredRequiredQuestionIds:
-                  sessionDetail.unansweredRequiredQuestionIds,
-            );
-            state = state.copyWith(
-              isLoading: false,
-              detail: detail,
-              session: sessionDetail.session,
-              answerDrafts: answerDrafts,
-              unansweredRequiredQuestionIds:
-                  sessionDetail.unansweredRequiredQuestionIds,
-              currentQuestionIndex: initialIndex,
-            );
-            return;
-        }
+      switch (detailResult) {
+        case Failure<ScaleDetail>(error: final error):
+          state = state.copyWith(isLoading: false, errorMessage: error.message);
+          return;
+        case Success<ScaleDetail>(data: final detail):
+          switch (sessionResult) {
+            case Failure<ScaleSessionDetail>(error: final error):
+              state = state.copyWith(
+                isLoading: false,
+                detail: detail,
+                errorMessage: error.message,
+              );
+              return;
+            case Success<ScaleSessionDetail>(data: final sessionDetail):
+              final answerDrafts = ScaleAnswerCodec.fromSessionAnswers(
+                answers: sessionDetail.answers,
+                questions: detail.questions,
+              );
+              final initialIndex = _findInitialQuestionIndex(
+                questions: detail.questions,
+                answerDrafts: answerDrafts,
+                unansweredRequiredQuestionIds:
+                    sessionDetail.unansweredRequiredQuestionIds,
+              );
+              state = state.copyWith(
+                isLoading: false,
+                detail: detail,
+                session: sessionDetail.session,
+                answerDrafts: answerDrafts,
+                unansweredRequiredQuestionIds:
+                    sessionDetail.unansweredRequiredQuestionIds,
+                currentQuestionIndex: initialIndex,
+              );
+              return;
+          }
+      }
+    } catch (_) {
+      state = state.copyWith(isLoading: false, errorMessage: '加载量表失败，请重试');
     }
   }
 
@@ -277,11 +305,13 @@ final class ScaleAssessmentController
       errorMessage: null,
     );
 
-    final result = await _ref.read(saveScaleAnswerUseCaseProvider).execute(
-      sessionId: _args.sessionId,
-      questionId: questionId,
-      answer: answer,
-    );
+    final result = await _ref
+        .read(saveScaleAnswerUseCaseProvider)
+        .execute(
+          sessionId: _args.sessionId,
+          questionId: questionId,
+          answer: answer,
+        );
 
     final finalSavingIds = Set<int>.from(state.savingQuestionIds)
       ..remove(questionId);
