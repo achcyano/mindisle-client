@@ -27,6 +27,15 @@ UserEventType userEventTypeFromWire({
   };
 }
 
+EventScaleDeliveryMode eventScaleDeliveryModeFromWire(String? raw) {
+  return switch ((raw ?? '').trim().toUpperCase()) {
+    '' => EventScaleDeliveryMode.native,
+    'NATIVE' => EventScaleDeliveryMode.native,
+    'WEBVIEW' => EventScaleDeliveryMode.webview,
+    _ => EventScaleDeliveryMode.unknown,
+  };
+}
+
 final class UserEventItemDto {
   const UserEventItemDto({
     required this.eventName,
@@ -42,6 +51,8 @@ final class UserEventItemDto {
     this.progress,
     this.activeMedicationCount,
     this.anchor,
+    this.deliveryMode = EventScaleDeliveryMode.native,
+    this.webPath,
   });
 
   factory UserEventItemDto.fromJson(Map<String, dynamic> json) {
@@ -71,6 +82,10 @@ final class UserEventItemDto {
       progress: _toInt(payload['progress']),
       activeMedicationCount: _toInt(payload['activeMedicationCount']),
       anchor: _toNonEmptyString(payload['anchor']),
+      deliveryMode: eventScaleDeliveryModeFromWire(
+        _toNonEmptyString(payload['deliveryMode']),
+      ),
+      webPath: _toNonEmptyString(payload['webPath']),
     );
   }
 
@@ -88,6 +103,8 @@ final class UserEventItemDto {
   final int? progress;
   final int? activeMedicationCount;
   final String? anchor;
+  final EventScaleDeliveryMode deliveryMode;
+  final String? webPath;
 
   UserEventItem toDomain() {
     return UserEventItem(
@@ -104,6 +121,8 @@ final class UserEventItemDto {
       progress: progress,
       activeMedicationCount: activeMedicationCount,
       anchor: anchor,
+      deliveryMode: deliveryMode,
+      webPath: webPath,
     );
   }
 }

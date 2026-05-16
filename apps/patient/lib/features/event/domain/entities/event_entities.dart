@@ -7,6 +7,8 @@ enum UserEventType {
   unknown,
 }
 
+enum EventScaleDeliveryMode { native, webview, unknown }
+
 final class UserEventItem {
   const UserEventItem({
     required this.eventName,
@@ -22,6 +24,8 @@ final class UserEventItem {
     this.progress,
     this.activeMedicationCount,
     this.anchor,
+    this.deliveryMode = EventScaleDeliveryMode.native,
+    this.webPath,
   });
 
   final String eventName;
@@ -38,6 +42,8 @@ final class UserEventItem {
   final int? progress;
   final int? activeMedicationCount;
   final String? anchor;
+  final EventScaleDeliveryMode deliveryMode;
+  final String? webPath;
 }
 
 final class UserEventList {

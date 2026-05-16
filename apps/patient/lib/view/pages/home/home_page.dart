@@ -26,6 +26,8 @@ import 'package:patient/view/pages/medicine/medicine_page.dart';
 import 'package:patient/view/pages/profile/profile_page.dart';
 import 'package:patient/view/pages/scale/scale_assessment_page.dart';
 import 'package:patient/view/pages/scale/scale_list_page.dart';
+import 'package:patient/view/pages/scale/scale_webview_args.dart';
+import 'package:patient/view/pages/scale/scale_webview_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, required this.onRouteRequested});
@@ -279,8 +281,14 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _openScaleEvent(UserEventItem item) async {
+    if (item.deliveryMode == EventScaleDeliveryMode.webview) {
+      await _openScaleWebViewEvent(item);
+      return;
+    }
+
     final scaleId = item.scaleId;
     if (scaleId == null || scaleId <= 0) {
+      if (!mounted) return;
       await ScaleListPage.route.goRoot(context);
       if (!mounted) return;
       await ref.read(eventHomeControllerProvider.notifier).refresh();
@@ -311,6 +319,11 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _continueScaleEvent(UserEventItem item) async {
+    if (item.deliveryMode == EventScaleDeliveryMode.webview) {
+      await _openScaleWebViewEvent(item);
+      return;
+    }
+
     final scaleId = item.scaleId;
     final sessionId = item.sessionId;
 
@@ -318,15 +331,36 @@ class _HomePageState extends ConsumerState<HomePage> {
         scaleId <= 0 ||
         sessionId == null ||
         sessionId <= 0) {
+      if (!mounted) return;
       await ScaleListPage.route.goRoot(context);
       if (!mounted) return;
       await ref.read(eventHomeControllerProvider.notifier).refresh();
       return;
     }
 
+    if (!mounted) return;
     await ScaleAssessmentPage.route.goRoot(
       context,
       ScaleAssessmentArgs(scaleId: scaleId, sessionId: sessionId),
+    );
+    if (!mounted) return;
+    await ref.read(eventHomeControllerProvider.notifier).refresh();
+  }
+
+  Future<void> _openScaleWebViewEvent(UserEventItem item) async {
+    final webPath = item.webPath;
+    if (webPath == null || webPath.isEmpty) {
+      _showSnack('该量表暂时无法打开，请稍后重试');
+      return;
+    }
+
+    if (!mounted) return;
+    await ScaleWebViewPage.route.goRoot(
+      context,
+      ScaleWebViewArgs(
+        title: item.scaleName ?? '量表评估',
+        webPath: webPath,
+      ),
     );
     if (!mounted) return;
     await ref.read(eventHomeControllerProvider.notifier).refresh();

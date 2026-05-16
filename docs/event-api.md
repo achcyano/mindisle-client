@@ -29,10 +29,25 @@
 
 1. `SCALE_REDO_DUE`
    - `eventType = OPEN_SCALE`
-   - `payload`: `scaleId/scaleCode/scaleName/intervalDays`
+   - `payload`: `scaleId/scaleCode/scaleName/intervalDays/deliveryMode/webPath`
+   - WebView 量表（如 TESS）返回 `deliveryMode=WEBVIEW` 和 `webPath=/web/scales/TESS`；原生量表返回 `deliveryMode=NATIVE`，`webPath` 可不存在。
 2. `SCALE_SESSION_IN_PROGRESS`
    - `eventType = CONTINUE_SCALE_SESSION`
-   - `payload`: `sessionId/scaleId/scaleCode/scaleName/progress`
+   - `payload`: `sessionId/scaleId/scaleCode/scaleName/progress/deliveryMode/webPath`
+   - WebView 未完成会话的 `webPath` 会带 `sessionId`，例如 `/web/scales/TESS?sessionId=99`。
+
+客户端打开事件中的 WebView 量表时，需要在 `webPath` 后追加 hash token：
+
+```text
+<webPath>#accessToken=<userAccessToken>
+```
+
+示例：
+
+```text
+/web/scales/TESS#accessToken=<userAccessToken>
+/web/scales/TESS?sessionId=99#accessToken=<userAccessToken>
+```
 3. `DOCTOR_BIND_REQUIRED`
    - `eventType = BIND_DOCTOR`
    - `payload`: `{}`
@@ -46,7 +61,7 @@
 ## 3. 到期时间与判定规则
 
 - `dueAt` 与 `generatedAt` 固定输出为 `UTC+8` 偏移格式（`+08:00`）。
-- `SCALE_REDO_DUE`：按量表配置 `redoIntervalDays` 计算（无配置默认 30 天）。
+- `SCALE_REDO_DUE`：按全部已发布量表的配置 `redoIntervalDays` 计算（无配置默认 30 天），TESS 也包含在内。
 - `SCALE_SESSION_IN_PROGRESS`：每个量表只返回 1 条最新未提交会话。
 - `DOCTOR_BIND_REQUIRED`：已接入真实绑定判定。
   - 当用户不存在活跃绑定（`doctor_patient_bindings.status=ACTIVE` 且 `unboundAt IS NULL`）时返回。

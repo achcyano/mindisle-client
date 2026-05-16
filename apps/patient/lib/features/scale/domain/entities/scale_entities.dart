@@ -14,6 +14,8 @@ enum ScaleQuestionType {
 
 enum ScaleAssistEventType { meta, delta, done, error, unknown }
 
+enum ScaleDeliveryMode { native, webview, unknown }
+
 final class ScaleSummary {
   const ScaleSummary({
     required this.scaleId,
@@ -24,6 +26,8 @@ final class ScaleSummary {
     this.versionId,
     this.version,
     this.lastCompletedAt,
+    this.deliveryMode = ScaleDeliveryMode.native,
+    this.webPath,
   });
 
   final int scaleId;
@@ -34,6 +38,8 @@ final class ScaleSummary {
   final int? versionId;
   final int? version;
   final DateTime? lastCompletedAt;
+  final ScaleDeliveryMode deliveryMode;
+  final String? webPath;
 }
 
 final class ScaleScoreRange {
@@ -117,6 +123,8 @@ final class ScaleDetail {
     this.config = const <String, dynamic>{},
     this.dimensions = const <ScaleDimensionDefinition>[],
     this.questions = const <ScaleQuestion>[],
+    this.deliveryMode = ScaleDeliveryMode.native,
+    this.webPath,
   });
 
   final int scaleId;
@@ -129,6 +137,8 @@ final class ScaleDetail {
   final Map<String, dynamic> config;
   final List<ScaleDimensionDefinition> dimensions;
   final List<ScaleQuestion> questions;
+  final ScaleDeliveryMode deliveryMode;
+  final String? webPath;
 }
 
 final class ScaleSession {
@@ -259,6 +269,8 @@ final class ScaleHistoryItem {
     this.totalScore,
     this.submittedAt,
     this.updatedAt,
+    this.deliveryMode = ScaleDeliveryMode.native,
+    this.webPath,
   });
 
   final int sessionId;
@@ -271,6 +283,8 @@ final class ScaleHistoryItem {
   final double? totalScore;
   final DateTime? submittedAt;
   final DateTime? updatedAt;
+  final ScaleDeliveryMode deliveryMode;
+  final String? webPath;
 }
 
 final class ScaleHistoryPage {

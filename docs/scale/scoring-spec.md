@@ -125,7 +125,44 @@ T分公式：
 - 不计算 T 分
 - 返回标记：`EPQ_NORM_PENDING_GENDER`
 
-## 6. 结果兼容策略
+## 6. TESS
+
+TESS version 1 用于药物副反应自评。每个症状项拆成两个题目：
+
+- `qN_severity`：严重程度，分值 `0~4`，计入总分
+- `qN_relation`：药物关联性，分值 `0~3`，不计入总分
+
+症状项与系统维度：
+
+- `neurologic`：震颤、静坐不能、肌强直
+- `autonomic`：口干、便秘、出汗增多
+- `cardiovascular`：心跳加速、头晕（站立时）
+- `digestive`：恶心、食欲变化
+- `psychiatric_behavioral`：嗜睡/镇静、失眠、焦虑/激越
+- `other`：头痛、体重增加
+
+计算：
+
+- `totalScore`：15 个严重程度题求和，范围 `0~60`
+- `dimensionScores`：按系统维度汇总严重程度分
+- `symptomCount`：严重程度 `> 0` 的症状数
+- `highSymptomCount`：严重程度 `>= 3` 的症状数
+- `probableDrugRelatedCount`：关联性 `>= 2` 的症状数
+- `maxSeverity`：最高严重程度
+
+临时非诊断性分层：
+
+- `0`：`none`（未见明显副反应）
+- `1~14`：`mild`（轻度副反应）
+- `15~29`：`moderate`（中度副反应）
+- `30~60`：`high`（副反应负担较高）
+
+输出标记：
+
+- 有严重程度 `>= 3`：`TESS_HIGH_SEVERITY`
+- 有关联性 `>= 2`：`TESS_PROBABLE_DRUG_RELATED`
+
+## 7. 结果兼容策略
 
 - 旧字段 `dimensionScores` 继续返回
 - 新字段：

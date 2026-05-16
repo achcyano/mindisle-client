@@ -184,7 +184,7 @@ Base URL: `/api/v1`
      - `patients.csv`：患者基本信息（id、手机号、姓名、性别、出生日期、既往史、是否使用中药、身高、腰围、疾病史）
      - `weight_logs.csv`：体重变化（记录日期、体重、来源）
      - `medications.csv`：用药全字段（包含 `deletedAt` 非空的历史删除记录）
-     - `scale_answers.csv`：量表作答（仅 `SUBMITTED` 会话；每个 `sessionId + questionId` 取最终一条原始答案；题目标识格式如 `SCL-90-1`）
+    - `scale_answers.csv`：量表作答（仅 `SUBMITTED` 会话；每个 `sessionId + questionId` 取最终一条原始答案；题目标识格式如 `SCL-90-1`；若答案含 `optionId/optionIds/optionKey/optionKeys`，会自动补充 `optionLabel/optionLabels`）
 7. `PUT /doctors/me/patients/{patientUserId}/grouping`
    - 入参：`severityGroup?`
    - 若请求体包含 `treatmentPhase`，返回 `40046 DOCTOR_FEATURE_NOT_SUPPORTED`
@@ -198,8 +198,9 @@ Base URL: `/api/v1`
    - 仅允许查询当前绑定患者
    - 返回：`phone/fullName/gender/birthDate/heightCm/weightKg/waistCm/usesTcm/diseaseHistory`
 11. `GET /doctors/me/patients/{patientUserId}/scale-history?limit=20&cursor=<sessionId>`
-   - 与患者端 `GET /scales/history` 同口径（会话级历史列表）
-   - 返回字段：`items[].sessionId/scaleId/scaleCode/scaleName/versionId/version/progress/totalScore/submittedAt/updatedAt`、`nextCursor`
+     - 与患者端 `GET /scales/history` 同口径（会话级历史列表）
+     - 返回字段：`items[].sessionId/scaleId/scaleCode/scaleName/versionId/version/progress/totalScore/submittedAt/updatedAt/deliveryMode/webPath`、`nextCursor`
+     - WebView 量表（如 TESS）的 `webPath` 会带 `sessionId`，可由客户端直接打开记录页。
 12. `GET /doctors/me/patients/{patientUserId}/scales/sessions/{sessionId}/result`
    - 与患者端 `GET /scales/sessions/{sessionId}/result` 同口径，返回单次会话的评分结果与维度结果
    - 仅允许查询当前医生已绑定患者的会话

@@ -1,7 +1,33 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patient/features/event/data/models/event_models.dart';
+import 'package:patient/features/event/domain/entities/event_entities.dart';
 
 void main() {
+  group('UserEventItemDto', () {
+    test('parses webview scale delivery payload', () {
+      final dto = UserEventItemDto.fromJson({
+        'eventName': 'SCALE_SESSION_IN_PROGRESS',
+        'eventType': 'CONTINUE_SCALE_SESSION',
+        'dueAt': '2026-05-16T09:00:00+08:00',
+        'persistent': true,
+        'payload': {
+          'scaleId': 8,
+          'scaleCode': 'TESS',
+          'scaleName': 'TESS 药物副反应自评',
+          'sessionId': 99,
+          'progress': 50,
+          'deliveryMode': 'WEBVIEW',
+          'webPath': '/web/scales/TESS?sessionId=99',
+        },
+      });
+
+      final item = dto.toDomain();
+      expect(item.eventType, UserEventType.continueScaleSession);
+      expect(item.deliveryMode, EventScaleDeliveryMode.webview);
+      expect(item.webPath, '/web/scales/TESS?sessionId=99');
+    });
+  });
+
   group('DoctorBindingStatusDto', () {
     test('parses doctor info from current object', () {
       final dto = DoctorBindingStatusDto.fromJson({

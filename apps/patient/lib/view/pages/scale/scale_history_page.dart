@@ -5,6 +5,8 @@ import 'package:patient/features/scale/presentation/history/scale_history_contro
 import 'package:patient/features/scale/presentation/history/scale_history_state.dart';
 import 'package:patient/features/scale/presentation/result/scale_result_args.dart';
 import 'package:patient/view/pages/scale/scale_result_page.dart';
+import 'package:patient/view/pages/scale/scale_webview_args.dart';
+import 'package:patient/view/pages/scale/scale_webview_page.dart';
 import 'package:patient/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
 
@@ -75,7 +77,26 @@ class _ScaleHistoryPageState extends ConsumerState<ScaleHistoryPage> {
                           final item = state.items[index];
                           return _HistoryTile(
                             item: item,
-                            onTap: () {
+                            onTap: () async {
+                              if (item.deliveryMode ==
+                                  ScaleDeliveryMode.webview) {
+                                final webPath = item.webPath;
+                                if (webPath == null || webPath.isEmpty) {
+                                  _showSnack('该量表记录暂时无法打开，请稍后重试');
+                                  return;
+                                }
+                                await ScaleWebViewPage.route.go(
+                                  context,
+                                  ScaleWebViewArgs(
+                                    title: item.scaleName,
+                                    webPath: webPath,
+                                  ),
+                                );
+                                if (!context.mounted) return;
+                                await controller.loadHistory(refresh: true);
+                                return;
+                              }
+
                               ScaleResultPage.route.go(
                                 context,
                                 ScaleResultArgs(
@@ -91,6 +112,12 @@ class _ScaleHistoryPageState extends ConsumerState<ScaleHistoryPage> {
               ),
       ),
     );
+  }
+
+  void _showSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

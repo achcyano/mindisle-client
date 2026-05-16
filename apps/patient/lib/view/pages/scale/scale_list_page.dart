@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:patient/features/scale/domain/entities/scale_entities.dart'
+    show ScaleDeliveryMode;
 import 'package:patient/features/scale/presentation/list/scale_list_controller.dart';
 import 'package:patient/features/scale/presentation/list/scale_list_state.dart';
 import 'package:patient/features/scale/presentation/assessment/scale_assessment_args.dart';
 import 'package:patient/view/pages/scale/scale_assessment_page.dart';
 import 'package:patient/view/pages/scale/scale_history_page.dart';
+import 'package:patient/view/pages/scale/scale_webview_args.dart';
+import 'package:patient/view/pages/scale/scale_webview_page.dart';
 import 'package:patient/view/pages/scale/widgets/scale_card_tile.dart';
 import 'package:patient/view/route/app_route.dart';
 import 'package:progress_indicator_m3e/progress_indicator_m3e.dart';
@@ -91,6 +95,26 @@ class _ScaleListPageState extends ConsumerState<ScaleListPage> {
                               lastCompletedAt: item.lastCompletedAt,
                               isOpening: state.openingScaleId == item.scaleId,
                               onTap: () async {
+                                if (item.deliveryMode ==
+                                    ScaleDeliveryMode.webview) {
+                                  final webPath = item.webPath;
+                                  if (webPath == null || webPath.isEmpty) {
+                                    _showSnack('该量表暂时无法打开，请稍后重试');
+                                    return;
+                                  }
+
+                                  await ScaleWebViewPage.route.go(
+                                    itemContext,
+                                    ScaleWebViewArgs(
+                                      title: item.name,
+                                      webPath: webPath,
+                                    ),
+                                  );
+                                  if (!itemContext.mounted) return;
+                                  await controller.loadScales(refresh: true);
+                                  return;
+                                }
+
                                 final session = await controller.openScale(
                                   item,
                                 );
@@ -115,5 +139,11 @@ class _ScaleListPageState extends ConsumerState<ScaleListPage> {
               ),
       ),
     );
+  }
+
+  void _showSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.hideCurrentSnackBar();
+    messenger?.showSnackBar(SnackBar(content: Text(message)));
   }
 }

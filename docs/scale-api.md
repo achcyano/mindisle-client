@@ -41,6 +41,9 @@
 - 列表项新增 `lastCompletedAt`：当前用户最近一次完成（`SUBMITTED`）该量表的时间
 - `lastCompletedAt` 使用固定时区 `UTC+8`，格式 `ISO8601 +08:00`（示例：`2026-02-24T21:30:00+08:00`）
 - 若该用户从未完成该量表，`lastCompletedAt` 为 `null`
+- 下发方式字段：
+  - `deliveryMode`: `NATIVE | WEBVIEW`
+  - `webPath`: WebView 量表入口；普通原生量表为 `null`
 
 ### 3.2 获取量表详情（题目+选项+维度）
 
@@ -57,6 +60,7 @@
   - `scoreRange`
   - `interpretationHint`
 - `questions`: 题目数组（含 `type/dimension/scorable/reverseScored/options`）
+- `deliveryMode/webPath`: 与列表字段一致
 
 ### 3.3 创建或恢复会话
 
@@ -148,6 +152,7 @@
 
 - `GET /api/v1/scales/history?limit=20&cursor=<optional>`
 - 仅返回当前用户 `SUBMITTED` 会话。
+- 历史项也会返回 `deliveryMode/webPath`。对于 WebView 量表，`webPath` 会自动带上 `sessionId`，例如：`/web/scales/TESS?sessionId=99`。
 
 ### 3.9 删除草稿会话
 
@@ -210,10 +215,79 @@ data: <json>
 - `PSQI`
 - `SCL90`
 - `EPQ`（EPQ-88）
+- `TESS`（WebView 下发）
 
 详见：`docs/scale/scoring-spec.md`
 
-## 6. 错误码（量表相关）
+## 6. TESS WebView 量表
+
+### 6.1 打开方式
+
+TESS 使用现有量表表结构与 `/api/v1/scales/**` JWT 接口，不新增业务数据表。客户端按列表或详情中的字段识别：
+
+- `deliveryMode = "WEBVIEW"`
+- `webPath = "/web/scales/TESS"`
+
+填写入口：
+
+```text
+/web/scales/TESS#accessToken=<userAccessToken>
+```
+
+历史记录入口：
+
+```text
+/web/scales/TESS?sessionId=<sessionId>#accessToken=<userAccessToken>
+```
+
+网页读取 hash 中的 `accessToken` 后会立即通过 `history.replaceState` 清理地址栏；token 只保存在页面内存中。带 `sessionId` 打开时会加载该次会话；若已提交则展示只读报告，不创建新会话。
+
+### 6.2 答案保存格式
+
+TESS version 1 共 15 个症状项，每项拆为两个单选题：
+
+- `qN_severity`：严重程度，必答且计分，选项分值 `0~4`
+- `qN_relation`：药物关联性，必答但不计入总分，选项分值 `0~3`
+
+网页保存答案仍调用现有接口：
+
+```http
+PUT /api/v1/scales/sessions/{sessionId}/answers/{questionId}
+```
+
+请求体示例：
+
+```json
+{
+  "answer": {
+    "optionId": 123
+  }
+}
+```
+
+当严重程度选择 `0 - 无` 时，网页会自动把对应 `qN_relation` 保存为 `0 - 无关`，从而继续复用服务端 required 校验。
+
+### 6.3 结果字段
+
+TESS 计分方法为 `ScaleScoringMethod.TESS`：
+
+- `totalScore`: 15 项严重程度总和，范围 `0~60`
+- `dimensionScores`: 按系统汇总严重程度分，包括 `neurologic/autonomic/cardiovascular/digestive/psychiatric_behavioral/other`
+- `overallMetrics`:
+  - `symptomCount`: 严重程度大于 0 的症状数
+  - `highSymptomCount`: 严重程度大于等于 3 的症状数
+  - `probableDrugRelatedCount`: 关联性大于等于 2 的症状数
+  - `maxSeverity`: 最高严重程度
+- `resultFlags`:
+  - `TESS_HIGH_SEVERITY`: 存在严重程度大于等于 3 的症状
+  - `TESS_PROBABLE_DRUG_RELATED`: 存在关联性大于等于 2 的症状
+- 临时非诊断性分层：
+  - `0`: `none`
+  - `1~14`: `mild`
+  - `15~29`: `moderate`
+  - `30~60`: `high`
+
+## 7. 错误码（量表相关）
 
 | code | HTTP | 含义 |
 |---|---|---|
@@ -233,9 +307,9 @@ data: <json>
 
 - `GET /scales/sessions/{sessionId}/result` 在“结果未生成”场景下会返回 HTTP `409` + `40020`
 
-## 7. 服务端机制摘要
+## 8. 服务端机制摘要
 
-1. 启动时自动建表，并按版本写入量表种子（PHQ9/GAD7/PSQI/SCL90/EPQ）。  
+1. 启动时自动建表，并按版本写入量表种子（PHQ9/GAD7/PSQI/SCL90/EPQ/TESS）。
 2. 客户端按量表详情渲染题目，逐题保存。  
 3. 服务端保存题目时更新进度，支持断点续填。  
 4. 提交后执行对应计分方法，写入总分、维度分、维度详情和风险标记。  

@@ -30,6 +30,15 @@ ScaleQuestionType scaleQuestionTypeFromWire(String? raw) {
   };
 }
 
+ScaleDeliveryMode scaleDeliveryModeFromWire(String? raw) {
+  return switch ((raw ?? '').trim().toUpperCase()) {
+    '' => ScaleDeliveryMode.native,
+    'NATIVE' => ScaleDeliveryMode.native,
+    'WEBVIEW' => ScaleDeliveryMode.webview,
+    _ => ScaleDeliveryMode.unknown,
+  };
+}
+
 final class ScaleSummaryDto {
   const ScaleSummaryDto({
     required this.scaleId,
@@ -40,6 +49,8 @@ final class ScaleSummaryDto {
     this.versionId,
     this.version,
     this.lastCompletedAt,
+    this.deliveryMode = ScaleDeliveryMode.native,
+    this.webPath,
   });
 
   factory ScaleSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -54,6 +65,8 @@ final class ScaleSummaryDto {
       lastCompletedAt:
           _parseDateTime(json['lastCompletedAt']) ??
           _parseDateTime(json['last_completed_at']),
+      deliveryMode: scaleDeliveryModeFromWire(json['deliveryMode'] as String?),
+      webPath: _toNonEmptyString(json['webPath']),
     );
   }
 
@@ -65,6 +78,8 @@ final class ScaleSummaryDto {
   final int? versionId;
   final int? version;
   final DateTime? lastCompletedAt;
+  final ScaleDeliveryMode deliveryMode;
+  final String? webPath;
 
   ScaleSummary toDomain() {
     return ScaleSummary(
@@ -76,6 +91,8 @@ final class ScaleSummaryDto {
       versionId: versionId,
       version: version,
       lastCompletedAt: lastCompletedAt,
+      deliveryMode: deliveryMode,
+      webPath: webPath,
     );
   }
 }
@@ -264,6 +281,8 @@ final class ScaleDetailDto {
     this.config = const <String, dynamic>{},
     this.dimensions = const <ScaleDimensionDefinitionDto>[],
     this.questions = const <ScaleQuestionDto>[],
+    this.deliveryMode = ScaleDeliveryMode.native,
+    this.webPath,
   });
 
   factory ScaleDetailDto.fromJson(Map<String, dynamic> json) {
@@ -298,6 +317,8 @@ final class ScaleDetailDto {
               ),
       ],
       questions: questions,
+      deliveryMode: scaleDeliveryModeFromWire(json['deliveryMode'] as String?),
+      webPath: _toNonEmptyString(json['webPath']),
     );
   }
 
@@ -311,6 +332,8 @@ final class ScaleDetailDto {
   final Map<String, dynamic> config;
   final List<ScaleDimensionDefinitionDto> dimensions;
   final List<ScaleQuestionDto> questions;
+  final ScaleDeliveryMode deliveryMode;
+  final String? webPath;
 
   ScaleDetail toDomain() {
     return ScaleDetail(
@@ -324,6 +347,8 @@ final class ScaleDetailDto {
       config: config,
       dimensions: dimensions.map((it) => it.toDomain()).toList(growable: false),
       questions: questions.map((it) => it.toDomain()).toList(growable: false),
+      deliveryMode: deliveryMode,
+      webPath: webPath,
     );
   }
 }
@@ -656,6 +681,8 @@ final class ScaleHistoryItemDto {
     this.totalScore,
     this.submittedAt,
     this.updatedAt,
+    this.deliveryMode = ScaleDeliveryMode.native,
+    this.webPath,
   });
 
   factory ScaleHistoryItemDto.fromJson(Map<String, dynamic> json) {
@@ -670,6 +697,8 @@ final class ScaleHistoryItemDto {
       totalScore: _toDouble(json['totalScore']),
       submittedAt: _parseDateTime(json['submittedAt']),
       updatedAt: _parseDateTime(json['updatedAt']),
+      deliveryMode: scaleDeliveryModeFromWire(json['deliveryMode'] as String?),
+      webPath: _toNonEmptyString(json['webPath']),
     );
   }
 
@@ -683,6 +712,8 @@ final class ScaleHistoryItemDto {
   final double? totalScore;
   final DateTime? submittedAt;
   final DateTime? updatedAt;
+  final ScaleDeliveryMode deliveryMode;
+  final String? webPath;
 
   ScaleHistoryItem toDomain() {
     return ScaleHistoryItem(
@@ -696,6 +727,8 @@ final class ScaleHistoryItemDto {
       totalScore: totalScore,
       submittedAt: submittedAt,
       updatedAt: updatedAt,
+      deliveryMode: deliveryMode,
+      webPath: webPath,
     );
   }
 }
